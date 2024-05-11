@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KafkaAuction", "KafkaAuction\KafkaAuction.csproj", "{11DB6F6D-69EF-40F6-965C-011EE115E087}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KafkaAuction.Tests", "KafkaAuction.Tests\KafkaAuction.Tests.csproj", "{0A24D85B-5898-4A4C-B24C-91163F5CAD22}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{11DB6F6D-69EF-40F6-965C-011EE115E087}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{11DB6F6D-69EF-40F6-965C-011EE115E087}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{11DB6F6D-69EF-40F6-965C-011EE115E087}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{11DB6F6D-69EF-40F6-965C-011EE115E087}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0A24D85B-5898-4A4C-B24C-91163F5CAD22}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A24D85B-5898-4A4C-B24C-91163F5CAD22}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A24D85B-5898-4A4C-B24C-91163F5CAD22}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A24D85B-5898-4A4C-B24C-91163F5CAD22}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
