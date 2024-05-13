@@ -1,5 +1,5 @@
 # To also start the sensor
-version: "3.0"
+version: "2.0"
 
 networks:
   dev:
@@ -7,7 +7,7 @@ networks:
 
 services:
   zookeeper:
-    image: confluentinc/cp-zookeeper:7.0.14
+    image: confluentinc/cp-zookeeper:7.4.0
     container_name: zookeeper
     networks:
       - dev
@@ -15,42 +15,102 @@ services:
       - "2181:2181"
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
-    volumes:
-      - ./backend/NetBackend/.containers/zookeeper_data:/var/lib/zookeeper/data
-      - ./backend/NetBackend/.containers/zookeeper_log:/var/lib/zookeeper/log
 
-  # reachable on 9092 from the host and on kafka:29092 from inside docker compose
   kafka:
-    image: confluentinc/cp-kafka:7.0.14
+    image: confluentinc/cp-kafka:7.4.0
     container_name: kafka
     networks:
       - dev
     depends_on:
       - zookeeper
     ports:
-      - "9092:9092"
-    expose:
-      - "29092"
+      - "29092:29092"
     environment:
+      KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
-      KAFKA_MIN_INSYNC_REPLICAS: "1"
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.4.0
+    container_name: schema-registry
+    depends_on:
+      - zookeeper
+      - kafka
+    ports:
+      - "8082:8082"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: "PLAINTEXT://kafka:9092"
+    networks:
+      - dev
+
+  ksqldb-server:
+    image: confluentinc/ksqldb-server:0.29.0
+    container_name: ksqldb-server
+    depends_on:
+      - kafka
+      - schema-registry
+    ports:
+      - "8088:8088"
     volumes:
-      - ./backend/.containers/kafka-data:/var/lib/kafka/data
+      - ./backend/.containers/confluent-hub-components/:/usr/share/kafka/plugins/
+    environment:
+      KSQL_LISTENERS: "http://0.0.0.0:8088"
+      KSQL_BOOTSTRAP_SERVERS: "kafka:9092"
+      KSQL_KSQL_SCHEMA_REGISTRY_URL: "http://schema-registry:8082"
+      KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: "true"
+      KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: "true"
+      # Configuration to embed Kafka Connect support.
+      KSQL_CONNECT_GROUP_ID: "ksql-connect-cluster"
+      KSQL_CONNECT_BOOTSTRAP_SERVERS: "kafka:9092"
+      KSQL_CONNECT_KEY_CONVERTER: "org.apache.kafka.connect.storage.StringConverter"
+      KSQL_CONNECT_VALUE_CONVERTER: "io.confluent.connect.avro.AvroConverter"
+      KSQL_CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: "http://schema-registry:8082"
+      KSQL_CONNECT_CONFIG_STORAGE_TOPIC: "_ksql-connect-configs"
+      KSQL_CONNECT_OFFSET_STORAGE_TOPIC: "_ksql-connect-offsets"
+      KSQL_CONNECT_STATUS_STORAGE_TOPIC: "_ksql-connect-statuses"
+      KSQL_CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      KSQL_CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      KSQL_CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+      KSQL_CONNECT_PLUGIN_PATH: "/usr/share/kafka/plugins"
+    networks:
+      - dev
+
+  ksqldb-cli:
+    image: confluentinc/ksqldb-cli:0.29.0
+    container_name: ksqldb-cli
+    depends_on:
+      - kafka
+      - ksqldb-server
+    entrypoint: /bin/sh
+    tty: true
+
+  kafdrop:
+    image: obsidiandynamics/kafdrop
+    container_name: kafdrop-kafka-gui
+    restart: "no"
+    ports:
+      - "9000:9000"
+    environment:
+      KAFKA_BROKERCONNECT: "kafka:9092"
+    depends_on:
+      - kafka
+    networks:
+      - dev
 
   kafkaAuctionBackend:
     image: docker.io/library/netbackend
     depends_on:
-      - kafkaAuctionDB
+      # - kafkaAuctionDB
       - kafka
     container_name: kafkaAuctionBackend
     ports:
-      - "8088:80"
+      - "8081:80"
     build:
       context: ./backend/
       dockerfile: Dockerfile
@@ -60,20 +120,20 @@ services:
     networks:
       - dev
 
-  kafkaAuctionDB:
-    image: postgres:latest
-    container_name: kafkaAuctionDB
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=kafkaAuctionDB
-    ports:
-      - "5433:5432"
-    restart: always
-    volumes:
-      - ./backend/.containers/kafkaAuctionDB:/var/lib/postgresql/data
-    networks:
-      - dev
+  # kafkaAuctionDB:
+  #   image: postgres:latest
+  #   container_name: kafkaAuctionDB
+  #   environment:
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_PASSWORD=password
+  #     - POSTGRES_DB=kafkaAuctionDB
+  #   ports:
+  #     - "5433:5432"
+  #   restart: always
+  #   volumes:
+  #     - ./backend/.containers/kafkaAuctionDB:/var/lib/postgresql/data
+  #   networks:
+  #     - dev
 
   # vuefrontend:
   #   image: docker.io/library/vuefrontend
@@ -82,8 +142,8 @@ services:
   #     context: ./frontend/
   #     dockerfile: Dockerfile
   #     args:
-  #       - VITE_VUE_APP_API_URL=http://localhost:8088
-  #       - VITE_VUE_APP_API_WEBSOCKET_URL=ws://localhost:8088/ws
+  #       - VITE_VUE_APP_API_URL=http://localhost:8081
+  #       - VITE_VUE_APP_API_WEBSOCKET_URL=ws://localhost:8081/ws
   #   ports:
   #     - "8080:80"
   #   depends_on:
