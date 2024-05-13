@@ -1,8 +1,6 @@
 using KafkaAuction.Dtos;
 using KafkaAuction.Models;
-using KafkaAuction.Services;
 using KafkaAuction.Services.Interfaces;
-using ksqlDB.RestApi.Client.KSql.Query.Context;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KafkaAuction.Controllers;
@@ -12,13 +10,11 @@ namespace KafkaAuction.Controllers;
 public class AuctionController : ControllerBase
 {
     private readonly ILogger<AuctionController> _logger;
-    private readonly KSqlDBContext _context;
     private readonly IAuctionService _auctionService;
 
-    public AuctionController(ILogger<AuctionController> logger, KSqlDBContext context, IAuctionService auctionService)
+    public AuctionController(ILogger<AuctionController> logger, IAuctionService auctionService)
     {
         _logger = logger;
-        _context = context;
         _auctionService = auctionService;
     }
 
@@ -35,6 +31,7 @@ public class AuctionController : ControllerBase
     {
         var auction = new Auction
         {
+            Auction_Id = auctionDto.Auction_Id,
             Title = auctionDto.Title
         };
 
@@ -48,8 +45,9 @@ public class AuctionController : ControllerBase
     {
         var auctionBid = new Auction_Bid
         {
+            Auction_Id = auctionBidDto.Auction_Id,
             Username = auctionBidDto.Username,
-            BidAmount = auctionBidDto.BidAmount
+            Bid_Amount = auctionBidDto.Bid_Amount
         };
 
         var result = await _auctionService.InsertBidAsync(auctionBid);

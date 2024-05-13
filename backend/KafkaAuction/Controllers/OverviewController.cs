@@ -4,6 +4,7 @@ using KafkaAuction.Services;
 using KafkaAuction.Services.Interfaces;
 using ksqlDB.RestApi.Client.KSql.Query.Context;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
 
 namespace KafkaAuction.Controllers;
 
@@ -25,7 +26,12 @@ public class OverviewController : ControllerBase
     {
         var result = await _ksqlDbService.CheckTablesAsync();
 
-        return Ok(result);
+        if (result == null)
+        {
+            return BadRequest();
+        }
+
+        return Ok(JToken.Parse(result).ToString(Newtonsoft.Json.Formatting.Indented));
     }
 
     [HttpDelete("DropTable")]
@@ -37,7 +43,12 @@ public class OverviewController : ControllerBase
         {
             var currentTables = await _ksqlDbService.CheckTablesAsync();
 
-            return Ok(currentTables);
+            if (currentTables == null)
+            {
+                return BadRequest();
+            }
+
+            return Ok(JToken.Parse(currentTables).ToString(Newtonsoft.Json.Formatting.Indented));
         }
         else
         {
@@ -50,6 +61,11 @@ public class OverviewController : ControllerBase
     {
         var result = await _ksqlDbService.MakeSQLQueryAsync(query);
 
-        return Ok(result);
+        if (result == null)
+        {
+            return BadRequest();
+        }
+
+        return Ok(JToken.Parse(result).ToString(Newtonsoft.Json.Formatting.Indented));
     }
 }

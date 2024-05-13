@@ -1,0 +1,11 @@
+# Remember for later:
+
+To get a stream of bids in an auction:
+
+```sql
+SELECT b.*, a.*
+FROM AUCTION_BIDS b
+JOIN AUCTIONS a
+ON b.AUCTION_ID = a.AUCTION_ID
+EMIT CHANGES;
+```

@@ -1,7 +1,6 @@
 
 using KafkaAuction.Models;
 using KafkaAuction.Services.Interfaces;
-using ksqlDB.RestApi.Client.KSql.RestApi.Extensions;
 using ksqlDB.RestApi.Client.KSql.RestApi.Serialization;
 using ksqlDB.RestApi.Client.KSql.RestApi.Statements;
 using ksqlDB.RestApi.Client.KSql.RestApi.Statements.Properties;
@@ -39,9 +38,8 @@ public class AuctionService : IAuctionService
         }
 
         // Create AuctionBid table
-        var createAuctionBidTableSql = $@"CREATE OR REPLACE TABLE {AuctionBidTableName} (
-            id INT PRIMARY KEY,
-            auction_id INT,
+        var createAuctionBidTableSql = $@"CREATE OR REPLACE STREAM {AuctionBidTableName} (
+            auction_id INT KEY,
             username VARCHAR,
             bid_amount DECIMAL(18,2)
         ) WITH (
@@ -77,10 +75,19 @@ public class AuctionService : IAuctionService
 
     public async Task<HttpResponseMessage> InsertBidAsync(Auction_Bid auctionBid)
     {
-        var insertStatement = _restApiProvider.ToInsertStatement(auctionBid);
-        _logger.LogInformation("InsertStatement: {Sql}", insertStatement.Sql);
+        // var insertStatement = _restApiProvider.ToInsertStatement(auctionBid);
+        // _logger.LogInformation("InsertStatement: {Sql}", insertStatement.Sql);
 
-        var result = await _restApiProvider.InsertIntoAsync(auctionBid, new InsertProperties { ShouldPluralizeEntityName = true });
+        // var result = await _restApiProvider.InsertIntoAsync(auctionBid, new InsertProperties { ShouldPluralizeEntityName = true });
+
+        // return result;
+
+        var insert = $"INSERT INTO {AuctionBidTableName} ({nameof(Auction_Bid.Auction_Id)}, {nameof(Auction_Bid.Username)}, {nameof(Auction_Bid.Bid_Amount)}) VALUES ({auctionBid.Auction_Id}, '{auctionBid.Username}', {auctionBid.Bid_Amount:0.00});";
+        _logger.LogInformation("InsertStatement: {Sql}", insert);
+
+        KSqlDbStatement ksqlDbStatement = new(insert);
+
+        var result = await _restApiProvider.ExecuteStatementAsync(ksqlDbStatement);
 
         return result;
     }
@@ -88,7 +95,8 @@ public class AuctionService : IAuctionService
     public async Task<HttpResponseMessage> InsertAuctionAsync(Auction auction)
     {
         var insert =
-          $"INSERT INTO {AuctionTableName} ({nameof(Auction.AuctionId)}, {nameof(Auction.Title)}) VALUES ({auction.AuctionId}, '{auction.Title}');";
+          $"INSERT INTO {AuctionTableName} ({nameof(Auction.Auction_Id)}, {nameof(Auction.Title)}) VALUES ({auction.Auction_Id}, '{auction.Title}');";
+        _logger.LogInformation("InsertStatement: {Sql}", insert);
 
         KSqlDbStatement ksqlDbStatement = new(insert);
 
@@ -118,6 +126,22 @@ public class AuctionService : IAuctionService
     public async Task<string?> CheckTablesAsync()
     {
         var statement = "SHOW TABLES;";
+        var response = await _restApiProvider.ExecuteStatementAsync(new KSqlDbStatement(statement));
+        if (response.IsSuccessStatusCode)
+        {
+            var content = await response.Content.ReadAsStringAsync();
+            return content;
+        }
+        else
+        {
+            _logger.LogError("Failed to fetch tables: " + await response.Content.ReadAsStringAsync());
+            return null;
+        }
+    }
+
+    public async Task<string?> CheckStreams()
+    {
+        var statement = "SHOW STREAMS;";
         var response = await _restApiProvider.ExecuteStatementAsync(new KSqlDbStatement(statement));
         if (response.IsSuccessStatusCode)
         {
