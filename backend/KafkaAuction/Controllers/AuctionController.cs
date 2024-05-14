@@ -18,15 +18,37 @@ public class AuctionController : ControllerBase
         _auctionService = auctionService;
     }
 
-    [HttpPost("CreateTables")]
+    [HttpPost("create_tables")]
     public async Task<IActionResult> CreateTables()
     {
-        var restult = await _auctionService.CreateTablesAsync();
+        var results = await _auctionService.CreateTablesAsync();
 
-        return Ok(restult);
+        if (results?.Count == 0 || results == null)
+        {
+            return Ok("Tables already exist or failed to create tables");
+        }
+        else
+        {
+            return Ok(results);
+        }
     }
 
-    [HttpPost("InsertAuction")]
+    [HttpPost("create_streams")]
+    public async Task<IActionResult> CreateStreams()
+    {
+        var results = await _auctionService.CreateStreamsAsync();
+
+        if (results?.Count == 0 || results == null)
+        {
+            return Ok("Tables already exist or failed to create streams");
+        }
+        else
+        {
+            return Ok(results);
+        }
+    }
+
+    [HttpPost("insert_auction")]
     public async Task<IActionResult> InsertAuction(AuctionDto auctionDto)
     {
         var auction = new Auction
@@ -40,7 +62,7 @@ public class AuctionController : ControllerBase
         return Ok(result);
     }
 
-    [HttpPost("InsertAuctionBid")]
+    [HttpPost("insert_auction_bid")]
     public async Task<IActionResult> InsertAuctionBid(AuctionBidDto auctionBidDto)
     {
         var auctionBid = new Auction_Bid
@@ -55,7 +77,7 @@ public class AuctionController : ControllerBase
         return Ok(result);
     }
 
-    [HttpDelete("DropTables")]
+    [HttpDelete("drop_tables")]
     public async Task<IActionResult> DropTables()
     {
         await _auctionService.DropTablesAsync();

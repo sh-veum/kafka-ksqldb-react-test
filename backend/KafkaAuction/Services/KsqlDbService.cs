@@ -2,6 +2,8 @@
 using KafkaAuction.Models;
 using KafkaAuction.Services.Interfaces;
 using ksqlDB.RestApi.Client.KSql.RestApi.Extensions;
+using ksqlDB.RestApi.Client.KSql.RestApi.Responses.Streams;
+using ksqlDB.RestApi.Client.KSql.RestApi.Responses.Tables;
 using ksqlDB.RestApi.Client.KSql.RestApi.Serialization;
 using ksqlDB.RestApi.Client.KSql.RestApi.Statements;
 using ksqlDB.RestApi.Client.KSql.RestApi.Statements.Properties;
@@ -19,45 +21,41 @@ public class KsqlDbService : IKsqlDbService
         _restApiProvider = restApiProvider;
     }
 
-    public async Task<bool> DropSingleTablesAsync(string tableName)
+    public async Task<string?> DropSingleTablesAsync(string tableName)
     {
         var httpResult = await _restApiProvider.DropTableAndTopic(tableName);
         if (!httpResult.IsSuccessStatusCode)
         {
             var content = await httpResult.Content.ReadAsStringAsync();
             _logger.LogError(content);
-        }
-
-        return true;
-    }
-
-    public async Task<string?> CheckTablesAsync()
-    {
-        var statement = "SHOW TABLES;";
-        var response = await _restApiProvider.ExecuteStatementAsync(new KSqlDbStatement(statement));
-        if (response.IsSuccessStatusCode)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            return content;
-        }
-        else
-        {
-            _logger.LogError("Failed to fetch tables: " + await response.Content.ReadAsStringAsync());
             return null;
         }
+
+        var responseContent = await httpResult.Content.ReadAsStringAsync();
+        return responseContent;
     }
 
-    public async Task<string?> MakeSQLQueryAsync(string query)
+    public async Task<string?> DropSingleStreamAsync(string streamName)
     {
-        var statement = new KSqlDbStatement(query);
-        var response = await _restApiProvider.ExecuteStatementAsync(statement);
-        if (!response.IsSuccessStatusCode)
+        var httpResult = await _restApiProvider.DropStreamAndTopic(streamName);
+        if (!httpResult.IsSuccessStatusCode)
         {
-            var errorContent = await response.Content.ReadAsStringAsync();
-            _logger.LogError($"Failed to execute query: {errorContent}");
-            return errorContent; // Directly returning the error message
+            var content = await httpResult.Content.ReadAsStringAsync();
+            _logger.LogError(content);
+            return null;
         }
 
-        return await response.Content.ReadAsStringAsync();
+        var responseContent = await httpResult.Content.ReadAsStringAsync();
+        return responseContent;
+    }
+
+    public async Task<TablesResponse[]> CheckTablesAsync()
+    {
+        return await _restApiProvider.GetTablesAsync();
+    }
+
+    public async Task<StreamsResponse[]> CheckStreams()
+    {
+        return await _restApiProvider.GetStreamsAsync();
     }
 }

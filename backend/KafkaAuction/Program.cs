@@ -3,6 +3,7 @@ using Confluent.Kafka;
 using KafkaAuction.Http;
 using KafkaAuction.Services;
 using KafkaAuction.Services.Interfaces;
+using KafkaAuction.Utilities;
 using ksqlDB.RestApi.Client.KSql.Config;
 using ksqlDB.RestApi.Client.KSql.Query.Context;
 using ksqlDB.RestApi.Client.KSql.Query.Context.Options;
@@ -25,7 +26,7 @@ var ksqlDbUrl = builder.Configuration.GetValue<string>("KSqlDb:Url");
 
 var contextOptions = new KSqlDbContextOptionsBuilder()
     .UseKSqlDb(ksqlDbUrl!)
-    .SetBasicAuthCredentials("fred", "letmein")
+    .SetBasicAuthCredentials("veum", "letmein")
     .SetJsonSerializerOptions(jsonOptions =>
     {
         jsonOptions.IgnoreReadOnlyFields = true;
@@ -57,12 +58,22 @@ var restApiProvider = new KSqlDbRestApiProvider(httpClientFactory, builder.Confi
 {
     DisposeHttpClient = false
 };
+
 builder.Services.AddScoped<IAuctionService, AuctionService>(
-    sp => new AuctionService(sp.GetRequiredService<ILogger<AuctionService>>(), restApiProvider)
+    sp => new AuctionService(
+        sp.GetRequiredService<ILogger<AuctionService>>(),
+        restApiProvider)
     );
+
 builder.Services.AddScoped<IKsqlDbService, KsqlDbService>(
-    sp => new KsqlDbService(sp.GetRequiredService<ILogger<KsqlDbService>>(), restApiProvider)
+    sp => new KsqlDbService(
+        sp.GetRequiredService<ILogger<KsqlDbService>>(),
+        restApiProvider)
     );
+
+builder.Services.AddScoped(typeof(EntityInserter<>));
+builder.Services.AddScoped(typeof(TableCreator<>));
+builder.Services.AddScoped(typeof(StreamCreator<>));
 
 var app = builder.Build();
 

@@ -1,8 +1,12 @@
+using ksqlDB.RestApi.Client.KSql.RestApi.Responses.Streams;
+using ksqlDB.RestApi.Client.KSql.RestApi.Responses.Tables;
+
 namespace KafkaAuction.Services.Interfaces;
 
 public interface IKsqlDbService
 {
-    Task<bool> DropSingleTablesAsync(string tableName);
-    Task<string?> CheckTablesAsync();
-    Task<string?> MakeSQLQueryAsync(string query);
+    Task<string?> DropSingleTablesAsync(string tableName);
+    Task<string?> DropSingleStreamAsync(string streamName);
+    Task<TablesResponse[]> CheckTablesAsync();
+    Task<StreamsResponse[]> CheckStreams();
 }

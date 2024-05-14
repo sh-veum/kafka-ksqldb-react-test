@@ -21,7 +21,7 @@ public class OverviewController : ControllerBase
         _ksqlDbService = ksqlDbService;
     }
 
-    [HttpGet("CheckTables")]
+    [HttpGet("check_tables")]
     public async Task<IActionResult> CheckTables()
     {
         var result = await _ksqlDbService.CheckTablesAsync();
@@ -31,41 +31,49 @@ public class OverviewController : ControllerBase
             return BadRequest();
         }
 
-        return Ok(JToken.Parse(result).ToString(Newtonsoft.Json.Formatting.Indented));
+        return Ok(result);
     }
 
-    [HttpDelete("DropTable")]
-    public async Task<IActionResult> DropTable([FromQuery] string tableName)
+    [HttpGet("check_streams")]
+    public async Task<IActionResult> CheckStreams()
     {
-        var result = await _ksqlDbService.DropSingleTablesAsync(tableName);
-
-        if (result)
-        {
-            var currentTables = await _ksqlDbService.CheckTablesAsync();
-
-            if (currentTables == null)
-            {
-                return BadRequest();
-            }
-
-            return Ok(JToken.Parse(currentTables).ToString(Newtonsoft.Json.Formatting.Indented));
-        }
-        else
-        {
-            return BadRequest();
-        }
-    }
-
-    [HttpPost("MakeSQLQuery")]
-    public async Task<IActionResult> MakeSQLQuery([FromBody] string query)
-    {
-        var result = await _ksqlDbService.MakeSQLQueryAsync(query);
+        var result = await _ksqlDbService.CheckStreams();
 
         if (result == null)
         {
             return BadRequest();
         }
 
-        return Ok(JToken.Parse(result).ToString(Newtonsoft.Json.Formatting.Indented));
+        return Ok(result);
+    }
+
+    [HttpDelete("drop_table")]
+    public async Task<IActionResult> DropTable([FromQuery] string tableName)
+    {
+        var result = await _ksqlDbService.DropSingleTablesAsync(tableName);
+
+        if (result == null)
+        {
+            return BadRequest();
+        }
+        else
+        {
+            return Ok(JToken.Parse(result).ToString(Newtonsoft.Json.Formatting.Indented));
+        }
+    }
+
+    [HttpDelete("drop_stream")]
+    public async Task<IActionResult> DropStream([FromQuery] string streamName)
+    {
+        var result = await _ksqlDbService.DropSingleStreamAsync(streamName);
+
+        if (result == null)
+        {
+            return BadRequest();
+        }
+        else
+        {
+            return Ok(JToken.Parse(result).ToString(Newtonsoft.Json.Formatting.Indented));
+        }
     }
 }
