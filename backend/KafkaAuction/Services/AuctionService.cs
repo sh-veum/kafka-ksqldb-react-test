@@ -62,7 +62,7 @@ public class AuctionService : IAuctionService
     public async Task DropTablesAsync()
     {
         await _restApiProvider.DropTableAndTopic(_auctionsTableName);
-        await _restApiProvider.DropTableAndTopic(_auctionBidsStreamName);
+        await _restApiProvider.DropStreamAndTopic(_auctionBidsStreamName);
     }
 
     public async Task<bool> DropSingleTableAsync(string tableName)

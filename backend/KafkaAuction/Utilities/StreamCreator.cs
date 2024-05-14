@@ -1,3 +1,6 @@
+using System.ComponentModel.DataAnnotations;
+using System.Reflection;
+using System.Text;
 using KafkaAuction.Services.Interfaces;
 using ksqlDB.RestApi.Client.KSql.RestApi.Serialization;
 using ksqlDB.RestApi.Client.KSql.RestApi.Statements;
@@ -17,16 +20,8 @@ public class StreamCreator<T>
 
     public async Task<bool> CreateStreamAsync(string streamName, CancellationToken cancellationToken = default)
     {
-        var createStreamSql = $@"
-            CREATE OR REPLACE STREAM {streamName} (
-                auction_id INT KEY,
-                username VARCHAR,
-                bid_amount DECIMAL(18,2)
-            ) WITH (
-                KAFKA_TOPIC='{streamName}',
-                PARTITIONS=1,
-                VALUE_FORMAT='JSON'
-            );";
+        var createStreamSql = GenerateCreateStreamSql(streamName);
+        _logger.LogInformation("Generated SQL Statement: {SqlStatement}", createStreamSql);
 
         var ksqlDbStatement = new KSqlDbStatement(createStreamSql);
         var response = await _restApiProvider.ExecuteStatementAsync(ksqlDbStatement, cancellationToken);
@@ -34,10 +29,48 @@ public class StreamCreator<T>
         if (!response.IsSuccessStatusCode)
         {
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
-            _logger.LogError(content);
+            _logger.LogError("Error creating stream: {Content}", content);
             return false;
         }
 
         return true;
+    }
+
+    private static string GenerateCreateStreamSql(string streamName)
+    {
+        var properties = typeof(T).GetProperties();
+        var columns = new StringBuilder();
+
+        foreach (var property in properties)
+        {
+            var columnName = property.Name.ToLower();
+            var columnType = TypeMapper.GetKSqlType(property.PropertyType);
+
+            // Exclude unwanted properties
+            if (columnName == "headers" || columnName == "rowoffset" || columnName == "rowpartition" || columnName == "rowtime")
+            {
+                continue;
+            }
+
+            if (property.GetCustomAttribute<KeyAttribute>() != null)
+            {
+                columns.AppendLine($"{columnName} {columnType} KEY,");
+            }
+            else
+            {
+                columns.AppendLine($"{columnName} {columnType},");
+            }
+        }
+
+        var columnsString = columns.ToString().TrimEnd(',', '\n', '\r');
+
+        return $@"
+            CREATE OR REPLACE STREAM {streamName} (
+                {columnsString}
+            ) WITH (
+                KAFKA_TOPIC='{streamName}',
+                PARTITIONS=1,
+                VALUE_FORMAT='JSON'
+            );";
     }
 }
