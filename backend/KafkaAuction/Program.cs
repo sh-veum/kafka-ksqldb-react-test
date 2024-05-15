@@ -98,9 +98,35 @@ builder.Services.AddScoped(typeof(EntityInserter<>));
 builder.Services.AddScoped(typeof(TableCreator<>));
 builder.Services.AddScoped(typeof(StreamCreator<>));
 
+// CORS policy with the frontend
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: "AllowSpecificOrigin",
+                      policy =>
+                      {
+                          var frontendUrl = configuration["FrontendUrl"];
+                          if (!string.IsNullOrEmpty(frontendUrl))
+                          {
+                              policy.WithOrigins(frontendUrl)
+                                    .AllowAnyHeader()
+                                    .AllowAnyMethod();
+                          }
+                      });
+    options.AddPolicy(name: "AllowAnyOrigin",
+                      policy =>
+                      {
+                          policy.AllowAnyOrigin()
+                                .AllowAnyHeader()
+                                .AllowAnyMethod();
+                      });
+});
+
 var app = builder.Build();
 
 app.MapIdentityApi<UserModel>();
+
+app.UseCors("AllowSpecificOrigin");
+// app.UseCors("AllowAnyOrigin"); 
 
 // app.UseHttpsRedirection();
 app.UseAuthentication();
