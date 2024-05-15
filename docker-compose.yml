@@ -136,7 +136,7 @@ services:
       context: ./backend/
       dockerfile: Dockerfile
     environment:
-      - ConnectionStrings__DefaultConnection=User ID=postgres;Password=password;Server=kafkaAuctionDB;Database=kafkaAuctionDB;Pooling=true;Port=5432;
+      - ConnectionStrings__DefaultConnection=User ID=postgres;Password=password;Server=auctionDB;Database=auctionDB;Pooling=true;Port=5432;
       - ASPNETCORE_URLS=http://+:80
     networks:
       - dev

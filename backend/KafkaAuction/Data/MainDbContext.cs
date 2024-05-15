@@ -11,4 +11,9 @@ public class MainDbContext : IdentityDbContext<UserModel, IdentityRole, string>
         : base(options)
     {
     }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+    }
 }
