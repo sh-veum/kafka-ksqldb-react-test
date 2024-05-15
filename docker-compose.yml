@@ -1,5 +1,5 @@
 # To also start the sensor
-version: "2.0"
+version: "2.1"
 
 networks:
   dev:
@@ -15,6 +15,7 @@ services:
       - "2181:2181"
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
+      ALLOW_ANONYMOUS_LOGIN: "yes"
 
   kafka:
     image: confluentinc/cp-kafka:7.4.0
@@ -34,6 +35,7 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    restart: always
 
   schema-registry:
     image: confluentinc/cp-schema-registry:7.4.0
@@ -46,6 +48,11 @@ services:
     environment:
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: "PLAINTEXT://kafka:9092"
+      SCHEMA_REGISTRY_KAFKASTORE_SECURITY_PROTOCOL: PLAINTEXT
+      SCHEMA_REGISTRY_LISTENERS: http://schema-registry:8082
+      SCHEMA_REGISTRY_SCHEMA_REGISTRY_INTER_INSTANCE_PROTOCOL: "http"
+      SCHEMA_REGISTRY_LOG4J_ROOT_LOGLEVEL: INFO
+      SCHEMA_REGISTRY_KAFKASTORE_TOPIC: _schemas
     networks:
       - dev
 
@@ -90,25 +97,39 @@ services:
     entrypoint: /bin/sh
     tty: true
 
-  kafdrop:
-    image: obsidiandynamics/kafdrop
-    container_name: kafdrop-kafka-gui
-    restart: "no"
-    ports:
-      - "9000:9000"
-    environment:
-      KAFKA_BROKERCONNECT: "kafka:9092"
-    depends_on:
-      - kafka
+  # Alternative UI for Kafka
+  # kafdrop:
+  #   image: obsidiandynamics/kafdrop
+  #   container_name: kafdrop-kafka-gui
+  #   restart: "no"
+  #   ports:
+  #     - "9000:9000"
+  #   environment:
+  #     KAFKA_BROKERCONNECT: "kafka:9092"
+  #   depends_on:
+  #     - kafka
+  #   networks:
+  #     - dev
+
+  kafka-ui:
+    container_name: kafka-ui
+    image: provectuslabs/kafka-ui:latest
     networks:
       - dev
+    ports:
+      - 8080:8080
+    environment:
+      # KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schema-registry:8082
+      DYNAMIC_CONFIG_ENABLED: "true"
 
-  kafkaAuctionBackend:
-    image: docker.io/library/netbackend
+  auctionBackend:
+    image: docker.io/library/auction_backend
     depends_on:
-      # - kafkaAuctionDB
+      - auctionDB
       - kafka
-    container_name: kafkaAuctionBackend
+    container_name: auctionBackend
     ports:
       - "8081:80"
     build:
@@ -119,21 +140,23 @@ services:
       - ASPNETCORE_URLS=http://+:80
     networks:
       - dev
+    volumes:
+      - dataprotection-keys:/root/.aspnet/DataProtection-Keys
 
-  # kafkaAuctionDB:
-  #   image: postgres:latest
-  #   container_name: kafkaAuctionDB
-  #   environment:
-  #     - POSTGRES_USER=postgres
-  #     - POSTGRES_PASSWORD=password
-  #     - POSTGRES_DB=kafkaAuctionDB
-  #   ports:
-  #     - "5433:5432"
-  #   restart: always
-  #   volumes:
-  #     - ./backend/.containers/kafkaAuctionDB:/var/lib/postgresql/data
-  #   networks:
-  #     - dev
+  auctionDB:
+    image: postgres:latest
+    container_name: auctionDB
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=auctionDB
+    ports:
+      - "5433:5432"
+    restart: always
+    volumes:
+      - ./backend/.containers/auctionDB:/var/lib/postgresql/data
+    networks:
+      - dev
 
   # vuefrontend:
   #   image: docker.io/library/vuefrontend
@@ -162,4 +185,4 @@ services:
   #     - dev
 
 volumes:
-  app_data:
+  dataprotection-keys:

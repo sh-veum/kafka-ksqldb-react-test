@@ -1,6 +1,8 @@
-using System.Text.Json.Serialization;
-using Confluent.Kafka;
+using KafkaAuction.Constants;
+using KafkaAuction.Data;
 using KafkaAuction.Http;
+using KafkaAuction.Initializers;
+using KafkaAuction.Models;
 using KafkaAuction.Services;
 using KafkaAuction.Services.Interfaces;
 using KafkaAuction.Utilities;
@@ -10,9 +12,12 @@ using ksqlDB.RestApi.Client.KSql.Query.Context.Options;
 using ksqlDB.RestApi.Client.KSql.Query.Options;
 using ksqlDB.RestApi.Client.KSql.RestApi;
 using ksqlDB.RestApi.Client.KSql.RestApi.Enums;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var configuration = builder.Configuration;
 
 // Add services to the container.
 
@@ -21,8 +26,26 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddAuthentication()
+    .AddBearerToken(IdentityConstants.BearerScheme);
+
+// Add authorization
+builder.Services.AddAuthorizationBuilder();
+
+// Configure DbContext
+var defaultConnectionString = configuration.GetConnectionString("DefaultConnection");
+
+builder.Services.AddDbContext<MainDbContext>(options =>
+    options.UseNpgsql(defaultConnectionString));
+
+builder.Services.AddIdentityCore<UserModel>()
+    .AddRoles<IdentityRole>()
+    .AddDefaultTokenProviders()
+    .AddEntityFrameworkStores<MainDbContext>()
+    .AddApiEndpoints();
+
 // Setup ksqlDB context
-var ksqlDbUrl = builder.Configuration.GetValue<string>("KSqlDb:Url");
+var ksqlDbUrl = configuration.GetValue<string>("KSqlDb:Url");
 
 var contextOptions = new KSqlDbContextOptionsBuilder()
     .UseKSqlDb(ksqlDbUrl!)
@@ -77,16 +100,64 @@ builder.Services.AddScoped(typeof(StreamCreator<>));
 
 var app = builder.Build();
 
+app.MapIdentityApi<UserModel>();
+
+// app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Automatic migration
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+
+    var dbContext = services.GetRequiredService<MainDbContext>();
+
+    dbContext.Database.Migrate();
+
+    // Make sure the roles and admin user is created
+    try
+    {
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+        var userManager = services.GetRequiredService<UserManager<UserModel>>();
+
+        await DbInitializer.SeedRoles(roleManager);
+
+        // Admin user
+        var adminEmail = configuration["DefaultUsers:Admin:Email"];
+        var adminPassword = configuration["DefaultUsers:Admin:Password"];
+
+        if (string.IsNullOrWhiteSpace(adminEmail) || string.IsNullOrWhiteSpace(adminPassword))
+        {
+            throw new InvalidOperationException("Admin email and password must be set in the configuration.");
+        }
+
+        await DbInitializer.EnsureUser(userManager, roleManager, adminEmail, adminPassword, RoleConstants.AdminRole);
+
+        // Test user
+        var userEmail = configuration["DefaultUsers:User:Email"];
+        var userPassword = configuration["DefaultUsers:User:Password"];
+
+        if (string.IsNullOrWhiteSpace(userEmail) || string.IsNullOrWhiteSpace(userPassword))
+        {
+            throw new InvalidOperationException("User email and password must be set in the configuration.");
+        }
+
+        await DbInitializer.EnsureUser(userManager, roleManager, userEmail, userPassword, RoleConstants.UserRole);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred seeding the DB.");
+    }
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-// app.UseHttpsRedirection();
-
-app.UseAuthorization();
 
 app.MapControllers();
 
