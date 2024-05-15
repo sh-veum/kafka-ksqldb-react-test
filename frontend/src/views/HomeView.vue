@@ -1,9 +1,11 @@
-<script setup lang="ts">
-import TheWelcome from '../components/TheWelcome.vue'
-</script>
+<script setup lang="ts"></script>
 
 <template>
   <main>
-    <TheWelcome />
+    <v-card title="Card title" subtitle="Subtitle" text="...">
+      <v-card-actions>
+        <v-btn variant="outlined">Click me</v-btn>
+      </v-card-actions>
+    </v-card>
   </main>
 </template>
