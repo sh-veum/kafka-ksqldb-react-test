@@ -1,0 +1,63 @@
+<script lang="ts">
+import { defineComponent, ref } from "vue";
+import { useAuthStore } from "@/stores/authStore";
+
+export default defineComponent({
+  setup() {
+    const email = ref("");
+    const password = ref("");
+    const authStore = useAuthStore();
+
+    const submit = async () => {
+      await authStore.register({
+        email: email.value,
+        password: password.value,
+      });
+    };
+
+    const rules = {
+      required: (value: string) => !!value || "Required.",
+    };
+
+    return {
+      email,
+      password,
+      authStore,
+      submit,
+      rules,
+    };
+  },
+});
+</script>
+
+<template>
+  <v-responsive class="mx-auto" max-width="344">
+    <h1>Register</h1>
+    <v-form @submit.prevent="submit">
+      <div>
+        <v-text-field
+          clearable
+          type="email"
+          v-model="email"
+          id="email"
+          label="Email"
+          hint="Enter your email address"
+          :rules="[rules.required]"
+        />
+      </div>
+      <div>
+        <v-text-field
+          clearable
+          type="password"
+          v-model="password"
+          id="password"
+          label="Password"
+          hint="Enter your password"
+          :rules="[rules.required]"
+        />
+      </div>
+      <v-btn type="submit" :disabled="authStore.loading">Register</v-btn>
+      <p v-if="authStore.error">{{ authStore.error }}</p>
+    </v-form>
+  </v-responsive>
+</template>
