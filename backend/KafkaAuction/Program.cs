@@ -2,6 +2,7 @@ using KafkaAuction.Constants;
 using KafkaAuction.Data;
 using KafkaAuction.Http;
 using KafkaAuction.Initializers;
+using KafkaAuction.Middleware;
 using KafkaAuction.Models;
 using KafkaAuction.Services;
 using KafkaAuction.Services.Interfaces;
@@ -73,7 +74,12 @@ contextOptions.DisposeHttpClient = false;
 
 builder.Services.AddSingleton(new KSqlDBContext(contextOptions));
 
+// Register IHttpClientFactory
+builder.Services.AddHttpClient();
+
 var httpClientFactory = new HttpClientFactory(new Uri(ksqlDbUrl!));
+
+
 builder.Services.AddSingleton<IKSqlDbRestApiClient>(new KSqlDbRestApiClient(httpClientFactory));
 
 // AuctionService
@@ -97,6 +103,11 @@ builder.Services.AddScoped<IKsqlDbService, KsqlDbService>(
 builder.Services.AddScoped(typeof(EntityInserter<>));
 builder.Services.AddScoped(typeof(TableCreator<>));
 builder.Services.AddScoped(typeof(StreamCreator<>));
+
+// WebSocket services
+// builder.Services.AddSingleton<IKSqlDbRestApiProvider, KSqlDbRestApiProvider>();
+builder.Services.AddSingleton<IAuctionWebSocketService, AuctionWebSocketService>();
+builder.Services.AddSingleton<IWebSocketHandler, WebSocketHandler>();
 
 // CORS policy with the frontend
 builder.Services.AddCors(options =>
@@ -128,7 +139,11 @@ app.MapIdentityApi<UserModel>();
 app.UseCors("AllowSpecificOrigin");
 // app.UseCors("AllowAnyOrigin"); 
 
+app.UseWebSockets();
+app.UseMiddleware<WebSocketMiddleware>();
+
 // app.UseHttpsRedirection();
+app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 

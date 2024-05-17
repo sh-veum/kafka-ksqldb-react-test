@@ -75,7 +75,9 @@ public class StreamCreator<T>
             ) WITH (
                 KAFKA_TOPIC='{streamName}',
                 PARTITIONS=1,
-                VALUE_FORMAT='JSON'
+                VALUE_FORMAT='JSON',
+                REPLICAS=1,
+                RETENTION_MS=-1
             );";
     }
 }
