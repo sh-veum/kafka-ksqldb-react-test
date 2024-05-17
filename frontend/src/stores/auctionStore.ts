@@ -3,12 +3,14 @@ import type { Auction } from "@/models/Auction";
 import axios from "axios";
 import { defineStore } from "pinia";
 import { ref } from "vue";
+import { webSocketService } from "@/lib/websocket";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
 export const useAuctionStore = defineStore("auction", () => {
   const loading = ref(false);
   const error = ref<string | null>(null);
+  const messages = ref<any[]>([]);
 
   const createTables = async () => {
     loading.value = true;
@@ -88,6 +90,16 @@ export const useAuctionStore = defineStore("auction", () => {
     }
   };
 
+  function connectWebSocket(auctionId: string) {
+    webSocketService.connect(auctionId, (data) => {
+      messages.value.push(data);
+    });
+  }
+
+  function disconnectWebSocket() {
+    webSocketService.disconnect();
+  }
+
   return {
     loading,
     error,
@@ -96,6 +108,9 @@ export const useAuctionStore = defineStore("auction", () => {
     insertAuction,
     insertAuctionBid,
     dropTables,
+    messages,
+    connectWebSocket,
+    disconnectWebSocket,
   };
 });
 
