@@ -1,12 +1,7 @@
-
-using KafkaAuction.Models;
 using KafkaAuction.Services.Interfaces;
-using ksqlDB.RestApi.Client.KSql.RestApi.Extensions;
 using ksqlDB.RestApi.Client.KSql.RestApi.Responses.Streams;
 using ksqlDB.RestApi.Client.KSql.RestApi.Responses.Tables;
-using ksqlDB.RestApi.Client.KSql.RestApi.Serialization;
 using ksqlDB.RestApi.Client.KSql.RestApi.Statements;
-using ksqlDB.RestApi.Client.KSql.RestApi.Statements.Properties;
 
 namespace KafkaAuction.Services;
 

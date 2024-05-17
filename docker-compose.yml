@@ -15,7 +15,7 @@ services:
       - "2181:2181"
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
-      ALLOW_ANONYMOUS_LOGIN: "yes"
+      ALLOW_ANONYMOUS_LOGIN: "yes" # No clue if this is necessary
 
   kafka:
     image: confluentinc/cp-kafka:7.4.0
@@ -35,6 +35,8 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_LOG_RETENTION_MS: -1 # This sets the retention period to indefinite
+      KAFKA_LOG_RETENTION_BYTES: -1 # This sets the retention size to indefinite
     restart: always
 
   schema-registry:
