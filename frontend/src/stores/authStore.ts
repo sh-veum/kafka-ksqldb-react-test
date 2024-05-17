@@ -1,4 +1,4 @@
-import type { User } from "@/models/user";
+import type { User } from "@/models/User";
 import axios from "axios";
 import { defineStore } from "pinia";
 import { ref } from "vue";
