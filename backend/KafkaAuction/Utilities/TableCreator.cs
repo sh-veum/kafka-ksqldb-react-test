@@ -34,4 +34,24 @@ public class TableCreator<T>
 
         return true;
     }
+
+    public async Task<bool> CreateQueryableTableAsync(string tableName, CancellationToken cancellationToken = default)
+    {
+        var createQueryTableSql = $"CREATE TABLE QUERYABLE_{tableName.ToUpper()} AS SELECT * FROM {tableName.ToUpper()};";
+
+        _logger.LogInformation("Generated SQL Statement: {SqlStatement}", createQueryTableSql);
+
+        var ksqlDbStatement = new KSqlDbStatement(createQueryTableSql);
+
+        var response = await _restApiProvider.ExecuteStatementAsync(ksqlDbStatement, cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogError("Error creating queryable table: {Content}", content);
+            return false;
+        }
+
+        return true;
+    }
 }
