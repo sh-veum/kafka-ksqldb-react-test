@@ -1,12 +1,17 @@
+using KafkaAuction.Dtos;
 using KafkaAuction.Models;
+using ksqlDB.RestApi.Client.KSql.RestApi.Responses.Streams;
+using ksqlDB.RestApi.Client.KSql.RestApi.Responses.Tables;
 
 namespace KafkaAuction.Services.Interfaces;
 
 public interface IAuctionService
 {
-    Task<List<string>?> CreateTablesAsync(CancellationToken cancellationToken = default);
-    Task<List<string>?> CreateStreamsAsync(CancellationToken cancellationToken = default);
+    Task<TablesResponse[]> CreateTablesAsync(CancellationToken cancellationToken = default);
+    Task<StreamsResponse[]> CreateStreamsAsync(CancellationToken cancellationToken = default);
     Task<HttpResponseMessage> InsertAuctionAsync(Auction auction);
     Task<HttpResponseMessage> InsertBidAsync(Auction_Bid auctionBid);
     Task DropTablesAsync();
+    Task<List<AuctionDto>> GetAllAuctions();
+    Task<List<AuctionBidDto>> GetAllBids();
 }

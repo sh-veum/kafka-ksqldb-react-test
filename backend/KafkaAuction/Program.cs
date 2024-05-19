@@ -66,7 +66,7 @@ var contextOptions = new KSqlDbContextOptionsBuilder()
     })
     .SetupPullQuery(options =>
     {
-        options[KSqlDbConfigs.KsqlQueryPullTableScanEnabled] = "false";
+        options[KSqlDbConfigs.KsqlQueryPullTableScanEnabled] = "true";
     })
     .Options;
 
@@ -91,7 +91,7 @@ var restApiProvider = new KSqlDbRestApiProvider(httpClientFactory, builder.Confi
 builder.Services.AddScoped<IAuctionService, AuctionService>(
     sp => new AuctionService(
         sp.GetRequiredService<ILogger<AuctionService>>(),
-        restApiProvider)
+        restApiProvider, configuration)
     );
 
 builder.Services.AddScoped<IKsqlDbService, KsqlDbService>(

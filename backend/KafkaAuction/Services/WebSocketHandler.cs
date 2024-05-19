@@ -14,6 +14,6 @@ public class WebSocketHandler : IWebSocketHandler
 
     public async Task HandleWebSocketAsync(HttpContext context, WebSocket webSocket, string auctionId)
     {
-        await _auctionWebSocketService.SubscribeAsync(webSocket, auctionId);
+        await _auctionWebSocketService.SubscribeToAuctionUpdatesAsync(webSocket, auctionId);
     }
 }

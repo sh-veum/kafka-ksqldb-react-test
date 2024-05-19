@@ -4,6 +4,7 @@ using KafkaAuction.Dtos;
 using KafkaAuction.Models;
 using KafkaAuction.Services.Interfaces;
 using ksqlDB.RestApi.Client.KSql.Linq;
+using ksqlDB.RestApi.Client.KSql.Linq.PullQueries;
 using ksqlDB.RestApi.Client.KSql.Query.Context;
 using ksqlDB.RestApi.Client.KSql.Query.Options;
 using Newtonsoft.Json;
@@ -13,35 +14,40 @@ namespace KafkaAuction.Services;
 public class AuctionWebSocketService : IAuctionWebSocketService
 {
     private readonly ILogger<AuctionWebSocketService> _logger;
-    private readonly IConfiguration _configuration;
+    private readonly string _ksqlDbUrl;
+    private readonly KSqlDBContext _context;
 
     public AuctionWebSocketService(ILogger<AuctionWebSocketService> logger, IConfiguration configuration)
     {
         _logger = logger;
-        _configuration = configuration;
-    }
 
-    public async Task SubscribeAsync(WebSocket webSocket, string auctionId)
-    {
-        _logger.LogInformation($"Subscribing to WebSocket for auctionId: {auctionId}");
-        var ksqlDbUrl = _configuration.GetValue<string>("KSqlDb:Url");
-        _logger.LogInformation($"KSqlDb:Url: {ksqlDbUrl}");
-
-        if (string.IsNullOrWhiteSpace(ksqlDbUrl))
+        _ksqlDbUrl = configuration.GetValue<string>("KSqlDb:Url") ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(_ksqlDbUrl))
         {
             throw new InvalidOperationException("KSqlDb:Url configuration is missing");
         }
 
-        var contextOptions = new KSqlDBContextOptions(ksqlDbUrl)
+        var contextOptions = new KSqlDBContextOptions(_ksqlDbUrl)
         {
             ShouldPluralizeFromItemName = true
         };
 
-        using var context = new KSqlDBContext(contextOptions);
+        _context = new KSqlDBContext(contextOptions);
+    }
+
+    /// <summary>
+    /// Subscribes the provided WebSocket to updates for the specified auction.
+    /// </summary>
+    /// <param name="webSocket">The WebSocket to send auction updates to.</param>
+    /// <param name="auctionId">The ID of the auction to subscribe to.</param>
+    /// <returns>A Task representing the asynchronous operation.</returns>
+    public async Task SubscribeToAuctionUpdatesAsync(WebSocket webSocket, string auctionId)
+    {
+        _logger.LogInformation($"Subscribing to WebSocket for auctionId: {auctionId}");
 
         var auctionIdInt = int.Parse(auctionId);
 
-        var subscription = context.CreatePushQuery<Auction_Bid>()
+        var subscription = _context.CreatePushQuery<Auction_Bid>()
             .WithOffsetResetPolicy(AutoOffsetReset.Earliest)
             .Where(p => p.Auction_Id == auctionIdInt)
             .Select(l => new AuctionBidDto

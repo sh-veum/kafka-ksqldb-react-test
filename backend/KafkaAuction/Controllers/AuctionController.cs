@@ -23,14 +23,7 @@ public class AuctionController : ControllerBase
     {
         var results = await _auctionService.CreateTablesAsync();
 
-        if (results?.Count == 0 || results == null)
-        {
-            return Ok("Tables already exist or failed to create tables");
-        }
-        else
-        {
-            return Ok(results);
-        }
+        return Ok(results);
     }
 
     [HttpPost("create_streams")]
@@ -38,18 +31,11 @@ public class AuctionController : ControllerBase
     {
         var results = await _auctionService.CreateStreamsAsync();
 
-        if (results?.Count == 0 || results == null)
-        {
-            return Ok("Tables already exist or failed to create streams");
-        }
-        else
-        {
-            return Ok(results);
-        }
+        return Ok(results);
     }
 
     [HttpPost("insert_auction")]
-    public async Task<IActionResult> InsertAuction(AuctionDto auctionDto)
+    public async Task<IActionResult> InsertAuction([FromBody] AuctionDto auctionDto)
     {
         var auction = new Auction
         {
@@ -57,13 +43,20 @@ public class AuctionController : ControllerBase
             Title = auctionDto.Title
         };
 
-        var result = await _auctionService.InsertAuctionAsync(auction);
+        HttpResponseMessage result = await _auctionService.InsertAuctionAsync(auction);
 
-        return Ok(result);
+        if (!result.IsSuccessStatusCode)
+        {
+            return BadRequest();
+        }
+        else
+        {
+            return Ok(auction);
+        }
     }
 
     [HttpPost("insert_auction_bid")]
-    public async Task<IActionResult> InsertAuctionBid(AuctionBidDto auctionBidDto)
+    public async Task<IActionResult> InsertAuctionBid([FromBody] AuctionBidDto auctionBidDto)
     {
         var auctionBid = new Auction_Bid
         {
@@ -72,9 +65,16 @@ public class AuctionController : ControllerBase
             Bid_Amount = auctionBidDto.Bid_Amount
         };
 
-        var result = await _auctionService.InsertBidAsync(auctionBid);
+        HttpResponseMessage result = await _auctionService.InsertBidAsync(auctionBid);
 
-        return Ok(result);
+        if (!result.IsSuccessStatusCode)
+        {
+            return BadRequest();
+        }
+        else
+        {
+            return Ok(auctionBid);
+        }
     }
 
     [HttpDelete("drop_tables")]
@@ -83,5 +83,23 @@ public class AuctionController : ControllerBase
         await _auctionService.DropTablesAsync();
 
         return Ok();
+    }
+
+    [HttpGet("get_all_auctions")]
+    [ProducesResponseType(typeof(AuctionDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAllAuctions()
+    {
+        var auctions = await _auctionService.GetAllAuctions();
+
+        return Ok(auctions);
+    }
+
+    [HttpGet("get_all_bids")]
+    [ProducesResponseType(typeof(AuctionBidDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAllBids()
+    {
+        var auctionBids = await _auctionService.GetAllBids();
+
+        return Ok(auctionBids);
     }
 }
