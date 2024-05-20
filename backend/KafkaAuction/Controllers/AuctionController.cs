@@ -47,7 +47,7 @@ public class AuctionController : ControllerBase
 
         if (!result.IsSuccessStatusCode)
         {
-            return BadRequest();
+            return BadRequest(result.ReasonPhrase);
         }
         else
         {
@@ -62,14 +62,15 @@ public class AuctionController : ControllerBase
         {
             Auction_Id = auctionBidDto.Auction_Id,
             Username = auctionBidDto.Username,
-            Bid_Amount = auctionBidDto.Bid_Amount
+            Bid_Amount = auctionBidDto.Bid_Amount,
+            Bid_Time = DateTime.UtcNow
         };
 
         HttpResponseMessage result = await _auctionService.InsertBidAsync(auctionBid);
 
         if (!result.IsSuccessStatusCode)
         {
-            return BadRequest();
+            return BadRequest(result.ReasonPhrase);
         }
         else
         {
