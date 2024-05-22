@@ -7,11 +7,13 @@ namespace KafkaAuction.Services.Interfaces;
 
 public interface IAuctionService
 {
-    Task<TablesResponse[]> CreateTablesAsync(CancellationToken cancellationToken = default);
-    Task<StreamsResponse[]> CreateStreamsAsync(CancellationToken cancellationToken = default);
+    Task<TablesResponse[]> CreateAuctionTableAsync(CancellationToken cancellationToken = default);
+    Task<StreamsResponse[]> CreateAuctionBidStreamAsync(CancellationToken cancellationToken = default);
     Task<HttpResponseMessage> InsertAuctionAsync(Auction auction);
     Task<HttpResponseMessage> InsertBidAsync(Auction_Bid auctionBid);
     Task DropTablesAsync();
     Task<List<AuctionDto>> GetAllAuctions();
+    Task<List<AuctionDto>> GetAuctions(int limit);
     Task<List<AuctionBidDto>> GetAllBids();
+    Task<HttpResponseMessage> CreateAuctionsWithBidsStreamAsync(CancellationToken cancellationToken = default);
 }

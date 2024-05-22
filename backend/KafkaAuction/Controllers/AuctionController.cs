@@ -21,7 +21,7 @@ public class AuctionController : ControllerBase
     [HttpPost("create_tables")]
     public async Task<IActionResult> CreateTables()
     {
-        var results = await _auctionService.CreateTablesAsync();
+        var results = await _auctionService.CreateAuctionTableAsync();
 
         return Ok(results);
     }
@@ -29,7 +29,15 @@ public class AuctionController : ControllerBase
     [HttpPost("create_streams")]
     public async Task<IActionResult> CreateStreams()
     {
-        var results = await _auctionService.CreateStreamsAsync();
+        var results = await _auctionService.CreateAuctionBidStreamAsync();
+
+        return Ok(results);
+    }
+
+    [HttpPost("crate_auction_with_bids_stream")]
+    public async Task<IActionResult> CreateAuctionWithBidsStream()
+    {
+        var results = await _auctionService.CreateAuctionsWithBidsStreamAsync();
 
         return Ok(results);
     }
@@ -103,4 +111,15 @@ public class AuctionController : ControllerBase
 
         return Ok(auctionBids);
     }
+
+    [HttpGet("get_auctions")]
+    [ProducesResponseType(typeof(AuctionDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetActions([FromQuery] int limit)
+    {
+        var auctions = await _auctionService.GetAuctions(limit);
+
+        return Ok(auctions);
+    }
+
+
 }

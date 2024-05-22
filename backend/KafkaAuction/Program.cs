@@ -162,7 +162,7 @@ using (var scope = app.Services.CreateScope())
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         var userManager = services.GetRequiredService<UserManager<UserModel>>();
 
-        await DbInitializer.SeedRoles(roleManager);
+        await PostgreSQLDbInitializer.SeedRoles(roleManager);
 
         // Admin user
         var adminEmail = configuration["DefaultUsers:Admin:Email"];
@@ -173,7 +173,7 @@ using (var scope = app.Services.CreateScope())
             throw new InvalidOperationException("Admin email and password must be set in the configuration.");
         }
 
-        await DbInitializer.EnsureUser(userManager, roleManager, adminEmail, adminPassword, RoleConstants.AdminRole);
+        await PostgreSQLDbInitializer.EnsureUser(userManager, roleManager, adminEmail, adminPassword, RoleConstants.AdminRole);
 
         // Test user
         var userEmail = configuration["DefaultUsers:User:Email"];
@@ -184,7 +184,7 @@ using (var scope = app.Services.CreateScope())
             throw new InvalidOperationException("User email and password must be set in the configuration.");
         }
 
-        await DbInitializer.EnsureUser(userManager, roleManager, userEmail, userPassword, RoleConstants.UserRole);
+        await PostgreSQLDbInitializer.EnsureUser(userManager, roleManager, userEmail, userPassword, RoleConstants.UserRole);
     }
     catch (Exception ex)
     {

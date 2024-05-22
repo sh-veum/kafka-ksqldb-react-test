@@ -3,12 +3,11 @@ using KafkaAuction.Dtos;
 using KafkaAuction.Models;
 using KafkaAuction.Services.Interfaces;
 using KafkaAuction.Utilities;
+using ksqlDB.RestApi.Client.KSql.Linq.PullQueries;
 using ksqlDB.RestApi.Client.KSql.Query.Context;
 using ksqlDB.RestApi.Client.KSql.RestApi.Responses.Streams;
 using ksqlDB.RestApi.Client.KSql.RestApi.Responses.Tables;
-using ksqlDB.RestApi.Client.KSql.RestApi.Serialization;
 using ksqlDB.RestApi.Client.KSql.RestApi.Statements;
-using ksqlDB.RestApi.Client.KSql.RestApi.Statements.Properties;
 
 namespace KafkaAuction.Services;
 
@@ -20,6 +19,7 @@ public class AuctionService : IAuctionService
     private readonly string _ksqlDbUrl;
     private readonly string _auctionsTableName = "auctions";
     private readonly string _auctionBidsStreamName = "auction_bids";
+    private readonly string _auctionsWithBidsStreamName = "auctions_with_bids";
 
     public AuctionService(ILogger<AuctionService> logger, IKSqlDbRestApiProvider restApiProvider, IConfiguration configuration)
     {
@@ -40,7 +40,7 @@ public class AuctionService : IAuctionService
         _context = new KSqlDBContext(contextOptions);
     }
 
-    public async Task<TablesResponse[]> CreateTablesAsync(CancellationToken cancellationToken = default)
+    public async Task<TablesResponse[]> CreateAuctionTableAsync(CancellationToken cancellationToken = default)
     {
         var auctionTableCreator = new TableCreator<Auction>(_restApiProvider, _logger);
         if (!await auctionTableCreator.CreateTableAsync(_auctionsTableName, cancellationToken))
@@ -56,7 +56,7 @@ public class AuctionService : IAuctionService
         return await _restApiProvider.GetTablesAsync(cancellationToken);
     }
 
-    public async Task<StreamsResponse[]> CreateStreamsAsync(CancellationToken cancellationToken = default)
+    public async Task<StreamsResponse[]> CreateAuctionBidStreamAsync(CancellationToken cancellationToken = default)
     {
         var auctionBidTableCreator = new StreamCreator<Auction_Bid>(_restApiProvider, _logger);
 
@@ -83,8 +83,10 @@ public class AuctionService : IAuctionService
 
     public async Task DropTablesAsync()
     {
-        await _restApiProvider.DropTableAndTopic(_auctionsTableName);
-        await _restApiProvider.DropStreamAndTopic(_auctionBidsStreamName);
+        await _restApiProvider.DropTableAndTopic(_auctionsTableName.ToUpper());
+        await _restApiProvider.DropTableAndTopic("QUERYABLE_" + _auctionsTableName.ToUpper());
+        await _restApiProvider.DropStreamAndTopic(_auctionBidsStreamName.ToUpper());
+        await _restApiProvider.DropStreamAndTopic(_auctionsWithBidsStreamName.ToUpper());
     }
 
     public async Task<bool> DropSingleTableAsync(string tableName)
@@ -122,6 +124,25 @@ public class AuctionService : IAuctionService
         return auctionDtos;
     }
 
+    public async Task<List<AuctionDto>> GetAuctions(int limit)
+    {
+        var auctions = _context.CreatePullQuery<Auction>($"queryable_{_auctionsTableName}")
+            .Take(limit);
+
+        List<AuctionDto> auctionDtos = [];
+
+        await foreach (var auction in auctions.GetManyAsync().ConfigureAwait(false))
+        {
+            auctionDtos.Add(new AuctionDto
+            {
+                Auction_Id = auction.Auction_Id,
+                Title = auction.Title
+            });
+        }
+
+        return auctionDtos;
+    }
+
     public async Task<List<AuctionBidDto>> GetAllBids()
     {
         var auctionBids = _context.CreatePullQuery<Auction_Bid>()
@@ -143,22 +164,34 @@ public class AuctionService : IAuctionService
         return auctionBidDtos;
     }
 
-    // public async Task<List<AuctionDto>> GetAuctions(int limit)
-    // {
-    //     var auctions = _context.CreatePullQuery<Auction>()
-    //         .Take(limit);
+    public async Task<HttpResponseMessage> CreateAuctionsWithBidsStreamAsync(CancellationToken cancellationToken = default)
+    {
+        string createStreamSql = $@"
+            CREATE OR REPLACE STREAM {_auctionsWithBidsStreamName} AS
+                SELECT
+                    a.Auction_Id,
+                    a.Title,
+                    b.Username,
+                    b.Bid_Amount,
+                    b.Bid_Time
+                FROM
+                    Auction_Bids b
+                LEFT JOIN
+                    Auctions a
+                ON b.Auction_Id = a.Auction_Id
+                EMIT CHANGES;";
 
-    //     List<AuctionDto> auctionDtos = [];
+        var ksqlDbStatement = new KSqlDbStatement(createStreamSql);
+        var response = await _restApiProvider.ExecuteStatementAsync(ksqlDbStatement, cancellationToken);
 
-    //     await foreach (var auction in auctions)
-    //     {
-    //         auctionDtos.Add(new AuctionDto
-    //         {
-    //             Auction_Id = auction.Auction_Id,
-    //             Title = auction.Title
-    //         });
-    //     }
+        if (!response.IsSuccessStatusCode)
+        {
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogError($"Error creating {_auctionsWithBidsStreamName} stream: {content}");
+            return response;
+        }
 
-    //     return auctionDtos;
-    // }
+        _logger.LogInformation($"{_auctionsWithBidsStreamName} stream created successfully.");
+        return response;
+    }
 }

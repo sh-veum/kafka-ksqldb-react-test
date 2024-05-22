@@ -3,11 +3,10 @@ using ksqlDB.RestApi.Client.KSql.RestApi.Statements.Annotations;
 
 namespace KafkaAuction.Models;
 
-public class Auction_Bid : Record
+class Auction_With_Bids : Record
 {
     [Key]
+    public int Auction_With_Bids_Id { get; set; }
     public int Auction_Id { get; set; }
-    public required string Username { get; set; }
-    public decimal Bid_Amount { get; set; }
-    public required DateTime Bid_Time { get; set; }
+    public int Auction_Bid_Id { get; set; }
 }
