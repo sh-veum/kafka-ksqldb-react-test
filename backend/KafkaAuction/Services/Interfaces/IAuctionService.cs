@@ -12,8 +12,8 @@ public interface IAuctionService
     Task<HttpResponseMessage> InsertAuctionAsync(Auction auction);
     Task<HttpResponseMessage> InsertBidAsync(Auction_Bid auctionBid);
     Task DropTablesAsync();
-    Task<List<AuctionDto>> GetAllAuctions();
-    Task<List<AuctionDto>> GetAuctions(int limit);
-    Task<List<AuctionBidDto>> GetAllBids();
-    Task<HttpResponseMessage> CreateAuctionsWithBidsStreamAsync(CancellationToken cancellationToken = default);
+    Task<List<AuctionDtoWithId>> GetAllAuctions();
+    Task<List<AuctionDtoWithId>> GetAuctions(int limit);
+    Task<List<AuctionBidDtoWithTimeStamp>> GetAllBids();
+    Task<StreamsResponse[]> CreateAuctionsWithBidsStreamAsync(CancellationToken cancellationToken = default);
 }

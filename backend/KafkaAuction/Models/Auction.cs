@@ -6,6 +6,6 @@ namespace KafkaAuction.Models;
 public class Auction : Record
 {
     [Key]
-    public int Auction_Id { get; set; }
+    public required string Auction_Id { get; set; }
     public required string Title { get; set; }
 }

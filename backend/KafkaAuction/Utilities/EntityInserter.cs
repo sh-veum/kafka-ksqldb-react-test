@@ -28,7 +28,7 @@ public class EntityInserter<T>
             return new HttpResponseMessage(HttpStatusCode.NotFound);
         }
 
-        var (columns, values) = EntityInserter<T>.FormatInsertValues(entity);
+        var (columns, values) = FormatInsertValues(entity);
 
         var insertStatement = $"INSERT INTO {tableName} ({columns}) VALUES ({values});";
         _logger.LogInformation("InsertStatement: {Sql}", insertStatement);
@@ -36,10 +36,12 @@ public class EntityInserter<T>
         var ksqlDbStatement = new KSqlDbStatement(insertStatement);
         var result = await _restApiProvider.ExecuteStatementAsync(ksqlDbStatement);
 
+        _logger.LogInformation("Execution result: {Result}", result);
+
         return result;
     }
 
-    private static (string, string) FormatInsertValues(T entity)
+    private (string, string) FormatInsertValues(T entity)
     {
         var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
@@ -63,6 +65,9 @@ public class EntityInserter<T>
             }
         }
 
+        _logger.LogInformation("Columns: {Columns}", columns);
+        _logger.LogInformation("Values: {Values}", values);
+
         return (columns.ToString(), values.ToString());
     }
 
@@ -75,5 +80,4 @@ public class EntityInserter<T>
             _ => value.ToString()
         };
     }
-
 }

@@ -47,7 +47,7 @@ public class AuctionController : ControllerBase
     {
         var auction = new Auction
         {
-            Auction_Id = auctionDto.Auction_Id,
+            Auction_Id = Guid.NewGuid().ToString(),
             Title = auctionDto.Title
         };
 
@@ -68,10 +68,11 @@ public class AuctionController : ControllerBase
     {
         var auctionBid = new Auction_Bid
         {
+            Bid_Id = Guid.NewGuid().ToString(),
             Auction_Id = auctionBidDto.Auction_Id,
             Username = auctionBidDto.Username,
             Bid_Amount = auctionBidDto.Bid_Amount,
-            Bid_Time = DateTime.UtcNow
+            Timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")
         };
 
         HttpResponseMessage result = await _auctionService.InsertBidAsync(auctionBid);

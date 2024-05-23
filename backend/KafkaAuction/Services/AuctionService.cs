@@ -1,5 +1,6 @@
 
 using KafkaAuction.Dtos;
+using KafkaAuction.Enums;
 using KafkaAuction.Models;
 using KafkaAuction.Services.Interfaces;
 using KafkaAuction.Utilities;
@@ -17,9 +18,9 @@ public class AuctionService : IAuctionService
     private readonly IKSqlDbRestApiProvider _restApiProvider;
     private readonly KSqlDBContext _context;
     private readonly string _ksqlDbUrl;
-    private readonly string _auctionsTableName = "auctions";
-    private readonly string _auctionBidsStreamName = "auction_bids";
-    private readonly string _auctionsWithBidsStreamName = "auctions_with_bids";
+    private readonly string _auctionsTableName = "AUCTIONS";
+    private readonly string _auctionBidsStreamName = "AUCTION_BIDS";
+    private readonly string _auctionsWithBidsStreamName = "AUCTIONS_WITH_BIDS";
 
     public AuctionService(ILogger<AuctionService> logger, IKSqlDbRestApiProvider restApiProvider, IConfiguration configuration)
     {
@@ -69,102 +70,7 @@ public class AuctionService : IAuctionService
         return await _restApiProvider.GetStreamsAsync(cancellationToken);
     }
 
-    public async Task<HttpResponseMessage> InsertBidAsync(Auction_Bid auctionBid)
-    {
-        var inserter = new EntityInserter<Auction_Bid>(_restApiProvider, _logger);
-        return await inserter.InsertAsync(_auctionBidsStreamName, auctionBid);
-    }
-
-    public async Task<HttpResponseMessage> InsertAuctionAsync(Auction auction)
-    {
-        var inserter = new EntityInserter<Auction>(_restApiProvider, _logger);
-        return await inserter.InsertAsync(_auctionsTableName, auction);
-    }
-
-    public async Task DropTablesAsync()
-    {
-        await _restApiProvider.DropTableAndTopic(_auctionsTableName.ToUpper());
-        await _restApiProvider.DropTableAndTopic("QUERYABLE_" + _auctionsTableName.ToUpper());
-        await _restApiProvider.DropStreamAndTopic(_auctionBidsStreamName.ToUpper());
-        await _restApiProvider.DropStreamAndTopic(_auctionsWithBidsStreamName.ToUpper());
-    }
-
-    public async Task<bool> DropSingleTableAsync(string tableName)
-    {
-        var httpResult = await _restApiProvider.DropTableAndTopic(tableName);
-        if (!httpResult.IsSuccessStatusCode)
-        {
-            var content = await httpResult.Content.ReadAsStringAsync();
-            _logger.LogError(content);
-            return false;
-        }
-
-        return true;
-    }
-
-    public async Task<List<AuctionDto>> GetAllAuctions()
-    {
-        var auctions = _context.CreatePullQuery<Auction>($"queryable_{_auctionsTableName}")
-            .GetManyAsync();
-
-        _logger.LogInformation("GetAllAuctions: {Auctions}", auctions);
-
-        List<AuctionDto> auctionDtos = [];
-
-        await foreach (var auction in auctions.ConfigureAwait(false))
-        {
-            _logger.LogInformation("GetAllAuctions: {Auction}", auction.ToString());
-            auctionDtos.Add(new AuctionDto
-            {
-                Auction_Id = auction.Auction_Id,
-                Title = auction.Title
-            });
-        }
-
-        return auctionDtos;
-    }
-
-    public async Task<List<AuctionDto>> GetAuctions(int limit)
-    {
-        var auctions = _context.CreatePullQuery<Auction>($"queryable_{_auctionsTableName}")
-            .Take(limit);
-
-        List<AuctionDto> auctionDtos = [];
-
-        await foreach (var auction in auctions.GetManyAsync().ConfigureAwait(false))
-        {
-            auctionDtos.Add(new AuctionDto
-            {
-                Auction_Id = auction.Auction_Id,
-                Title = auction.Title
-            });
-        }
-
-        return auctionDtos;
-    }
-
-    public async Task<List<AuctionBidDto>> GetAllBids()
-    {
-        var auctionBids = _context.CreatePullQuery<Auction_Bid>()
-            .GetManyAsync();
-
-        List<AuctionBidDto> auctionBidDtos = [];
-
-        await foreach (var auctionBid in auctionBids.ConfigureAwait(false))
-        {
-            _logger.LogInformation("GetAllBids: {auctionBid}", auctionBid.ToString());
-            auctionBidDtos.Add(new AuctionBidDto
-            {
-                Auction_Id = auctionBid.Auction_Id,
-                Username = auctionBid.Username,
-                Bid_Amount = auctionBid.Bid_Amount
-            });
-        }
-
-        return auctionBidDtos;
-    }
-
-    public async Task<HttpResponseMessage> CreateAuctionsWithBidsStreamAsync(CancellationToken cancellationToken = default)
+    public async Task<StreamsResponse[]> CreateAuctionsWithBidsStreamAsync(CancellationToken cancellationToken = default)
     {
         string createStreamSql = $@"
             CREATE OR REPLACE STREAM {_auctionsWithBidsStreamName} AS
@@ -173,7 +79,7 @@ public class AuctionService : IAuctionService
                     a.Title,
                     b.Username,
                     b.Bid_Amount,
-                    b.Bid_Time
+                    b.Timestamp
                 FROM
                     Auction_Bids b
                 LEFT JOIN
@@ -188,10 +94,94 @@ public class AuctionService : IAuctionService
         {
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
             _logger.LogError($"Error creating {_auctionsWithBidsStreamName} stream: {content}");
-            return response;
         }
 
         _logger.LogInformation($"{_auctionsWithBidsStreamName} stream created successfully.");
-        return response;
+
+        return await _restApiProvider.GetStreamsAsync(cancellationToken);
+    }
+
+    public async Task<HttpResponseMessage> InsertBidAsync(Auction_Bid auctionBid)
+    {
+        var inserter = new EntityInserter<Auction_Bid>(_restApiProvider, _logger);
+        return await inserter.InsertAsync(_auctionBidsStreamName, auctionBid);
+    }
+
+    public async Task<HttpResponseMessage> InsertAuctionAsync(Auction auction)
+    {
+        var inserter = new EntityInserter<Auction>(_restApiProvider, _logger);
+        return await inserter.InsertAsync(_auctionsTableName, auction);
+    }
+
+    public async Task DropTablesAsync()
+    {
+        var dropper = new KsqlResourceDropper(_restApiProvider, _logger);
+        await dropper.DropResourceAsync("QUERYABLE_" + _auctionsTableName, ResourceType.Table);
+        await dropper.DropResourceAsync(_auctionsTableName, ResourceType.Table);
+        await dropper.DropResourceAsync(_auctionBidsStreamName, ResourceType.Stream);
+        await dropper.DropResourceAsync(_auctionsWithBidsStreamName, ResourceType.Stream);
+    }
+
+    public async Task<List<AuctionDtoWithId>> GetAllAuctions()
+    {
+        var auctions = _context.CreatePullQuery<Auction>($"queryable_{_auctionsTableName}")
+            .GetManyAsync();
+
+        _logger.LogInformation("Found {amount} of auctions", await auctions.CountAsync());
+
+        List<AuctionDtoWithId> auctionDtos = [];
+
+        await foreach (var auction in auctions.ConfigureAwait(false))
+        {
+            auctionDtos.Add(new AuctionDtoWithId
+            {
+                Auction_Id = auction.Auction_Id,
+                Title = auction.Title
+            });
+        }
+
+        return auctionDtos;
+    }
+
+    public async Task<List<AuctionDtoWithId>> GetAuctions(int limit)
+    {
+        var auctions = _context.CreatePullQuery<Auction>($"queryable_{_auctionsTableName}")
+            .Take(limit);
+
+        List<AuctionDtoWithId> auctionDtos = [];
+
+        await foreach (var auction in auctions.GetManyAsync().ConfigureAwait(false))
+        {
+            auctionDtos.Add(new AuctionDtoWithId
+            {
+                Auction_Id = auction.Auction_Id,
+                Title = auction.Title
+            });
+        }
+
+        return auctionDtos;
+    }
+
+    public async Task<List<AuctionBidDtoWithTimeStamp>> GetAllBids()
+    {
+        var auctionBids = _context.CreatePullQuery<Auction_Bid>()
+            .GetManyAsync();
+
+        _logger.LogInformation("Found {amount} of auctions", await auctionBids.CountAsync());
+
+        List<AuctionBidDtoWithTimeStamp> auctionBidDtos = [];
+
+        await foreach (var auctionBid in auctionBids.ConfigureAwait(false))
+        {
+            auctionBidDtos.Add(new AuctionBidDtoWithTimeStamp
+            {
+                Auction_Id = auctionBid.Auction_Id,
+                Username = auctionBid.Username,
+                Bid_Amount = auctionBid.Bid_Amount,
+                Timestamp = auctionBid.Timestamp
+            });
+        }
+
+        return auctionBidDtos;
     }
 }

@@ -45,16 +45,15 @@ public class AuctionWebSocketService : IAuctionWebSocketService
     {
         _logger.LogInformation($"Subscribing to WebSocket for auctionId: {auctionId}");
 
-        var auctionIdInt = int.Parse(auctionId);
-
         var subscription = _context.CreatePushQuery<Auction_Bid>()
             .WithOffsetResetPolicy(AutoOffsetReset.Earliest)
-            .Where(p => p.Auction_Id == auctionIdInt)
-            .Select(l => new AuctionBidDto
+            .Where(p => p.Auction_Id == auctionId)
+            .Select(l => new AuctionBidDtoWithTimeStamp
             {
                 Auction_Id = l.Auction_Id,
                 Username = l.Username,
                 Bid_Amount = l.Bid_Amount,
+                Timestamp = l.Timestamp
             })
             .Subscribe(AuctionBidDto =>
             {
