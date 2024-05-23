@@ -21,7 +21,7 @@ public class AuctionController : ControllerBase
     [HttpPost("create_tables")]
     public async Task<IActionResult> CreateTables()
     {
-        var results = await _auctionService.CreateTablesAsync();
+        var results = await _auctionService.CreateAuctionTableAsync();
 
         return Ok(results);
     }
@@ -29,7 +29,15 @@ public class AuctionController : ControllerBase
     [HttpPost("create_streams")]
     public async Task<IActionResult> CreateStreams()
     {
-        var results = await _auctionService.CreateStreamsAsync();
+        var results = await _auctionService.CreateAuctionBidStreamAsync();
+
+        return Ok(results);
+    }
+
+    [HttpPost("crate_auction_with_bids_stream")]
+    public async Task<IActionResult> CreateAuctionWithBidsStream()
+    {
+        var results = await _auctionService.CreateAuctionsWithBidsStreamAsync();
 
         return Ok(results);
     }
@@ -39,7 +47,7 @@ public class AuctionController : ControllerBase
     {
         var auction = new Auction
         {
-            Auction_Id = auctionDto.Auction_Id,
+            Auction_Id = Guid.NewGuid().ToString(),
             Title = auctionDto.Title
         };
 
@@ -47,7 +55,7 @@ public class AuctionController : ControllerBase
 
         if (!result.IsSuccessStatusCode)
         {
-            return BadRequest();
+            return BadRequest(result.ReasonPhrase);
         }
         else
         {
@@ -60,16 +68,18 @@ public class AuctionController : ControllerBase
     {
         var auctionBid = new Auction_Bid
         {
+            Bid_Id = Guid.NewGuid().ToString(),
             Auction_Id = auctionBidDto.Auction_Id,
             Username = auctionBidDto.Username,
-            Bid_Amount = auctionBidDto.Bid_Amount
+            Bid_Amount = auctionBidDto.Bid_Amount,
+            Timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")
         };
 
         HttpResponseMessage result = await _auctionService.InsertBidAsync(auctionBid);
 
         if (!result.IsSuccessStatusCode)
         {
-            return BadRequest();
+            return BadRequest(result.ReasonPhrase);
         }
         else
         {
@@ -102,4 +112,15 @@ public class AuctionController : ControllerBase
 
         return Ok(auctionBids);
     }
+
+    [HttpGet("get_auctions")]
+    [ProducesResponseType(typeof(AuctionDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetActions([FromQuery] int limit)
+    {
+        var auctions = await _auctionService.GetAuctions(limit);
+
+        return Ok(auctions);
+    }
+
+
 }

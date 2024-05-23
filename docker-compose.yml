@@ -37,7 +37,6 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_LOG_RETENTION_MS: -1 # This sets the retention period to indefinite
       KAFKA_LOG_RETENTION_BYTES: -1 # This sets the retention size to indefinite
-    restart: always
 
   schema-registry:
     image: confluentinc/cp-schema-registry:7.4.0
@@ -130,6 +129,7 @@ services:
     image: docker.io/library/auction_backend
     depends_on:
       - auctionDB
+      - ksqldb-server
       - kafka
     container_name: auctionBackend
     ports:
@@ -154,7 +154,6 @@ services:
       - POSTGRES_DB=auctionDB
     ports:
       - "5433:5432"
-    restart: always
     volumes:
       - ./backend/.containers/auctionDB:/var/lib/postgresql/data
     networks:

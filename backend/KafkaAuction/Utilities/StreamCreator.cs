@@ -1,8 +1,8 @@
-using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using System.Text;
 using KafkaAuction.Services.Interfaces;
 using ksqlDB.RestApi.Client.KSql.RestApi.Statements;
+using ksqlDB.RestApi.Client.KSql.RestApi.Statements.Annotations;
 
 namespace KafkaAuction.Utilities;
 
@@ -35,9 +35,10 @@ public class StreamCreator<T>
         return true;
     }
 
-    private static string GenerateCreateStreamSql(string streamName)
+    private string GenerateCreateStreamSql(string streamName)
     {
         var properties = typeof(T).GetProperties();
+        _logger.LogInformation("Properties: {Properties}", properties);
         var columns = new StringBuilder();
 
         foreach (var property in properties)

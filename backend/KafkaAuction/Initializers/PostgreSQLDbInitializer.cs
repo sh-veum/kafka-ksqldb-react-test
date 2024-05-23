@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace KafkaAuction.Initializers;
 
-public static class DbInitializer
+public static class PostgreSQLDbInitializer
 {
     public static async Task SeedRoles(RoleManager<IdentityRole> roleManager)
     {

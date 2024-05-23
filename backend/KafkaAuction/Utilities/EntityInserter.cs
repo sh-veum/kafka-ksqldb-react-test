@@ -1,11 +1,8 @@
 using System.Net;
 using System.Reflection;
 using System.Text;
-using Antlr4.Runtime.Misc;
 using KafkaAuction.Services.Interfaces;
 using ksqlDb.RestApi.Client.KSql.RestApi.Generators.Asserts;
-using ksqlDb.RestApi.Client.KSql.RestApi.Responses.Asserts;
-using ksqlDB.RestApi.Client.KSql.Query.Functions;
 using ksqlDB.RestApi.Client.KSql.RestApi.Statements;
 
 namespace KafkaAuction.Utilities;
@@ -31,7 +28,7 @@ public class EntityInserter<T>
             return new HttpResponseMessage(HttpStatusCode.NotFound);
         }
 
-        var (columns, values) = EntityInserter<T>.FormatInsertValues(entity);
+        var (columns, values) = FormatInsertValues(entity);
 
         var insertStatement = $"INSERT INTO {tableName} ({columns}) VALUES ({values});";
         _logger.LogInformation("InsertStatement: {Sql}", insertStatement);
@@ -39,10 +36,12 @@ public class EntityInserter<T>
         var ksqlDbStatement = new KSqlDbStatement(insertStatement);
         var result = await _restApiProvider.ExecuteStatementAsync(ksqlDbStatement);
 
+        _logger.LogInformation("Execution result: {Result}", result);
+
         return result;
     }
 
-    private static (string, string) FormatInsertValues(T entity)
+    private (string, string) FormatInsertValues(T entity)
     {
         var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
@@ -51,6 +50,10 @@ public class EntityInserter<T>
 
         foreach (var property in properties)
         {
+            // Skip the RowTime property
+            if (property.Name.Equals("RowTime", StringComparison.OrdinalIgnoreCase))
+                continue;
+
             var value = property.GetValue(entity);
             if (value != null)
             {
@@ -62,6 +65,9 @@ public class EntityInserter<T>
             }
         }
 
+        _logger.LogInformation("Columns: {Columns}", columns);
+        _logger.LogInformation("Values: {Values}", values);
+
         return (columns.ToString(), values.ToString());
     }
 
@@ -69,7 +75,8 @@ public class EntityInserter<T>
     {
         return value switch
         {
-            string str => $"'{str.Replace("'", "''")}'",
+            DateTime dt => $"'{dt:yyyy-MM-dd HH:mm:ss}'", // Use a standard SQL datetime format
+            string str => $"'{str.Replace("'", "''")}'", // Ensure strings are correctly escaped
             _ => value.ToString()
         };
     }

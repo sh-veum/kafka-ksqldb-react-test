@@ -22,6 +22,7 @@ public static class TypeMapper
             var t when t == typeof(ushort) => "BIGINT",  // Map unsigned short to BIGINT
             var t when t == typeof(ulong) => "BIGINT",  // Map unsigned long to BIGINT
             var t when t == typeof(char) => "VARCHAR",  // Map char to VARCHAR
+            var t when t == typeof(DateTime) => "VARCHAR",
             _ => throw new NotSupportedException($"Type {type.Name} is not supported.")
         };
     }
