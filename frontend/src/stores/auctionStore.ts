@@ -1,16 +1,30 @@
 import type { AuctionBid } from "@/models/AuctionBid";
-import type { Auction } from "@/models/Auction";
 import axios from "axios";
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { webSocketService } from "@/lib/websocket";
+import type { AuctionCreator } from "@/models/AuctionCreator";
+import type { AuctionMessage } from "@/models/AuctionMessage";
+import type { AuctionBidsMessage } from "@/models/AuctionBidsMessage";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
+
+type Message = AuctionMessage | AuctionBidsMessage;
 
 export const useAuctionStore = defineStore("auction", () => {
   const loading = ref(false);
   const error = ref<string | null>(null);
-  const messages = ref<any[]>([]);
+  const messages = ref<Message[]>([]);
+
+  function isAuctionMessage(message: Message): message is AuctionMessage {
+    return (message as AuctionMessage).Title !== undefined;
+  }
+
+  function isAuctionBidsMessage(
+    message: Message
+  ): message is AuctionBidsMessage {
+    return (message as AuctionBidsMessage).Timestamp !== undefined;
+  }
 
   const createTables = async () => {
     loading.value = true;
@@ -42,7 +56,7 @@ export const useAuctionStore = defineStore("auction", () => {
     }
   };
 
-  const insertAuction = async (auction: Auction) => {
+  const insertAuction = async (auction: AuctionCreator) => {
     loading.value = true;
     error.value = null;
     try {
@@ -52,7 +66,11 @@ export const useAuctionStore = defineStore("auction", () => {
       );
       return response.data;
     } catch (err) {
-      error.value = "Failed to insert auction";
+      if (axios.isAxiosError(err) && err.response) {
+        error.value = err.response.data;
+      } else {
+        error.value = "Failed to insert auction bid";
+      }
       console.error(err);
     } finally {
       loading.value = false;
@@ -69,7 +87,11 @@ export const useAuctionStore = defineStore("auction", () => {
       );
       return response.data;
     } catch (err) {
-      error.value = "Failed to insert auction bid";
+      if (axios.isAxiosError(err) && err.response) {
+        error.value = err.response.data;
+      } else {
+        error.value = "Failed to insert auction bid";
+      }
       console.error(err);
     } finally {
       loading.value = false;
@@ -90,8 +112,8 @@ export const useAuctionStore = defineStore("auction", () => {
     }
   };
 
-  function connectWebSocket(auctionId: string) {
-    webSocketService.connect(auctionId, (data) => {
+  function connectWebSocket(auctionId: string, webPage: string) {
+    webSocketService.connect(auctionId, webPage, (data) => {
       messages.value.push(data);
     });
   }
@@ -111,6 +133,8 @@ export const useAuctionStore = defineStore("auction", () => {
     messages,
     connectWebSocket,
     disconnectWebSocket,
+    isAuctionBidsMessage,
+    isAuctionMessage,
   };
 });
 

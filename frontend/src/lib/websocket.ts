@@ -1,13 +1,15 @@
 class WebSocketService {
   private socket: WebSocket | null = null;
 
-  connect(auctionId: string, onMessage: (data: any) => void) {
+  connect(auctionId: string, webPage: string, onMessage: (data: any) => void) {
     if (this.socket) {
       this.socket.close();
     }
 
     this.socket = new WebSocket(
-      `${import.meta.env.VITE_API_WEBSOCKET_URL}?auctionId=${auctionId}`
+      `${
+        import.meta.env.VITE_API_WEBSOCKET_URL
+      }?auctionId=${auctionId}&webPage=${webPage}`
     );
 
     this.socket.onmessage = (event) => {

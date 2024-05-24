@@ -1,19 +1,3 @@
-<script setup lang="ts">
-import { ref } from "vue";
-import { useRouter } from "vue-router";
-import { RouterLink } from "vue-router";
-
-const auctionId = ref("");
-const router = useRouter();
-
-const navigateToAuction = () => {
-  if (auctionId.value) {
-    router.push(`/auction/${auctionId.value}`);
-    auctionId.value = "";
-  }
-};
-</script>
-
 <template>
   <div class="wrapper">
     <nav class="nav-container">
@@ -24,13 +8,6 @@ const navigateToAuction = () => {
         <RouterLink to="/debug">
           <v-btn variant="tonal">Debug</v-btn>
         </RouterLink>
-        <v-btn variant="tonal" @click="navigateToAuction">Auction</v-btn>
-        <v-text-field
-          v-model="auctionId"
-          label="Auction ID"
-          placeholder="Enter Auction ID"
-          @keyup.enter="navigateToAuction"
-        ></v-text-field>
       </div>
       <div class="nav-right">
         <RouterLink to="/login">
@@ -43,6 +20,10 @@ const navigateToAuction = () => {
     </nav>
   </div>
 </template>
+
+<script setup lang="ts">
+import { RouterLink } from "vue-router";
+</script>
 
 <style scoped>
 .nav-container {

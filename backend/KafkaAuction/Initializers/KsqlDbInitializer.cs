@@ -17,7 +17,6 @@ public static class KsqlDbInitializer
         var auctions = await auctionService.GetAllAuctions();
         if (auctions.Count == 0)
         {
-
             await InsertAuctionsAndBids(auctionService, numAuctions, numBidsPerAuction);
         }
     }
@@ -45,7 +44,7 @@ public static class KsqlDbInitializer
         for (int i = 1; i <= numAuctions; i++)
         {
             var auctionId = Guid.NewGuid().ToString();
-            var auction = new Auction { Auction_Id = auctionId, Title = $"Auction {i}" };
+            var auction = new Auction { Auction_Id = auctionId, Title = $"Auction {i}", Description = $"Description for Auction {i}", Starting_Price = 1 };
             auctions.Add(auction);
             await auctionService.InsertAuctionAsync(auction);
 

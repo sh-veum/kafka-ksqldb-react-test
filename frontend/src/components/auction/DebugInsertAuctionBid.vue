@@ -1,21 +1,22 @@
 <template>
   <v-card>
-    <h1>Insert Auction</h1>
-    <v-form @submit.prevent="insertAuction">
-      <v-text-field v-model="title" label="Title" required></v-text-field>
+    <h1>Insert Auction Bid</h1>
+    <v-form @submit.prevent="insertAuctionBid">
       <v-text-field
-        v-model="description"
-        label="Description"
+        v-model="auctionId"
+        label="Auction ID"
+        type="string"
         required
       ></v-text-field>
+      <v-text-field v-model="username" label="Username" required></v-text-field>
       <v-text-field
-        v-model="startingPrice"
-        label="Starting price"
+        v-model="bidAmount"
+        label="Bid Amount"
         type="number"
         required
       ></v-text-field>
       <v-btn type="submit" :loading="auctionStore.loading"
-        >Insert Auction</v-btn
+        >Insert Auction Bid</v-btn
       >
     </v-form>
     <v-textarea
@@ -39,22 +40,22 @@ import { ref, watch } from "vue";
 import { useAuctionStore } from "@/stores/auctionStore";
 
 const auctionStore = useAuctionStore();
-const title = ref<string>("");
-const description = ref<string>("");
-const startingPrice = ref<number>(0);
+const auctionId = ref<string | null>(null);
+const username = ref<string | null>(null);
+const bidAmount = ref<number | null>(null);
 const result = ref<object | null>(null);
 const formattedResult = ref<string>("");
 
-const insertAuction = async () => {
+const insertAuctionBid = async () => {
   if (
-    title.value !== null &&
-    description.value !== null &&
-    startingPrice.value !== null
+    auctionId.value !== null &&
+    username.value !== null &&
+    bidAmount.value !== null
   ) {
-    const response = await auctionStore.insertAuction({
-      Title: title.value,
-      Description: description.value,
-      Starting_Price: startingPrice.value,
+    const response = await auctionStore.insertAuctionBid({
+      auction_Id: auctionId.value,
+      username: username.value,
+      bid_Amount: bidAmount.value,
     });
     result.value = response;
   }

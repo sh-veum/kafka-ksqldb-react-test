@@ -43,12 +43,14 @@ public class AuctionController : ControllerBase
     }
 
     [HttpPost("insert_auction")]
-    public async Task<IActionResult> InsertAuction([FromBody] AuctionDto auctionDto)
+    public async Task<IActionResult> InsertAuction([FromBody] AuctionCreatorDto auctionCreatorDto)
     {
         var auction = new Auction
         {
             Auction_Id = Guid.NewGuid().ToString(),
-            Title = auctionDto.Title
+            Title = auctionCreatorDto.Title,
+            Description = auctionCreatorDto.Description,
+            Starting_Price = auctionCreatorDto.Starting_Price
         };
 
         HttpResponseMessage result = await _auctionService.InsertAuctionAsync(auction);
@@ -79,13 +81,15 @@ public class AuctionController : ControllerBase
 
         if (!result.IsSuccessStatusCode)
         {
-            return BadRequest(result.ReasonPhrase);
+            string errorMessage = await result.Content.ReadAsStringAsync();
+            return Ok(errorMessage);
         }
         else
         {
             return Ok(auctionBid);
         }
     }
+
 
     [HttpDelete("drop_tables")]
     public async Task<IActionResult> DropTables()

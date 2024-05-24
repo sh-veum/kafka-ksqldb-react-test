@@ -41,7 +41,7 @@ public class AuctionWebSocketService : IAuctionWebSocketService
     /// <param name="webSocket">The WebSocket to send auction updates to.</param>
     /// <param name="auctionId">The ID of the auction to subscribe to.</param>
     /// <returns>A Task representing the asynchronous operation.</returns>
-    public async Task SubscribeToAuctionUpdatesAsync(WebSocket webSocket, string auctionId)
+    public async Task SubscribeToAuctionBidUpdatesAsync(WebSocket webSocket, string auctionId)
     {
         _logger.LogInformation($"Subscribing to WebSocket for auctionId: {auctionId}");
 
@@ -58,6 +58,47 @@ public class AuctionWebSocketService : IAuctionWebSocketService
             .Subscribe(AuctionBidDto =>
             {
                 var message = JsonConvert.SerializeObject(AuctionBidDto);
+                var buffer = Encoding.UTF8.GetBytes(message);
+                var segment = new ArraySegment<byte>(buffer);
+
+                _logger.LogInformation($"Sending message: {message}");
+
+                webSocket.SendAsync(segment, WebSocketMessageType.Text, true, CancellationToken.None);
+            },
+            error => _logger.LogError(error, "Error in WebSocket subscription"));
+
+        _logger.LogInformation("WebSocket subscription completed");
+
+        // Keep the WebSocket open until closed by the client
+        var buffer = new byte[1024 * 4];
+        WebSocketReceiveResult result;
+        do
+        {
+            result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+        } while (!result.CloseStatus.HasValue);
+
+        await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
+    }
+
+    public async Task SubscribeToAuctionOverviewUpdatesAsync(WebSocket webSocket)
+    {
+        _logger.LogInformation($"Subscribing to WebSocket for auction updates");
+
+        var subscription = _context.CreatePushQuery<Auction>()
+            .WithOffsetResetPolicy(AutoOffsetReset.Earliest)
+            .Select(l => new AuctionDto
+            {
+                Auction_Id = l.Auction_Id,
+                Title = l.Title,
+                Description = l.Description,
+                Number_Of_Bids = l.Number_Of_Bids,
+                Starting_Price = l.Starting_Price,
+                Current_Price = l.Current_Price,
+                Winner = l.Winner,
+            })
+            .Subscribe(AuctionDto =>
+            {
+                var message = JsonConvert.SerializeObject(AuctionDto);
                 var buffer = Encoding.UTF8.GetBytes(message);
                 var segment = new ArraySegment<byte>(buffer);
 

@@ -2,12 +2,6 @@
   <v-card>
     <h1>Insert Auction Bid</h1>
     <v-form @submit.prevent="insertAuctionBid">
-      <v-text-field
-        v-model="auctionId"
-        label="Auction ID"
-        type="number"
-        required
-      ></v-text-field>
       <v-text-field v-model="username" label="Username" required></v-text-field>
       <v-text-field
         v-model="bidAmount"
@@ -35,51 +29,39 @@
   </v-card>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref, watch } from "vue";
+<script setup lang="ts">
+import { ref, watch } from "vue";
 import { useAuctionStore } from "@/stores/auctionStore";
 
-export default defineComponent({
-  setup() {
-    const auctionStore = useAuctionStore();
-    const auctionId = ref<number | null>(null);
-    const username = ref<string | null>(null);
-    const bidAmount = ref<number | null>(null);
-    const result = ref<object | null>(null);
-    const formattedResult = ref<string>("");
+const auctionStore = useAuctionStore();
+const username = ref<string | null>(null);
+const bidAmount = ref<number | null>(null);
+const result = ref<object | null>(null);
+const formattedResult = ref<string>("");
 
-    const insertAuctionBid = async () => {
-      if (
-        auctionId.value !== null &&
-        username.value !== null &&
-        bidAmount.value !== null
-      ) {
-        const response = await auctionStore.insertAuctionBid({
-          auction_Id: auctionId.value,
-          username: username.value,
-          bid_Amount: bidAmount.value,
-        });
-        result.value = response;
-      }
-    };
+const props = defineProps<{ auctionId: string }>();
 
-    watch(result, (newResult) => {
-      if (newResult) {
-        formattedResult.value = JSON.stringify(newResult, null, 2);
-      } else {
-        formattedResult.value = "";
-      }
+const insertAuctionBid = async () => {
+  if (
+    props.auctionId !== null &&
+    username.value !== null &&
+    bidAmount.value !== null
+  ) {
+    const response = await auctionStore.insertAuctionBid({
+      auction_Id: props.auctionId,
+      username: username.value,
+      bid_Amount: bidAmount.value,
     });
+    console.log(response);
+    result.value = response;
+  }
+};
 
-    return {
-      auctionStore,
-      auctionId,
-      username,
-      bidAmount,
-      insertAuctionBid,
-      result,
-      formattedResult,
-    };
-  },
+watch(result, (newResult) => {
+  if (newResult) {
+    formattedResult.value = JSON.stringify(newResult, null, 2);
+  } else {
+    formattedResult.value = "";
+  }
 });
 </script>

@@ -4,5 +4,6 @@ namespace KafkaAuction.Services.Interfaces;
 
 public interface IAuctionWebSocketService
 {
-    Task SubscribeToAuctionUpdatesAsync(WebSocket webSocket, string auctionId);
+    Task SubscribeToAuctionBidUpdatesAsync(WebSocket webSocket, string auctionId);
+    Task SubscribeToAuctionOverviewUpdatesAsync(WebSocket webSocket);
 }

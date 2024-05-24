@@ -1,6 +1,9 @@
+using System.Reflection;
+using System.Text;
 using KafkaAuction.Services.Interfaces;
 using ksqlDB.RestApi.Client.KSql.RestApi.Serialization;
 using ksqlDB.RestApi.Client.KSql.RestApi.Statements;
+using ksqlDB.RestApi.Client.KSql.RestApi.Statements.Annotations;
 
 namespace KafkaAuction.Utilities;
 
@@ -15,24 +18,87 @@ public class TableCreator<T>
         _logger = logger;
     }
 
+    // public async Task<bool> CreateTableAsync(string tableName, CancellationToken cancellationToken = default)
+    // {
+    //     var metadata = new EntityCreationMetadata(tableName)
+    //     {
+    //         Partitions = 1,
+    //         Replicas = 1,
+    //         ValueFormat = SerializationFormats.Json
+    //     };
+
+    //     var response = await _restApiProvider.CreateOrReplaceTableAsync<T>(metadata, cancellationToken);
+    //     if (!response.IsSuccessStatusCode)
+    //     {
+    //         var content = await response.Content.ReadAsStringAsync(cancellationToken);
+    //         _logger.LogError(content);
+    //         return false;
+    //     }
+
+    //     return true;
+    // }
+
     public async Task<bool> CreateTableAsync(string tableName, CancellationToken cancellationToken = default)
     {
-        var metadata = new EntityCreationMetadata(tableName)
-        {
-            Partitions = 1,
-            Replicas = 1,
-            ValueFormat = SerializationFormats.Json
-        };
+        var createTableSql = GenerateCreateTableSql(tableName);
+        _logger.LogInformation("Generated SQL Statement: {SqlStatement}", createTableSql);
 
-        var response = await _restApiProvider.CreateOrReplaceTableAsync<T>(metadata, cancellationToken);
+        var ksqlDbStatement = new KSqlDbStatement(createTableSql);
+        var response = await _restApiProvider.ExecuteStatementAsync(ksqlDbStatement, cancellationToken);
+
         if (!response.IsSuccessStatusCode)
         {
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
-            _logger.LogError(content);
+            _logger.LogError("Error creating table: {Content}", content);
             return false;
         }
 
         return true;
+    }
+
+    private string GenerateCreateTableSql(string tableName)
+    {
+        var properties = typeof(T).GetProperties();
+        _logger.LogInformation("Properties: {Properties}", properties);
+        var columns = new StringBuilder();
+
+        foreach (var property in properties)
+        {
+            var columnName = property.Name.ToLower();
+            var columnType = TypeMapper.GetKSqlType(property.PropertyType);
+
+            // Exclude unwanted properties
+            if (
+                columnName == "headers" ||
+                columnName == "rowoffset" ||
+                columnName == "rowpartition" ||
+                columnName == "rowtime"
+                )
+            {
+                continue;
+            }
+
+            if (property.GetCustomAttribute<KeyAttribute>() != null)
+            {
+                columns.AppendLine($"{columnName} {columnType} PRIMARY KEY,");
+            }
+            else
+            {
+                columns.AppendLine($"{columnName} {columnType},");
+            }
+        }
+
+        var columnsString = columns.ToString().TrimEnd(',', '\n', '\r');
+
+        return $@"
+            CREATE OR REPLACE TABLE {tableName} (
+                {columnsString}
+            ) WITH (
+                KAFKA_TOPIC='{tableName}',
+                PARTITIONS=1,
+                REPLICAS=1,
+                VALUE_FORMAT='JSON'
+            );";
     }
 
     public async Task<bool> CreateQueryableTableAsync(string tableName, CancellationToken cancellationToken = default)

@@ -1,12 +1,14 @@
-<script setup lang="ts">
-import { RouterView } from "vue-router";
-import Navigation from "@/components/Navigation.vue";
-</script>
-
 <template>
   <header>
     <Navigation />
   </header>
 
-  <RouterView />
+  <div class="ma-2">
+    <RouterView />
+  </div>
 </template>
+
+<script setup lang="ts">
+import { RouterView } from "vue-router";
+import Navigation from "@/components/Navigation.vue";
+</script>
