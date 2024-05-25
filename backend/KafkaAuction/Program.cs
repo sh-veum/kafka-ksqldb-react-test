@@ -6,6 +6,8 @@ using KafkaAuction.Middleware;
 using KafkaAuction.Models;
 using KafkaAuction.Services;
 using KafkaAuction.Services.Interfaces;
+using KafkaAuction.Services.Interfaces.WebSocketService;
+using KafkaAuction.Services.WebSocketService;
 using KafkaAuction.Utilities;
 using ksqlDB.RestApi.Client.KSql.Query.Context;
 using ksqlDB.RestApi.Client.KSql.RestApi;
@@ -70,6 +72,12 @@ builder.Services.AddScoped<IAuctionService, AuctionService>(
         restApiProvider, configuration)
     );
 
+builder.Services.AddScoped<IChatService, ChatService>(
+    sp => new ChatService(
+        sp.GetRequiredService<ILogger<ChatService>>(),
+        restApiProvider, configuration)
+    );
+
 builder.Services.AddScoped<IKsqlDbService, KsqlDbService>(
     sp => new KsqlDbService(
         sp.GetRequiredService<ILogger<KsqlDbService>>(),
@@ -83,6 +91,7 @@ builder.Services.AddScoped(typeof(StreamCreator<>));
 // WebSocket services
 // builder.Services.AddSingleton<IKSqlDbRestApiProvider, KSqlDbRestApiProvider>();
 builder.Services.AddSingleton<IAuctionWebSocketService, AuctionWebSocketService>();
+builder.Services.AddSingleton<IChatWebSocketService, ChatWebSocketService>();
 builder.Services.AddSingleton<IWebSocketHandler, WebSocketHandler>();
 
 // CORS policy with the frontend
@@ -128,6 +137,8 @@ using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
 
+    var logger = services.GetRequiredService<ILogger<Program>>();
+
     var dbContext = services.GetRequiredService<MainDbContext>();
 
     dbContext.Database.Migrate();
@@ -164,7 +175,6 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        var logger = services.GetRequiredService<ILogger<Program>>();
         logger.LogError(ex, "An error occurred seeding the DB.");
     }
 
@@ -172,12 +182,12 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var auctionService = services.GetRequiredService<IAuctionService>();
+        var chatService = services.GetRequiredService<IChatService>();
 
-        await KsqlDbInitializer.InitializeAsync(auctionService);
+        await KsqlDbInitializer.InitializeAsync(auctionService, chatService);
     }
     catch (Exception ex)
     {
-        var logger = services.GetRequiredService<ILogger<Program>>();
         logger.LogError(ex, "An error occurred initializing KsqlDB.");
     }
 }

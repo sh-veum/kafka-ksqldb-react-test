@@ -20,35 +20,24 @@
   </v-card>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref, watch } from "vue";
+<script setup lang="ts">
+import { ref, watch } from "vue";
 import { useOverviewStore } from "@/stores/auctionStore";
 
-export default defineComponent({
-  setup() {
-    const overviewStore = useOverviewStore();
-    const result = ref<object | null>(null);
-    const formattedResult = ref<string>("");
+const overviewStore = useOverviewStore();
+const result = ref<object | null>(null);
+const formattedResult = ref<string>("");
 
-    const checkStreams = async () => {
-      const response = await overviewStore.checkStreams();
-      result.value = response;
-    };
+const checkStreams = async () => {
+  const response = await overviewStore.checkStreams();
+  result.value = response;
+};
 
-    watch(result, (newResult) => {
-      if (newResult) {
-        formattedResult.value = JSON.stringify(newResult, null, 2);
-      } else {
-        formattedResult.value = "";
-      }
-    });
-
-    return {
-      overviewStore,
-      checkStreams,
-      result,
-      formattedResult,
-    };
-  },
+watch(result, (newResult) => {
+  if (newResult) {
+    formattedResult.value = JSON.stringify(newResult, null, 2);
+  } else {
+    formattedResult.value = "";
+  }
 });
 </script>

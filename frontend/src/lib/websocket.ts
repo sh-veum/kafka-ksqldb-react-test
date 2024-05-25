@@ -1,33 +1,121 @@
-class WebSocketService {
-  private socket: WebSocket | null = null;
+import { WebPage } from "@/Enums/webPage";
 
-  connect(auctionId: string, onMessage: (data: any) => void) {
-    if (this.socket) {
-      this.socket.close();
+const baseUrl = `${import.meta.env.VITE_API_URL}/ws`;
+
+class WebSocketService {
+  private auctionOverviewSocket: WebSocket | null = null;
+  private bidSocket: WebSocket | null = null;
+  private chatSocket: WebSocket | null = null;
+
+  connectAuctionOverview(
+    onMessage: (data: any) => void,
+    onError: (err: string) => void
+  ) {
+    if (this.auctionOverviewSocket) {
+      this.auctionOverviewSocket.close();
     }
 
-    this.socket = new WebSocket(
-      `${import.meta.env.VITE_API_WEBSOCKET_URL}?auctionId=${auctionId}`
+    this.auctionOverviewSocket = new WebSocket(
+      `${baseUrl}?auctionId=none&webPage=${WebPage.AuctionOverview}`
     );
 
-    this.socket.onmessage = (event) => {
+    this.auctionOverviewSocket.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      console.log("WebSocket message received:", data);
+      console.log("Auction overview WebSocket message received:", data);
       onMessage(data);
     };
 
-    this.socket.onclose = () => {
-      console.log("WebSocket connection closed");
+    this.auctionOverviewSocket.onclose = () => {
+      console.log("Auction overview WebSocket connection closed");
     };
 
-    this.socket.onerror = (error) => {
-      console.error("WebSocket error:", error);
+    this.auctionOverviewSocket.onerror = (error) => {
+      console.error("Auction overview WebSocket error:", error);
+    };
+
+    this.auctionOverviewSocket.onerror = (error) => {
+      console.error("Auction overview WebSocket error:", error);
+      onError("Failed to connect to the WebSocket.");
     };
   }
 
-  disconnect() {
-    if (this.socket) {
-      this.socket.close();
+  connectBids(
+    auctionId: string,
+    onMessage: (data: any) => void,
+    onError: (err: string) => void
+  ) {
+    if (this.bidSocket) {
+      this.bidSocket.close();
+    }
+
+    this.bidSocket = new WebSocket(
+      `${baseUrl}?auctionId=${auctionId}&webPage=${WebPage.SpesificAuction}`
+    );
+
+    this.bidSocket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log("Bid WebSocket message received:", data);
+      onMessage(data);
+    };
+
+    this.bidSocket.onclose = () => {
+      console.log("Bid WebSocket connection closed");
+    };
+
+    this.bidSocket.onerror = (error) => {
+      console.error("Bid WebSocket error:", error);
+      onError("Failed to connect to the WebSocket.");
+    };
+  }
+
+  connectChat(
+    auctionId: string,
+    onMessage: (data: any) => void,
+    onError: (err: string) => void
+  ) {
+    if (this.chatSocket) {
+      this.chatSocket.close();
+    }
+
+    this.chatSocket = new WebSocket(
+      `${baseUrl}?auctionId=${auctionId}&webPage=${WebPage.Chat}`
+    );
+
+    this.chatSocket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log("Chat WebSocket message received:", data);
+      onMessage(data);
+    };
+
+    this.chatSocket.onclose = () => {
+      console.log("Chat WebSocket connection closed");
+    };
+
+    this.chatSocket.onerror = (error) => {
+      console.error("Chat WebSocket error:", error);
+    };
+
+    this.chatSocket.onerror = (error) => {
+      console.error("Chat WebSocket error:", error);
+      onError("Failed to connect to the WebSocket.");
+    };
+  }
+
+  disconnectAuctionOverview() {
+    if (this.auctionOverviewSocket) {
+      this.auctionOverviewSocket.close();
+    }
+  }
+
+  disconnectBids() {
+    if (this.bidSocket) {
+      this.bidSocket.close();
+    }
+  }
+
+  disconnectChat() {
+    if (this.chatSocket) {
+      this.chatSocket.close();
     }
   }
 }

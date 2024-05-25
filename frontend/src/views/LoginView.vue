@@ -1,35 +1,3 @@
-<script lang="ts">
-import { defineComponent, ref } from "vue";
-import { useAuthStore } from "@/stores/authStore";
-
-export default defineComponent({
-  setup() {
-    const email = ref("");
-    const password = ref("");
-    const authStore = useAuthStore();
-
-    const submit = async () => {
-      await authStore.login({
-        email: email.value,
-        password: password.value,
-      });
-    };
-
-    const rules = {
-      required: (value: string) => !!value || "Required.",
-    };
-
-    return {
-      email,
-      password,
-      authStore,
-      submit,
-      rules,
-    };
-  },
-});
-</script>
-
 <template>
   <v-responsive class="mx-auto" max-width="344">
     <h1>Login</h1>
@@ -61,3 +29,23 @@ export default defineComponent({
     </v-form>
   </v-responsive>
 </template>
+
+<script setup lang="ts">
+import { ref } from "vue";
+import { useAuthStore } from "@/stores/authStore";
+
+const email = ref("");
+const password = ref("");
+const authStore = useAuthStore();
+
+const submit = async () => {
+  await authStore.login({
+    email: email.value,
+    password: password.value,
+  });
+};
+
+const rules = {
+  required: (value: string) => !!value || "Required.",
+};
+</script>

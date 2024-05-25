@@ -1,16 +1,21 @@
 import type { AuctionBid } from "@/models/AuctionBid";
-import type { Auction } from "@/models/Auction";
 import axios from "axios";
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import { webSocketService } from "@/lib/websocket";
+import { webSocketService } from "@/lib/webSocket";
+import type { AuctionCreator } from "@/models/AuctionCreator";
+import type { AuctionMessage } from "@/models/AuctionMessage";
+import type { AuctionBidsMessage } from "@/models/AuctionBidsMessage";
+import type { ChatMessage } from "@/models/ChatMessage";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
 export const useAuctionStore = defineStore("auction", () => {
   const loading = ref(false);
   const error = ref<string | null>(null);
-  const messages = ref<any[]>([]);
+  const auctionMessages = ref<AuctionMessage[]>([]);
+  const auctionBidsMessages = ref<AuctionBidsMessage[]>([]);
+  const chatMessages = ref<ChatMessage[]>([]);
 
   const createTables = async () => {
     loading.value = true;
@@ -42,7 +47,7 @@ export const useAuctionStore = defineStore("auction", () => {
     }
   };
 
-  const insertAuction = async (auction: Auction) => {
+  const insertAuction = async (auction: AuctionCreator) => {
     loading.value = true;
     error.value = null;
     try {
@@ -52,7 +57,11 @@ export const useAuctionStore = defineStore("auction", () => {
       );
       return response.data;
     } catch (err) {
-      error.value = "Failed to insert auction";
+      if (axios.isAxiosError(err) && err.response) {
+        error.value = err.response.data;
+      } else {
+        error.value = "Failed to insert auction bid";
+      }
       console.error(err);
     } finally {
       loading.value = false;
@@ -69,7 +78,11 @@ export const useAuctionStore = defineStore("auction", () => {
       );
       return response.data;
     } catch (err) {
-      error.value = "Failed to insert auction bid";
+      if (axios.isAxiosError(err) && err.response) {
+        error.value = err.response.data;
+      } else {
+        error.value = "Failed to insert auction bid";
+      }
       console.error(err);
     } finally {
       loading.value = false;
@@ -90,14 +103,62 @@ export const useAuctionStore = defineStore("auction", () => {
     }
   };
 
-  function connectWebSocket(auctionId: string) {
-    webSocketService.connect(auctionId, (data) => {
-      messages.value.push(data);
-    });
+  function connectAuctionOverviewWebSocket(
+    onFirstMessage: () => void,
+    onError: (err: string) => void
+  ) {
+    webSocketService.connectAuctionOverview((data) => {
+      if (auctionMessages.value.length === 0) {
+        onFirstMessage();
+      }
+      auctionMessages.value.push(data);
+    }, onError);
   }
 
-  function disconnectWebSocket() {
-    webSocketService.disconnect();
+  function connectBidsWebSocket(
+    auctionId: string,
+    onFirstMessage: () => void,
+    onError: (err: string) => void
+  ) {
+    webSocketService.connectBids(
+      auctionId,
+      (data) => {
+        if (auctionBidsMessages.value.length === 0) {
+          onFirstMessage();
+        }
+        auctionBidsMessages.value.push(data);
+      },
+      onError
+    );
+  }
+
+  function connectChatWebSocket(
+    auctionId: string,
+    onFirstMessage: () => void,
+    onError: (err: string) => void
+  ) {
+    webSocketService.connectChat(
+      auctionId,
+      (data) => {
+        if (chatMessages.value.length === 0) {
+          onFirstMessage();
+        }
+        chatMessages.value.push(data);
+      },
+      onError
+    );
+  }
+
+  function disconnectAuctionOverviewWebSocket() {
+    webSocketService.disconnectAuctionOverview();
+  }
+
+  function disconnectBidsWebSocket() {
+    webSocketService.disconnectBids();
+  }
+
+  function disconnectChatWebSocket() {
+    webSocketService.disconnectChat();
   }
 
   return {
@@ -108,9 +169,15 @@ export const useAuctionStore = defineStore("auction", () => {
     insertAuction,
     insertAuctionBid,
     dropTables,
-    messages,
-    connectWebSocket,
-    disconnectWebSocket,
+    auctionMessages,
+    auctionBidsMessages,
+    chatMessages,
+    connectAuctionOverviewWebSocket,
+    connectBidsWebSocket,
+    connectChatWebSocket,
+    disconnectAuctionOverviewWebSocket,
+    disconnectBidsWebSocket,
+    disconnectChatWebSocket,
   };
 });
 

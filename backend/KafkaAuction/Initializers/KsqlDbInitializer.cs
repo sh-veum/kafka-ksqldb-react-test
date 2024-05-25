@@ -5,20 +5,21 @@ namespace KafkaAuction.Initializers;
 
 public static class KsqlDbInitializer
 {
-    private const int numAuctions = 6;
+    private const int numAuctions = 5;
     private const int numBidsPerAuction = 10;
+    private const int numMessagesPerAuction = 15;
 
-    public static async Task InitializeAsync(IAuctionService auctionService)
+    public static async Task InitializeAsync(IAuctionService auctionService, IChatService chatService)
     {
         await CreateAuctionTable(auctionService);
         await CreateAuctionBidStream(auctionService);
         await CreateAuctionWithBidsStream(auctionService);
+        await CreateChatMessageTable(chatService);
 
         var auctions = await auctionService.GetAllAuctions();
         if (auctions.Count == 0)
         {
-
-            await InsertAuctionsAndBids(auctionService, numAuctions, numBidsPerAuction);
+            await InsertAuctionsAndBidsAndMessages(auctionService, chatService, numAuctions, numBidsPerAuction, numMessagesPerAuction);
         }
     }
 
@@ -37,7 +38,12 @@ public static class KsqlDbInitializer
         await auctionService.CreateAuctionsWithBidsStreamAsync();
     }
 
-    private static async Task InsertAuctionsAndBids(IAuctionService auctionService, int numAuctions, int numBidsPerAuction)
+    private static async Task CreateChatMessageTable(IChatService chatService)
+    {
+        await chatService.CreateChatTableAsync();
+    }
+
+    private static async Task InsertAuctionsAndBidsAndMessages(IAuctionService auctionService, IChatService chatService, int numAuctions, int numBidsPerAuction, int numMessagesPerAuction)
     {
         var auctions = new List<Auction>();
 
@@ -45,12 +51,20 @@ public static class KsqlDbInitializer
         for (int i = 1; i <= numAuctions; i++)
         {
             var auctionId = Guid.NewGuid().ToString();
-            var auction = new Auction { Auction_Id = auctionId, Title = $"Auction {i}" };
+            var auction = new Auction
+            {
+                Auction_Id = auctionId,
+                Title = $"Auction {i}",
+                Description = $"Description for Auction {i}",
+                Starting_Price = 1
+            };
             auctions.Add(auction);
             await auctionService.InsertAuctionAsync(auction);
 
             // Generate bids for this auction
             await InsertBidsForAuction(auctionService, auctionId, numBidsPerAuction);
+            // Generate messages for this auction
+            await InsertMessagesForAuction(chatService, auctionId, numMessagesPerAuction);
         }
     }
 
@@ -63,10 +77,24 @@ public static class KsqlDbInitializer
                 Bid_Id = Guid.NewGuid().ToString(),
                 Auction_Id = auctionId,
                 Username = $"User{i}",
-                Bid_Amount = i * 100,
-                Timestamp = DateTime.UtcNow.ToString()
+                Bid_Amount = i * 100
             };
             await auctionService.InsertBidAsync(auctionBid);
+        }
+    }
+
+    private static async Task InsertMessagesForAuction(IChatService chatService, string auctionId, int numMessages)
+    {
+        for (int i = 1; i <= numMessages; i++)
+        {
+            var chatMessage = new Chat_Message
+            {
+                Message_Id = Guid.NewGuid().ToString(),
+                Auction_Id = auctionId,
+                Username = $"User{i}",
+                MessageText = $"Message {i}"
+            };
+            await chatService.InsertMessageAsync(chatMessage);
         }
     }
 }

@@ -9,24 +9,14 @@
   </v-card>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref } from "vue";
+<script setup lang="ts">
+import { ref } from "vue";
 import { useAuctionStore } from "@/stores/auctionStore";
 
-export default defineComponent({
-  setup() {
-    const auctionStore = useAuctionStore();
-    const result = ref<string | null>(null);
+const auctionStore = useAuctionStore();
+const result = ref<string | null>(null);
 
-    const createStreams = async () => {
-      result.value = await auctionStore.createStreams();
-    };
-
-    return {
-      auctionStore,
-      createStreams,
-      result,
-    };
-  },
-});
+const createStreams = async () => {
+  result.value = await auctionStore.createStreams();
+};
 </script>

@@ -1,14 +1,3 @@
-<script setup lang="ts">
-import CheckStreams from "@/components/auction/CheckStreams.vue";
-import CheckTables from "@/components/auction/CheckTables.vue";
-import CreateStreams from "@/components/auction/CreateStreams.vue";
-import CreateTables from "@/components/auction/CreateTables.vue";
-import DropStreams from "@/components/auction/DropStreams.vue";
-import DropTables from "@/components/auction/DropTables.vue";
-import InsertAuction from "@/components/auction/InsertAuction.vue";
-import InsertAuctionBid from "@/components/auction/InsertAuctionBid.vue";
-</script>
-
 <template>
   <div>
     <h1>Demo Page</h1>
@@ -44,3 +33,14 @@ import InsertAuctionBid from "@/components/auction/InsertAuctionBid.vue";
     </v-container>
   </div>
 </template>
+
+<script setup lang="ts">
+import CheckStreams from "@/components/auction/CheckStreams.vue";
+import CheckTables from "@/components/auction/CheckTables.vue";
+import CreateStreams from "@/components/auction/CreateStreams.vue";
+import CreateTables from "@/components/auction/CreateTables.vue";
+import DropStreams from "@/components/auction/DropStreams.vue";
+import DropTables from "@/components/auction/DropTables.vue";
+import InsertAuction from "@/components/auction/InsertAuction.vue";
+import InsertAuctionBid from "@/components/auction/DebugInsertAuctionBid.vue";
+</script>
