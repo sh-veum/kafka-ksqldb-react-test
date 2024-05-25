@@ -18,7 +18,6 @@ public class AuctionService : IAuctionService
     private readonly ILogger<AuctionService> _logger;
     private readonly IKSqlDbRestApiProvider _restApiProvider;
     private readonly KSqlDBContext _context;
-    private readonly string _ksqlDbUrl;
     private readonly string _auctionsTableName = "AUCTIONS";
     private readonly string _auctionBidsStreamName = "AUCTION_BIDS";
     private readonly string _auctionsWithBidsStreamName = "AUCTIONS_WITH_BIDS";
@@ -28,7 +27,7 @@ public class AuctionService : IAuctionService
         _logger = logger;
         _restApiProvider = restApiProvider;
 
-        _ksqlDbUrl = configuration.GetValue<string>("KSqlDb:Url") ?? string.Empty;
+        var _ksqlDbUrl = configuration.GetValue<string>("KSqlDb:Url") ?? string.Empty;
         if (string.IsNullOrWhiteSpace(_ksqlDbUrl))
         {
             throw new InvalidOperationException("KSqlDb:Url configuration is missing");
@@ -177,7 +176,7 @@ public class AuctionService : IAuctionService
         var auctions = _context.CreatePullQuery<Auction>($"queryable_{_auctionsTableName}")
             .GetManyAsync();
 
-        _logger.LogInformation("Found {amount} auctions", await auctions.CountAsync());
+        // _logger.LogInformation("Found {amount} auctions", await auctions.CountAsync());
 
         List<AuctionDto> auctionDtos = [];
 
@@ -242,8 +241,6 @@ public class AuctionService : IAuctionService
     {
         var auctionBids = _context.CreatePullQuery<Auction_Bid>()
             .GetManyAsync();
-
-        _logger.LogInformation("Found {amount} of auctions", await auctionBids.CountAsync());
 
         List<AuctionBidDtoWithTimeStamp> auctionBidDtos = [];
 

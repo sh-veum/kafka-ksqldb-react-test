@@ -15,9 +15,9 @@ services:
       - "2181:2181"
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
-    volumes:
-      - zookeeper_data:/var/lib/zookeeper/data
-      - zookeeper_log:/var/lib/zookeeper/log
+    # volumes:
+    #   - ./backend/.containers/zookeeper_data:/var/lib/zookeeper/data
+    #   - ./backend/.containers/zookeeper_log:/var/lib/zookeeper/log
 
   kafka:
     image: confluentinc/cp-kafka:7.4.0
@@ -33,13 +33,20 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      # KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_MIN_INSYNC_REPLICAS: 1
       KAFKA_LOG_RETENTION_MS: -1 # This sets the retention period to indefinite
       KAFKA_LOG_RETENTION_BYTES: -1 # This sets the retention size to indefinite
-    volumes:
-      - kafka:/var/lib/kafka/data
+    # volumes:
+    #   - ./backend/.containers/kafka:/var/lib/kafka/data
+    restart: on-failure
+    deploy:
+      restart_policy:
+        condition: any
+        delay: 5s
+        window: 120s
 
   schema-registry:
     image: confluentinc/cp-schema-registry:7.4.0
@@ -196,6 +203,3 @@ services:
 
 volumes:
   dataprotection-keys:
-  kafka:
-  zookeeper_data:
-  zookeeper_log:

@@ -6,6 +6,8 @@ using KafkaAuction.Middleware;
 using KafkaAuction.Models;
 using KafkaAuction.Services;
 using KafkaAuction.Services.Interfaces;
+using KafkaAuction.Services.Interfaces.WebSocketService;
+using KafkaAuction.Services.WebSocketService;
 using KafkaAuction.Utilities;
 using ksqlDB.RestApi.Client.KSql.Query.Context;
 using ksqlDB.RestApi.Client.KSql.RestApi;
@@ -70,6 +72,12 @@ builder.Services.AddScoped<IAuctionService, AuctionService>(
         restApiProvider, configuration)
     );
 
+builder.Services.AddScoped<IChatService, ChatService>(
+    sp => new ChatService(
+        sp.GetRequiredService<ILogger<ChatService>>(),
+        restApiProvider, configuration)
+    );
+
 builder.Services.AddScoped<IKsqlDbService, KsqlDbService>(
     sp => new KsqlDbService(
         sp.GetRequiredService<ILogger<KsqlDbService>>(),
@@ -83,6 +91,7 @@ builder.Services.AddScoped(typeof(StreamCreator<>));
 // WebSocket services
 // builder.Services.AddSingleton<IKSqlDbRestApiProvider, KSqlDbRestApiProvider>();
 builder.Services.AddSingleton<IAuctionWebSocketService, AuctionWebSocketService>();
+builder.Services.AddSingleton<IChatWebSocketService, ChatWebSocketService>();
 builder.Services.AddSingleton<IWebSocketHandler, WebSocketHandler>();
 
 // CORS policy with the frontend
@@ -128,15 +137,7 @@ using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
 
-    // Delay the migration until kafka and the database is (hopefully) ready
     var logger = services.GetRequiredService<ILogger<Program>>();
-    var countdown = 30;
-    while (countdown > 0)
-    {
-        logger.LogInformation($"Countdown: {countdown} seconds");
-        await Task.Delay(1000);
-        countdown--;
-    }
 
     var dbContext = services.GetRequiredService<MainDbContext>();
 
@@ -181,8 +182,9 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var auctionService = services.GetRequiredService<IAuctionService>();
+        var chatService = services.GetRequiredService<IChatService>();
 
-        await KsqlDbInitializer.InitializeAsync(auctionService);
+        await KsqlDbInitializer.InitializeAsync(auctionService, chatService);
     }
     catch (Exception ex)
     {

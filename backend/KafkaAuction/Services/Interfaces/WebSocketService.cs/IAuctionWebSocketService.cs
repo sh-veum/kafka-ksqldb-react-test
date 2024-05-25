@@ -1,6 +1,6 @@
 using System.Net.WebSockets;
 
-namespace KafkaAuction.Services.Interfaces;
+namespace KafkaAuction.Services.Interfaces.WebSocketService;
 
 public interface IAuctionWebSocketService
 {

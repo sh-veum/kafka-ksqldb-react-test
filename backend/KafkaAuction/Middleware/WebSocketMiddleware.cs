@@ -1,5 +1,5 @@
 using KafkaAuction.Enums;
-using KafkaAuction.Services.Interfaces;
+using KafkaAuction.Services.Interfaces.WebSocketService;
 
 namespace KafkaAuction.Middleware;
 

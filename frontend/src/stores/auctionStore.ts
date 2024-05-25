@@ -2,29 +2,20 @@ import type { AuctionBid } from "@/models/AuctionBid";
 import axios from "axios";
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import { webSocketService } from "@/lib/websocket";
+import { webSocketService } from "@/lib/webSocket";
 import type { AuctionCreator } from "@/models/AuctionCreator";
 import type { AuctionMessage } from "@/models/AuctionMessage";
 import type { AuctionBidsMessage } from "@/models/AuctionBidsMessage";
+import type { ChatMessage } from "@/models/ChatMessage";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
-
-type Message = AuctionMessage | AuctionBidsMessage;
 
 export const useAuctionStore = defineStore("auction", () => {
   const loading = ref(false);
   const error = ref<string | null>(null);
-  const messages = ref<Message[]>([]);
-
-  function isAuctionMessage(message: Message): message is AuctionMessage {
-    return (message as AuctionMessage).Title !== undefined;
-  }
-
-  function isAuctionBidsMessage(
-    message: Message
-  ): message is AuctionBidsMessage {
-    return (message as AuctionBidsMessage).Timestamp !== undefined;
-  }
+  const auctionMessages = ref<AuctionMessage[]>([]);
+  const auctionBidsMessages = ref<AuctionBidsMessage[]>([]);
+  const chatMessages = ref<ChatMessage[]>([]);
 
   const createTables = async () => {
     loading.value = true;
@@ -112,14 +103,62 @@ export const useAuctionStore = defineStore("auction", () => {
     }
   };
 
-  function connectWebSocket(auctionId: string, webPage: string) {
-    webSocketService.connect(auctionId, webPage, (data) => {
-      messages.value.push(data);
-    });
+  function connectAuctionOverviewWebSocket(
+    onFirstMessage: () => void,
+    onError: (err: string) => void
+  ) {
+    webSocketService.connectAuctionOverview((data) => {
+      if (auctionMessages.value.length === 0) {
+        onFirstMessage();
+      }
+      auctionMessages.value.push(data);
+    }, onError);
   }
 
-  function disconnectWebSocket() {
-    webSocketService.disconnect();
+  function connectBidsWebSocket(
+    auctionId: string,
+    onFirstMessage: () => void,
+    onError: (err: string) => void
+  ) {
+    webSocketService.connectBids(
+      auctionId,
+      (data) => {
+        if (auctionBidsMessages.value.length === 0) {
+          onFirstMessage();
+        }
+        auctionBidsMessages.value.push(data);
+      },
+      onError
+    );
+  }
+
+  function connectChatWebSocket(
+    auctionId: string,
+    onFirstMessage: () => void,
+    onError: (err: string) => void
+  ) {
+    webSocketService.connectChat(
+      auctionId,
+      (data) => {
+        if (chatMessages.value.length === 0) {
+          onFirstMessage();
+        }
+        chatMessages.value.push(data);
+      },
+      onError
+    );
+  }
+
+  function disconnectAuctionOverviewWebSocket() {
+    webSocketService.disconnectAuctionOverview();
+  }
+
+  function disconnectBidsWebSocket() {
+    webSocketService.disconnectBids();
+  }
+
+  function disconnectChatWebSocket() {
+    webSocketService.disconnectChat();
   }
 
   return {
@@ -130,11 +169,15 @@ export const useAuctionStore = defineStore("auction", () => {
     insertAuction,
     insertAuctionBid,
     dropTables,
-    messages,
-    connectWebSocket,
-    disconnectWebSocket,
-    isAuctionBidsMessage,
-    isAuctionMessage,
+    auctionMessages,
+    auctionBidsMessages,
+    chatMessages,
+    connectAuctionOverviewWebSocket,
+    connectBidsWebSocket,
+    connectChatWebSocket,
+    disconnectAuctionOverviewWebSocket,
+    disconnectBidsWebSocket,
+    disconnectChatWebSocket,
   };
 });
 

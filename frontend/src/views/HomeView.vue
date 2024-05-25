@@ -15,33 +15,33 @@
           ></v-select>
         </v-col>
         <v-col
-          v-for="(message, index) in sortedMessages"
+          v-for="(auction, index) in sortedMessages"
           :key="index"
           cols="12"
           md="4"
         >
-          <v-card v-if="auctionStore.isAuctionMessage(message)">
-            <v-card-title>{{ message.Title }}</v-card-title>
+          <v-card>
+            <v-card-title>{{ auction.Title }}</v-card-title>
             <v-card-subtitle>
-              Number of Bids: {{ message.Number_Of_Bids }}
+              Number of Bids: {{ auction.Number_Of_Bids }}
             </v-card-subtitle>
             <v-card-subtitle>
-              Created at: {{ message.Created_At }}
+              Created at: {{ auction.Created_At }}
             </v-card-subtitle>
             <v-card-text>
-              Starting Price: {{ message.Starting_Price }}
+              Starting Price: {{ auction.Starting_Price }}
             </v-card-text>
             <v-card-text>
-              Current Price: {{ message.Current_Price }}
+              Current Price: {{ auction.Current_Price }}
             </v-card-text>
-            <v-card-text> Description: {{ message.Description }} </v-card-text>
-            <v-card-text> Winner: {{ message.Winner }} </v-card-text>
+            <v-card-text> Description: {{ auction.Description }} </v-card-text>
+            <v-card-text> Winner: {{ auction.Winner }} </v-card-text>
             <v-card-actions>
               <v-btn
                 variant="outlined"
-                @click="navigateToAuction(message.Auction_Id)"
+                @click="navigateToAuction(auction.Auction_Id)"
               >
-                Go to Auction: {{ message.Title }}
+                Go to Auction: {{ auction.Title }}
               </v-btn>
             </v-card-actions>
           </v-card>
@@ -54,25 +54,24 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useAuctionStore } from "@/stores/auctionStore";
-import { WebPage } from "@/Enums/webPage";
 import router from "@/router";
 import InsertAuction from "@/components/auction/InsertAuction.vue";
 
 const auctionStore = useAuctionStore();
 const sortOrder = ref("Latest");
+const loading = ref(true);
+const error = ref<string | null>(null);
 
 const sortedMessages = computed(() => {
-  return auctionStore.messages
-    .filter(auctionStore.isAuctionMessage)
-    .sort((a, b) => {
-      const dateA = new Date(a.Created_At);
-      const dateB = new Date(b.Created_At);
-      if (sortOrder.value === "Latest") {
-        return dateB.getTime() - dateA.getTime();
-      } else {
-        return dateA.getTime() - dateB.getTime();
-      }
-    });
+  return auctionStore.auctionMessages.sort((a, b) => {
+    const dateA = new Date(a.Created_At);
+    const dateB = new Date(b.Created_At);
+    if (sortOrder.value === "Latest") {
+      return dateB.getTime() - dateA.getTime();
+    } else {
+      return dateA.getTime() - dateB.getTime();
+    }
+  });
 });
 
 const navigateToAuction = (auctionId: string) => {
@@ -80,10 +79,19 @@ const navigateToAuction = (auctionId: string) => {
 };
 
 onMounted(() => {
-  auctionStore.connectWebSocket("none", WebPage.AuctionOverview);
+  auctionStore.connectAuctionOverviewWebSocket(onFirstMessage, onError);
 });
 
 onBeforeUnmount(() => {
-  auctionStore.disconnectWebSocket();
+  auctionStore.disconnectAuctionOverviewWebSocket();
 });
+
+function onFirstMessage() {
+  loading.value = false;
+}
+
+function onError(err: string) {
+  loading.value = false;
+  error.value = err;
+}
 </script>
