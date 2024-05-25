@@ -12,5 +12,6 @@ public class Auction : Record
     public required decimal Starting_Price { get; set; }
     public decimal? Current_Price { get; set; } = 0;
     public int? Number_Of_Bids { get; set; } = 0;
-    public string? Winner { get; set; } = "No Winner Yet";
+    public string? Winner { get; set; }
+    public string Created_At { get; set; } = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
 }

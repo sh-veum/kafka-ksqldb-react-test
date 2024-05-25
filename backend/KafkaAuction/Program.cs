@@ -128,6 +128,16 @@ using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
 
+    // Delay the migration until kafka and the database is (hopefully) ready
+    var logger = services.GetRequiredService<ILogger<Program>>();
+    var countdown = 30;
+    while (countdown > 0)
+    {
+        logger.LogInformation($"Countdown: {countdown} seconds");
+        await Task.Delay(1000);
+        countdown--;
+    }
+
     var dbContext = services.GetRequiredService<MainDbContext>();
 
     dbContext.Database.Migrate();
@@ -164,7 +174,6 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        var logger = services.GetRequiredService<ILogger<Program>>();
         logger.LogError(ex, "An error occurred seeding the DB.");
     }
 
@@ -177,7 +186,6 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        var logger = services.GetRequiredService<ILogger<Program>>();
         logger.LogError(ex, "An error occurred initializing KsqlDB.");
     }
 }

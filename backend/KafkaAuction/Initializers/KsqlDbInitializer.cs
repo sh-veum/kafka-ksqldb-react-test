@@ -44,7 +44,13 @@ public static class KsqlDbInitializer
         for (int i = 1; i <= numAuctions; i++)
         {
             var auctionId = Guid.NewGuid().ToString();
-            var auction = new Auction { Auction_Id = auctionId, Title = $"Auction {i}", Description = $"Description for Auction {i}", Starting_Price = 1 };
+            var auction = new Auction
+            {
+                Auction_Id = auctionId,
+                Title = $"Auction {i}",
+                Description = $"Description for Auction {i}",
+                Starting_Price = 1
+            };
             auctions.Add(auction);
             await auctionService.InsertAuctionAsync(auction);
 
@@ -63,7 +69,7 @@ public static class KsqlDbInitializer
                 Auction_Id = auctionId,
                 Username = $"User{i}",
                 Bid_Amount = i * 100,
-                Timestamp = DateTime.UtcNow.ToString()
+                Timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")
             };
             await auctionService.InsertBidAsync(auctionBid);
         }

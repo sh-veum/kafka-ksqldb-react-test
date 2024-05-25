@@ -95,6 +95,7 @@ public class AuctionWebSocketService : IAuctionWebSocketService
                 Starting_Price = l.Starting_Price,
                 Current_Price = l.Current_Price,
                 Winner = l.Winner,
+                Created_At = l.Created_At
             })
             .Subscribe(AuctionDto =>
             {

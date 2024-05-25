@@ -11,4 +11,5 @@ public class AuctionDto
     public decimal? Current_Price { get; set; }
     public int? Number_Of_Bids { get; set; } = 0;
     public string? Winner { get; set; }
+    public required string Created_At { get; set; }
 }

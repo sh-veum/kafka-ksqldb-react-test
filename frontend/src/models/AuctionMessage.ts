@@ -6,4 +6,5 @@ export interface AuctionMessage {
   Current_Price: number;
   Number_Of_Bids: number;
   Winner: string;
+  Created_At: string;
 }

@@ -119,18 +119,11 @@ public class AuctionService : IAuctionService
 
         if (auctionBid.Bid_Amount > auction.Current_Price)
         {
-            _logger.LogInformation("Bid is higher than current price");
-            var updatedAuction = new Auction
-            {
-                Auction_Id = auctionBid.Auction_Id,
-                Title = auction.Title,
-                Starting_Price = auction.Starting_Price,
-                Current_Price = auctionBid.Bid_Amount,
-                Number_Of_Bids = auction.Number_Of_Bids + 1,
-            };
+            auction.Current_Price = auctionBid.Bid_Amount;
+            auction.Number_Of_Bids += 1;
 
             var auctionInserter = new EntityInserter<Auction>(_restApiProvider, _logger);
-            var insertAuctionResponse = await auctionInserter.InsertAsync(_auctionsTableName, updatedAuction);
+            var insertAuctionResponse = await auctionInserter.InsertAsync(_auctionsTableName, auction);
 
             if (!insertAuctionResponse.IsSuccessStatusCode)
             {
@@ -198,7 +191,8 @@ public class AuctionService : IAuctionService
                 Starting_Price = auction.Starting_Price,
                 Current_Price = auction.Current_Price,
                 Number_Of_Bids = auction.Number_Of_Bids,
-                Winner = auction.Winner
+                Winner = auction.Winner,
+                Created_At = auction.Created_At
             });
         }
 
@@ -222,14 +216,15 @@ public class AuctionService : IAuctionService
                 Starting_Price = auction.Starting_Price,
                 Current_Price = auction.Current_Price,
                 Number_Of_Bids = auction.Number_Of_Bids,
-                Winner = auction.Winner
+                Winner = auction.Winner,
+                Created_At = auction.Created_At
             });
         }
 
         return auctionDtos;
     }
 
-    public async Task<AuctionDto?> GetAuction(string auction_id)
+    public async Task<Auction?> GetAuction(string auction_id)
     {
         var auction = await _context.CreatePullQuery<Auction>($"queryable_{_auctionsTableName}")
             .Where(a => a.Auction_Id == auction_id)
@@ -240,16 +235,7 @@ public class AuctionService : IAuctionService
             return null;
         }
 
-        return new AuctionDto
-        {
-            Auction_Id = auction.Auction_Id,
-            Title = auction.Title,
-            Description = auction.Description,
-            Starting_Price = auction.Starting_Price,
-            Current_Price = auction.Current_Price,
-            Number_Of_Bids = auction.Number_Of_Bids,
-            Winner = auction.Winner
-        };
+        return auction;
     }
 
     public async Task<List<AuctionBidDtoWithTimeStamp>> GetAllBids()

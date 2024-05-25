@@ -6,8 +6,16 @@
     </div>
     <v-container fluid>
       <v-row>
+        <v-col cols="12">
+          <v-select
+            v-model="sortOrder"
+            :items="['Latest', 'Earliest']"
+            label="Sort by"
+            variant="outlined"
+          ></v-select>
+        </v-col>
         <v-col
-          v-for="(message, index) in auctionStore.messages"
+          v-for="(message, index) in sortedMessages"
           :key="index"
           cols="12"
           md="4"
@@ -16,6 +24,9 @@
             <v-card-title>{{ message.Title }}</v-card-title>
             <v-card-subtitle>
               Number of Bids: {{ message.Number_Of_Bids }}
+            </v-card-subtitle>
+            <v-card-subtitle>
+              Created at: {{ message.Created_At }}
             </v-card-subtitle>
             <v-card-text>
               Starting Price: {{ message.Starting_Price }}
@@ -41,13 +52,28 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useAuctionStore } from "@/stores/auctionStore";
 import { WebPage } from "@/Enums/webPage";
 import router from "@/router";
 import InsertAuction from "@/components/auction/InsertAuction.vue";
 
 const auctionStore = useAuctionStore();
+const sortOrder = ref("Latest");
+
+const sortedMessages = computed(() => {
+  return auctionStore.messages
+    .filter(auctionStore.isAuctionMessage)
+    .sort((a, b) => {
+      const dateA = new Date(a.Created_At);
+      const dateB = new Date(b.Created_At);
+      if (sortOrder.value === "Latest") {
+        return dateB.getTime() - dateA.getTime();
+      } else {
+        return dateA.getTime() - dateB.getTime();
+      }
+    });
+});
 
 const navigateToAuction = (auctionId: string) => {
   router.push(`/auction/${auctionId}`);
