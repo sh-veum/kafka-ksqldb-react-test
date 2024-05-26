@@ -187,9 +187,9 @@ public class AuctionService : IAuctionService
                 Auction_Id = auction.Auction_Id,
                 Title = auction.Title,
                 Description = auction.Description,
+                Number_Of_Bids = auction.Number_Of_Bids,
                 Starting_Price = auction.Starting_Price,
                 Current_Price = auction.Current_Price,
-                Number_Of_Bids = auction.Number_Of_Bids,
                 Winner = auction.Winner,
                 Created_At = auction.Created_At
             });

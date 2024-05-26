@@ -5,10 +5,11 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
+const TOKEN_KEY = "authToken";
 
 export const useAuthStore = defineStore("auth", () => {
   const router = useRouter();
-  const token = ref<string | null>(null);
+  const token = ref<string>(localStorage.getItem(TOKEN_KEY) || "");
   const loading = ref(false);
   const error = ref<string | null>(null);
 
@@ -18,7 +19,8 @@ export const useAuthStore = defineStore("auth", () => {
 
     try {
       const response = await axios.post(`${baseUrl}/login`, user);
-      token.value = response.data.access_token;
+      token.value = response.data.accessToken;
+      localStorage.setItem(TOKEN_KEY, token.value);
       axios.defaults.headers.common["Authorization"] = `Bearer ${token.value}`;
       router.push("/"); // Redirect to home or another protected route
     } catch (err) {
@@ -45,7 +47,7 @@ export const useAuthStore = defineStore("auth", () => {
   };
 
   const logout = () => {
-    token.value = null;
+    token.value = "";
     delete axios.defaults.headers.common["Authorization"];
     router.push("/login"); // Redirect to login
   };

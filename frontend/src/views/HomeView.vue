@@ -1,20 +1,26 @@
 <template>
   <main>
-    <h1>Auction Overview</h1>
-    <div>
-      <InsertAuction />
-    </div>
     <v-container fluid>
+      <h1>Auction Overview</h1>
+      <div>
+        <InsertAuction />
+      </div>
+      <div class="mt-4">
+        <v-select
+          v-model="sortOrder"
+          :items="['Latest', 'Earliest']"
+          label="Sort by"
+          variant="outlined"
+        ></v-select>
+      </div>
       <v-row>
-        <v-col cols="12">
-          <v-select
-            v-model="sortOrder"
-            :items="['Latest', 'Earliest']"
-            label="Sort by"
-            variant="outlined"
-          ></v-select>
+        <v-col cols="12" md="4" v-if="loading" v-for="n in 3" :key="n">
+          <v-skeleton-loader
+            type="heading, list-item-two-line, list-item@4, button"
+          ></v-skeleton-loader>
         </v-col>
         <v-col
+          v-else
           v-for="(auction, index) in sortedMessages"
           :key="index"
           cols="12"
@@ -87,10 +93,12 @@ onBeforeUnmount(() => {
 });
 
 function onFirstMessage() {
+  console.log("Recieved first message");
   loading.value = false;
 }
 
 function onError(err: string) {
+  console.log("Error occured");
   loading.value = false;
   error.value = err;
 }

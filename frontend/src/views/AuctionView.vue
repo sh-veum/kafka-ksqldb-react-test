@@ -33,17 +33,11 @@
             :items="auctionStore.auctionBidsMessages"
             :loading="bidsLoading"
             item-key="BidId"
+            :sort-by="[{ key: 'Timestamp', order: 'desc' }]"
           >
             <template v-slot:loading>
               <v-skeleton-loader type="table-row@10"></v-skeleton-loader>
             </template>
-            <!-- <template v-slot:body>
-              <template v-if="error">
-                <tr>
-                  <td colspan="100%" class="text-center">{{ error }}</td>
-                </tr>
-              </template>
-            </template> -->
           </v-data-table>
         </v-col>
         <v-col cols="12" md="6" class="d-flex flex-column">
@@ -60,11 +54,13 @@
             style="max-height: 640px"
           >
             <template
-              v-for="chatMessage in auctionStore.chatMessages"
+              v-for="chatMessage in reversedChatMessages"
               v-scroll:#scroll-target="onScroll"
             >
               <v-textarea
-                :label="`${chatMessage.Username} - ${chatMessage.Timestamp}`"
+                :label="`${chatMessage.Username} - ${formatTimestamp(
+                  chatMessage.Timestamp
+                )}`"
                 :model-value="chatMessage.MessageText"
                 rows="1"
                 variant="filled"
@@ -76,6 +72,12 @@
               </v-textarea>
             </template>
           </v-container>
+
+          <v-text-field
+            v-model="newMessage"
+            label="Enter your message"
+          ></v-text-field>
+          <v-btn @click="sendMessage">Send</v-btn>
         </v-col>
       </v-row>
     </v-container>
@@ -83,28 +85,39 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRoute } from "vue-router";
 import { useAuctionStore } from "@/stores/auctionStore";
+import { useChatStore } from "@/stores/chatStore";
+import { useUserStore } from "@/stores/userStore";
 import InsertAuctionBid from "@/components/auction/InsertAuctionBid.vue";
 
 const route = useRoute();
 const auctionStore = useAuctionStore();
+const chatStore = useChatStore();
+const userStore = useUserStore();
 const auctionId = route.params.auctionId as string;
 const dialog = ref(false);
 const bidsLoading = ref(true);
 const bidsError = ref<string | null>(null);
 const chatLoading = ref(true);
 const chatError = ref<string | null>(null);
+const newMessage = ref("");
 
-onMounted(() => {
+const reversedChatMessages = computed(() => {
+  return [...chatStore.chatMessages].reverse();
+});
+
+onMounted(async () => {
   auctionStore.connectBidsWebSocket(auctionId, onFirstBidMessage, onBidError);
-  auctionStore.connectChatWebSocket(auctionId, onFirstChatMessage, onChatError);
+  chatStore.connectChatWebSocket(auctionId, onFirstChatMessage, onChatError);
+  await userStore.fetchUserInfo();
+  console.log(userStore.userInfo);
 });
 
 onBeforeUnmount(() => {
   auctionStore.disconnectBidsWebSocket();
-  auctionStore.disconnectChatWebSocket();
+  chatStore.disconnectChatWebSocket();
 });
 
 function onFirstBidMessage() {
@@ -123,5 +136,34 @@ function onFirstChatMessage() {
 function onChatError(err: string) {
   chatLoading.value = false;
   chatError.value = err;
+}
+
+async function sendMessage() {
+  console.log(userStore.userInfo?.userName);
+  if (newMessage.value.trim() !== "") {
+    try {
+      await chatStore.insertChatMessage({
+        username: userStore.userInfo?.userName ?? "anon",
+        messageText: newMessage.value,
+        auction_Id: auctionId,
+      });
+      newMessage.value = "";
+    } catch (error) {
+      console.error("Failed to send message", error);
+    }
+  }
+}
+
+function formatTimestamp(timestamp: string): string {
+  const messageDate = new Date(timestamp);
+  const today = new Date();
+  const isToday = messageDate.toDateString() === today.toDateString();
+  const formattedTime = messageDate.toTimeString().split(" ")[0];
+  if (isToday) {
+    return `Today at ${formattedTime}`;
+  } else {
+    const formattedDate = messageDate.toLocaleDateString("en-GB");
+    return `${formattedDate} ${formattedTime}`;
+  }
 }
 </script>
