@@ -6,7 +6,7 @@ import { webSocketService } from "@/lib/webSocket";
 import type { AuctionCreator } from "@/models/AuctionCreator";
 import type { AuctionMessage } from "@/models/AuctionMessage";
 import type { AuctionBidsMessage } from "@/models/AuctionBidsMessage";
-import type { ChatMessage } from "@/models/ChatMessage";
+import type { AuctionMessageDto } from "@/models/AuctionMessageDto";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
@@ -14,8 +14,8 @@ export const useAuctionStore = defineStore("auction", () => {
   const loading = ref(false);
   const error = ref<string | null>(null);
   const auctionMessages = ref<AuctionMessage[]>([]);
+  const auctionMessagesFromREST = ref<AuctionMessageDto[]>([]);
   const auctionBidsMessages = ref<AuctionBidsMessage[]>([]);
-  const chatMessages = ref<ChatMessage[]>([]);
 
   const createTables = async () => {
     loading.value = true;
@@ -115,6 +115,23 @@ export const useAuctionStore = defineStore("auction", () => {
     }, onError);
   }
 
+  const getAllTables = async () => {
+    loading.value = true;
+    error.value = null;
+    try {
+      const response = await axios.get(
+        `${baseUrl}/api/auction/get_all_auctions`
+      );
+      auctionMessagesFromREST.value = response.data;
+      console.log(auctionMessagesFromREST.value);
+    } catch (err) {
+      error.value = "Failed to retrieve tables";
+      console.error(err);
+    } finally {
+      loading.value = false;
+    }
+  };
+
   function connectBidsWebSocket(
     auctionId: string,
     onFirstMessage: () => void,
@@ -132,33 +149,12 @@ export const useAuctionStore = defineStore("auction", () => {
     );
   }
 
-  function connectChatWebSocket(
-    auctionId: string,
-    onFirstMessage: () => void,
-    onError: (err: string) => void
-  ) {
-    webSocketService.connectChat(
-      auctionId,
-      (data) => {
-        if (chatMessages.value.length === 0) {
-          onFirstMessage();
-        }
-        chatMessages.value.push(data);
-      },
-      onError
-    );
-  }
-
   function disconnectAuctionOverviewWebSocket() {
     webSocketService.disconnectAuctionOverview();
   }
 
   function disconnectBidsWebSocket() {
     webSocketService.disconnectBids();
-  }
-
-  function disconnectChatWebSocket() {
-    webSocketService.disconnectChat();
   }
 
   return {
@@ -171,13 +167,12 @@ export const useAuctionStore = defineStore("auction", () => {
     dropTables,
     auctionMessages,
     auctionBidsMessages,
-    chatMessages,
     connectAuctionOverviewWebSocket,
     connectBidsWebSocket,
-    connectChatWebSocket,
     disconnectAuctionOverviewWebSocket,
     disconnectBidsWebSocket,
-    disconnectChatWebSocket,
+    getAllTables,
+    auctionMessagesFromREST,
   };
 });
 
