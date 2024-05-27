@@ -45,7 +45,7 @@ public class AuctionWebSocketService : IAuctionWebSocketService
         _logger.LogInformation($"Subscribing to WebSocket for auctionId: {auctionId}");
 
         var subscription = _context.CreatePushQuery<Auction_Bid>()
-            .WithOffsetResetPolicy(AutoOffsetReset.Earliest)
+            .WithOffsetResetPolicy(AutoOffsetReset.Latest)
             .Where(p => p.Auction_Id == auctionId)
             .Select(l => new AuctionBidMessageDto
             {
@@ -83,7 +83,7 @@ public class AuctionWebSocketService : IAuctionWebSocketService
         _logger.LogInformation($"Subscribing to WebSocket for auction updates");
 
         var subscription = _context.CreatePushQuery<Auction>()
-            .WithOffsetResetPolicy(AutoOffsetReset.Earliest)
+            .WithOffsetResetPolicy(AutoOffsetReset.Latest)
             .Select(l => new AuctionDto
             {
                 Auction_Id = l.Auction_Id,

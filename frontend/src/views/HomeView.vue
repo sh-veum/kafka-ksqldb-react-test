@@ -84,18 +84,15 @@ const navigateToAuction = (auctionId: string) => {
   router.push(`/auction/${auctionId}`);
 };
 
-onMounted(() => {
-  auctionStore.connectAuctionOverviewWebSocket(onFirstMessage, onError);
+onMounted(async () => {
+  await auctionStore.getAllTables();
+  loading.value = false;
+  auctionStore.connectAuctionOverviewWebSocket(onError);
 });
 
 onBeforeUnmount(() => {
   auctionStore.disconnectAuctionOverviewWebSocket();
 });
-
-function onFirstMessage() {
-  console.log("Recieved first message");
-  loading.value = false;
-}
 
 function onError(err: string) {
   console.log("Error occured");
