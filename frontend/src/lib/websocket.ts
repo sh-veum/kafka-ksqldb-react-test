@@ -1,6 +1,6 @@
 import { WebPage } from "@/Enums/webPage";
 
-const baseUrl = `${import.meta.env.VITE_API_URL}/ws`;
+const baseUrl = `${import.meta.env.VITE_API_WEBSOCKET_URL}`;
 
 class WebSocketService {
   private auctionOverviewSocket: WebSocket | null = null;

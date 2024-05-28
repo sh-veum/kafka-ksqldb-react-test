@@ -6,16 +6,15 @@ import { webSocketService } from "@/lib/webSocket";
 import type { AuctionCreator } from "@/models/AuctionCreator";
 import type { AuctionMessage } from "@/models/AuctionMessage";
 import type { AuctionBidsMessage } from "@/models/AuctionBidsMessage";
-import type { AuctionMessageDto } from "@/models/AuctionMessageDto";
-import { normalizeAuctionMessages } from "@/lib/normalizeAuctionMessages";
+import { normalizeData } from "@/lib/normalizeData";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
 export const useAuctionStore = defineStore("auction", () => {
+  // is this even used?
   const loading = ref(false);
   const error = ref<string | null>(null);
   const auctionMessages = ref<AuctionMessage[]>([]);
-  const auctionMessagesFromREST = ref<AuctionMessageDto[]>([]);
   const auctionBidsMessages = ref<AuctionBidsMessage[]>([]);
 
   const createTables = async () => {
@@ -104,12 +103,6 @@ export const useAuctionStore = defineStore("auction", () => {
     }
   };
 
-  function connectAuctionOverviewWebSocket(onError: (err: string) => void) {
-    webSocketService.connectAuctionOverview((data) => {
-      auctionMessages.value.push(data);
-    }, onError);
-  }
-
   const getAllTables = async () => {
     loading.value = true;
     error.value = null;
@@ -117,8 +110,8 @@ export const useAuctionStore = defineStore("auction", () => {
       const response = await axios.get(
         `${baseUrl}/api/auction/get_all_auctions`
       );
-      const normalizedData = response.data.map((dto: AuctionMessageDto) =>
-        normalizeAuctionMessages(dto)
+      const normalizedData = response.data.map((dto: any) =>
+        normalizeData(dto)
       );
       auctionMessages.value = normalizedData;
     } catch (err) {
@@ -129,17 +122,43 @@ export const useAuctionStore = defineStore("auction", () => {
     }
   };
 
+  const getAuctionBidsForAuction = async (
+    auctionId: string
+  ): Promise<boolean> => {
+    loading.value = true;
+    error.value = null;
+    try {
+      const response = await axios.get(
+        `${baseUrl}/api/auction/get_bid_messages_for_auction?auction_Id=${auctionId}`
+      );
+      const normalizedData = response.data.map((dto: any) =>
+        normalizeData(dto)
+      );
+      auctionBidsMessages.value = normalizedData;
+      console.log(auctionBidsMessages.value);
+      return true;
+    } catch (err) {
+      error.value = "Failed to retrieve auction bids";
+      console.error(err);
+      return false;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  function connectAuctionOverviewWebSocket(onError: (err: string) => void) {
+    webSocketService.connectAuctionOverview((data) => {
+      auctionMessages.value.push(data);
+    }, onError);
+  }
+
   function connectBidsWebSocket(
     auctionId: string,
-    onFirstMessage: () => void,
     onError: (err: string) => void
   ) {
     webSocketService.connectBids(
       auctionId,
       (data) => {
-        if (auctionBidsMessages.value.length === 0) {
-          onFirstMessage();
-        }
         auctionBidsMessages.value.push(data);
       },
       onError
@@ -169,7 +188,7 @@ export const useAuctionStore = defineStore("auction", () => {
     disconnectAuctionOverviewWebSocket,
     disconnectBidsWebSocket,
     getAllTables,
-    auctionMessagesFromREST,
+    getAuctionBidsForAuction,
   };
 });
 

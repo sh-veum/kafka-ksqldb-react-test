@@ -126,5 +126,11 @@ public class AuctionController : ControllerBase
         return Ok(auctions);
     }
 
+    [HttpGet("get_bid_messages_for_auction")]
+    public async Task<IActionResult> GetBidMessagesForAuction(string auction_Id)
+    {
+        var messages = await _auctionService.GetBidMessagesForAuction(auction_Id);
 
+        return Ok(messages);
+    }
 }

@@ -257,4 +257,45 @@ public class AuctionService : IAuctionService
 
         return auctionBidDtos;
     }
+
+    public async Task<List<AuctionBidDtoWithTimeStamp>> GetBidsForAuction(string auction_id)
+    {
+        var auctionBids = _context.CreatePullQuery<Auction_Bid>()
+            .Where(a => a.Auction_Id == auction_id);
+
+        List<AuctionBidDtoWithTimeStamp> auctionBidDtos = [];
+
+        await foreach (var auctionBid in auctionBids.GetManyAsync().ConfigureAwait(false))
+        {
+            auctionBidDtos.Add(new AuctionBidDtoWithTimeStamp
+            {
+                Auction_Id = auctionBid.Auction_Id,
+                Username = auctionBid.Username,
+                Bid_Amount = auctionBid.Bid_Amount,
+                Timestamp = auctionBid.Timestamp
+            });
+        }
+
+        return auctionBidDtos;
+    }
+
+    public async Task<List<AuctionBidMessageDto>> GetBidMessagesForAuction(string auction_id)
+    {
+        var auctionBids = _context.CreatePullQuery<Auction_Bid>()
+            .Where(a => a.Auction_Id == auction_id);
+
+        List<AuctionBidMessageDto> auctionBidDtos = [];
+
+        await foreach (var auctionBid in auctionBids.GetManyAsync().ConfigureAwait(false))
+        {
+            auctionBidDtos.Add(new AuctionBidMessageDto
+            {
+                Username = auctionBid.Username,
+                Bid_Amount = auctionBid.Bid_Amount,
+                Timestamp = auctionBid.Timestamp
+            });
+        }
+
+        return auctionBidDtos;
+    }
 }

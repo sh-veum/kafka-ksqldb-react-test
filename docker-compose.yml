@@ -41,10 +41,9 @@ services:
       KAFKA_LOG_RETENTION_BYTES: -1 # This sets the retention size to indefinite
     # volumes:
     #   - ./backend/.containers/kafka:/var/lib/kafka/data
-    restart: on-failure
     deploy:
       restart_policy:
-        condition: any
+        condition: on-failure
         delay: 5s
         window: 120s
 
@@ -154,11 +153,11 @@ services:
       - dev
     volumes:
       - dataprotection-keys:/root/.aspnet/DataProtection-Keys
-    restart: on-failure
     deploy:
       restart_policy:
-        condition: any
-        delay: 5s
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
         window: 120s
 
   auctionDB:

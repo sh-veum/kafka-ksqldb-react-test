@@ -64,9 +64,17 @@ public class ChatController : ControllerBase
     }
 
     [HttpGet("get_messages_for_auction")]
-    public async Task<IActionResult> GetMessagesForAuction(string auction_id)
+    public async Task<IActionResult> GetMessagesForAuction([FromQuery] string auction_Id)
     {
-        var messages = await _chatService.GetMessagesForAuction(auction_id);
+        var messages = await _chatService.GetMessagesForAuction(auction_Id);
+
+        return Ok(messages);
+    }
+
+    [HttpGet("get_messages_for_auction_alternative")]
+    public async Task<IActionResult> GetMessagesForAuctionAlt([FromQuery] string auction_Id)
+    {
+        var messages = await _chatService.GetMessagesForAuctionAlternative(auction_Id);
 
         return Ok(messages);
     }

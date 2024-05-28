@@ -30,10 +30,10 @@
       <v-row>
         <v-col cols="12" md="6">
           <v-data-table
-            :items="auctionStore.auctionBidsMessages"
+            :items="soertedBids"
             :loading="bidsLoading"
             item-key="BidId"
-            :sort-by="[{ key: 'Timestamp', order: 'desc' }]"
+            :sort-by="[{ key: 'Bid_Amount', order: 'desc' }]"
           >
             <template v-slot:loading>
               <v-skeleton-loader type="table-row@10"></v-skeleton-loader>
@@ -54,7 +54,7 @@
             style="max-height: 640px"
           >
             <template
-              v-for="chatMessage in reversedChatMessages"
+              v-for="chatMessage in chatStore.chatMessages"
               v-scroll:#scroll-target="onScroll"
             >
               <v-textarea
@@ -104,15 +104,24 @@ const chatLoading = ref(true);
 const chatError = ref<string | null>(null);
 const newMessage = ref("");
 
-const reversedChatMessages = computed(() => {
-  return [...chatStore.chatMessages].reverse();
+const soertedBids = computed(() => {
+  return auctionStore.auctionBidsMessages.sort((a, b) => {
+    return b.Bid_Amount - a.Bid_Amount;
+  });
 });
 
 onMounted(async () => {
-  auctionStore.connectBidsWebSocket(auctionId, onFirstBidMessage, onBidError);
-  chatStore.connectChatWebSocket(auctionId, onFirstChatMessage, onChatError);
   await userStore.fetchUserInfo();
-  console.log(userStore.userInfo);
+  await Promise.all([
+    (bidsLoading.value = !(await auctionStore.getAuctionBidsForAuction(
+      auctionId
+    ))),
+    (chatLoading.value = !(await chatStore.getChatMessagesForAuction(
+      auctionId
+    ))),
+  ]);
+  auctionStore.connectBidsWebSocket(auctionId, onBidError);
+  chatStore.connectChatWebSocket(auctionId, onChatError);
 });
 
 onBeforeUnmount(() => {
@@ -120,17 +129,9 @@ onBeforeUnmount(() => {
   chatStore.disconnectChatWebSocket();
 });
 
-function onFirstBidMessage() {
-  bidsLoading.value = false;
-}
-
 function onBidError(err: string) {
   bidsLoading.value = false;
   bidsError.value = err;
-}
-
-function onFirstChatMessage() {
-  chatLoading.value = false;
 }
 
 function onChatError(err: string) {
