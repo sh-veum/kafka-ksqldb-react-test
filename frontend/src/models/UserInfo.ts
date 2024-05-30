@@ -1,5 +1,5 @@
 export interface UserInfo {
-  email: string;
-  userName: string;
-  role: string;
+  Email: string;
+  UserName: string;
+  Role: string;
 }

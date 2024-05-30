@@ -1,9 +1,8 @@
-using ksqlDB.RestApi.Client.KSql.Query;
 using ksqlDB.RestApi.Client.KSql.RestApi.Statements.Annotations;
 
 namespace KafkaAuction.Models;
 
-public class Auction : Record
+public record Auction
 {
     [Key]
     public required string Auction_Id { get; set; }

@@ -83,6 +83,7 @@ services:
       KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: "true"
       KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: "true"
       # Configuration to embed Kafka Connect support.
+      # No clue if this is needed, but it's here.
       KSQL_CONNECT_GROUP_ID: "ksql-connect-cluster"
       KSQL_CONNECT_BOOTSTRAP_SERVERS: "kafka:9092"
       KSQL_CONNECT_KEY_CONVERTER: "org.apache.kafka.connect.storage.StringConverter"

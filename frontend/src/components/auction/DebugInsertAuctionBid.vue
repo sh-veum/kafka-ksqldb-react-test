@@ -53,9 +53,9 @@ const insertAuctionBid = async () => {
     bidAmount.value !== null
   ) {
     const response = await auctionStore.insertAuctionBid({
-      auction_Id: auctionId.value,
-      username: username.value,
-      bid_Amount: bidAmount.value,
+      Auction_Id: auctionId.value,
+      Username: username.value,
+      Bid_Amount: bidAmount.value,
     });
     result.value = response;
   }

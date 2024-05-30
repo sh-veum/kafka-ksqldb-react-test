@@ -19,7 +19,7 @@ axios.interceptors.request.use(
     if (authToken) {
       config.headers.Authorization = `Bearer ${authToken}`;
     }
-    console.log("Token:", authToken);
+    // console.log("Token:", authToken);
     console.log("Making request to:", config.url);
     return config;
   },

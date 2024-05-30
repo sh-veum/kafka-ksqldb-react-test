@@ -3,7 +3,6 @@ import { ref } from "vue";
 import axios from "axios";
 import type { ChatMessage } from "@/models/ChatMessage";
 import { webSocketService } from "@/lib/webSocket";
-import { normalizeData } from "@/lib/normalizeData";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
@@ -33,12 +32,9 @@ export const useChatStore = defineStore("chat", () => {
     error.value = null;
     try {
       const response = await axios.get(
-        `${baseUrl}/api/chat/get_messages_for_auction?auction_Id=${auctionId}`
+        `${baseUrl}/api/chat/get_messages_for_auction?auction_Id=${auctionId}&sortByDate=true`
       );
-      const normalizedData = response.data.map((dto: any) =>
-        normalizeData(dto)
-      );
-      chatMessages.value = normalizedData;
+      chatMessages.value = response.data;
       return true;
     } catch (err) {
       error.value = "Failed to retrieve chat messages";
@@ -56,12 +52,9 @@ export const useChatStore = defineStore("chat", () => {
     error.value = null;
     try {
       const response = await axios.get(
-        `${baseUrl}/api/chat/get_messages_for_auction_alternative?auction_Id=${auctionId}`
+        `${baseUrl}/api/chat/get_messages_for_auction_push_query?auction_Id=${auctionId}`
       );
-      const normalizedData = response.data.map((dto: any) =>
-        normalizeData(dto)
-      );
-      chatMessagesAlt.value = normalizedData;
+      chatMessagesAlt.value = response.data;
       return true;
     } catch (err) {
       error.value = "Failed to retrieve chat messages";

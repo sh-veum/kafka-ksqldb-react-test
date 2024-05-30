@@ -16,7 +16,7 @@ export const useUserStore = defineStore("user", () => {
       userInfo.value = response.data;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 401) {
-        userInfo.value = { email: "", userName: "anon", role: "" };
+        userInfo.value = { Email: "", UserName: "anon", Role: "" };
       } else {
         console.error("Error fetching user info", error);
       }

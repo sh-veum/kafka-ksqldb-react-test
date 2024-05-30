@@ -6,7 +6,6 @@ import { webSocketService } from "@/lib/webSocket";
 import type { AuctionCreator } from "@/models/AuctionCreator";
 import type { AuctionMessage } from "@/models/AuctionMessage";
 import type { AuctionBidsMessage } from "@/models/AuctionBidsMessage";
-import { normalizeData } from "@/lib/normalizeData";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
@@ -108,12 +107,9 @@ export const useAuctionStore = defineStore("auction", () => {
     error.value = null;
     try {
       const response = await axios.get(
-        `${baseUrl}/api/auction/get_all_auctions`
+        `${baseUrl}/api/auction/get_all_auctions?sortByDate=true`
       );
-      const normalizedData = response.data.map((dto: any) =>
-        normalizeData(dto)
-      );
-      auctionMessages.value = normalizedData;
+      auctionMessages.value = response.data;
     } catch (err) {
       error.value = "Failed to retrieve tables";
       console.error(err);
@@ -131,10 +127,7 @@ export const useAuctionStore = defineStore("auction", () => {
       const response = await axios.get(
         `${baseUrl}/api/auction/get_bid_messages_for_auction?auction_Id=${auctionId}`
       );
-      const normalizedData = response.data.map((dto: any) =>
-        normalizeData(dto)
-      );
-      auctionBidsMessages.value = normalizedData;
+      auctionBidsMessages.value = response.data;
       console.log(auctionBidsMessages.value);
       return true;
     } catch (err) {

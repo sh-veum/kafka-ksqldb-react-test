@@ -1,6 +1,7 @@
 using KafkaAuction.Dtos;
 using KafkaAuction.Models;
 using KafkaAuction.Services.Interfaces;
+using KafkaAuction.Utilities;
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
@@ -56,25 +57,36 @@ public class ChatController : ControllerBase
     }
 
     [HttpGet("get_all_messages")]
-    public async Task<IActionResult> GetAllMessages()
+    public async Task<IActionResult> GetAllMessages([FromQuery] bool sortByDate = false)
     {
         var messages = await _chatService.GetAllMessages();
+
+        if (sortByDate)
+        {
+            messages = Sorter.SortByDate(messages, messages => messages.Timestamp!);
+        }
 
         return Ok(messages);
     }
 
     [HttpGet("get_messages_for_auction")]
-    public async Task<IActionResult> GetMessagesForAuction([FromQuery] string auction_Id)
+    [ProducesResponseType(typeof(ChatMessageDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetMessagesForAuction([FromQuery] string auction_Id, [FromQuery] bool sortByDate = false)
     {
         var messages = await _chatService.GetMessagesForAuction(auction_Id);
+
+        if (sortByDate)
+        {
+            messages = Sorter.SortByDate(messages, messages => messages.Timestamp!);
+        }
 
         return Ok(messages);
     }
 
-    [HttpGet("get_messages_for_auction_alternative")]
-    public async Task<IActionResult> GetMessagesForAuctionAlt([FromQuery] string auction_Id)
+    [HttpGet("get_messages_for_auction_push_query")]
+    public async Task<IActionResult> GetMessagesForAuctionPushQuery([FromQuery] string auction_Id)
     {
-        var messages = await _chatService.GetMessagesForAuctionAlternative(auction_Id);
+        var messages = await _chatService.GetMessagesForAuctionPushQuery(auction_Id);
 
         return Ok(messages);
     }

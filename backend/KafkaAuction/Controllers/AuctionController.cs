@@ -1,6 +1,7 @@
 using KafkaAuction.Dtos;
 using KafkaAuction.Models;
 using KafkaAuction.Services.Interfaces;
+using KafkaAuction.Utilities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KafkaAuction.Controllers;
@@ -101,9 +102,14 @@ public class AuctionController : ControllerBase
 
     [HttpGet("get_all_auctions")]
     [ProducesResponseType(typeof(AuctionDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAllAuctions()
+    public async Task<IActionResult> GetAllAuctions([FromQuery] bool sortByDate = false)
     {
         var auctions = await _auctionService.GetAllAuctions();
+
+        if (sortByDate)
+        {
+            auctions = Sorter.SortByDate(auctions, auction => auction.Created_At);
+        }
 
         return Ok(auctions);
     }
@@ -119,9 +125,14 @@ public class AuctionController : ControllerBase
 
     [HttpGet("get_auctions")]
     [ProducesResponseType(typeof(AuctionDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetActions([FromQuery] int limit)
+    public async Task<IActionResult> GetAuctions([FromQuery] int limit, [FromQuery] bool sortByDate = false)
     {
         var auctions = await _auctionService.GetAuctions(limit);
+
+        if (sortByDate)
+        {
+            auctions = Sorter.SortByDate(auctions, auction => auction.Created_At);
+        }
 
         return Ok(auctions);
     }

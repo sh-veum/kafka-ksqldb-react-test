@@ -140,11 +140,10 @@ function onChatError(err: string) {
 }
 
 async function sendMessage() {
-  console.log(userStore.userInfo?.userName);
   if (newMessage.value.trim() !== "") {
     try {
       await chatStore.insertChatMessage({
-        username: userStore.userInfo?.userName ?? "anon",
+        username: userStore.userInfo?.UserName ?? "anon",
         messageText: newMessage.value,
         auction_Id: auctionId,
       });

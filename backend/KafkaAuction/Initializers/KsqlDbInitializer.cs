@@ -1,5 +1,7 @@
 using KafkaAuction.Models;
 using KafkaAuction.Services.Interfaces;
+using ksqlDB.RestApi.Client.KSql.RestApi.Responses.Streams;
+using ksqlDB.RestApi.Client.KSql.RestApi.Responses.Tables;
 
 namespace KafkaAuction.Initializers;
 
@@ -9,15 +11,22 @@ public static class KsqlDbInitializer
     private const int numBidsPerAuction = 6;
     private const int numMessagesPerAuction = 8;
 
-    public static async Task InitializeAsync(IAuctionService auctionService, IChatService chatService)
+    public static async Task InitializeAsync(IAuctionService auctionService, IChatService chatService, IKsqlDbService ksqlDbService, ILogger logger)
     {
+        TablesResponse[] tables = ksqlDbService.CheckTablesAsync().Result;
+        StreamsResponse[] streams = ksqlDbService.CheckStreams().Result;
+        logger.LogInformation("Tables Length: {Tables}", tables.Length);
+        logger.LogInformation("Streams Length: {Streams}", streams.Length);
+
         await CreateAuctionTable(auctionService);
-        await CreateAuctionBidStream(auctionService);
-        await CreateAuctionWithBidsStream(auctionService);
         await CreateChatMessageTable(chatService);
 
-        // Sleep for 5 seconds because creating tables is slow as hell
+        await CreateAuctionBidStream(auctionService);
+        await CreateAuctionWithBidsStream(auctionService);
+
         Thread.Sleep(5000);
+
+        // Sleep for 5 seconds because creating tables is slow as hell
 
         var auctions = await auctionService.GetAllAuctions();
         if (auctions.Count == 0)

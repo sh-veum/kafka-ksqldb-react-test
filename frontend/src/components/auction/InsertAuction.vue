@@ -65,9 +65,9 @@ const insertAuction = async () => {
     startingPrice.value !== null
   ) {
     const response = await auctionStore.insertAuction({
-      Title: title.value,
-      Description: description.value,
-      Starting_Price: startingPrice.value,
+      title: title.value,
+      description: description.value,
+      starting_Price: startingPrice.value,
     });
     result.value = response;
   }

@@ -19,6 +19,10 @@ class WebSocketService {
       `${baseUrl}?auctionId=none&webPage=${WebPage.AuctionOverview}`
     );
 
+    this.auctionOverviewSocket.onopen = () => {
+      console.log("Auction overview WebSocket connection opened");
+    };
+
     this.auctionOverviewSocket.onmessage = (event) => {
       const data = JSON.parse(event.data);
       console.log("Auction overview WebSocket message received:", data);
@@ -52,6 +56,10 @@ class WebSocketService {
       `${baseUrl}?auctionId=${auctionId}&webPage=${WebPage.SpesificAuction}`
     );
 
+    this.bidSocket.onopen = () => {
+      console.log("Bid WebSocket connection opened");
+    };
+
     this.bidSocket.onmessage = (event) => {
       const data = JSON.parse(event.data);
       console.log("Bid WebSocket message received:", data);
@@ -80,6 +88,10 @@ class WebSocketService {
     this.chatSocket = new WebSocket(
       `${baseUrl}?auctionId=${auctionId}&webPage=${WebPage.Chat}`
     );
+
+    this.chatSocket.onopen = () => {
+      console.log("Chat WebSocket connection opened");
+    };
 
     this.chatSocket.onmessage = (event) => {
       const data = JSON.parse(event.data);

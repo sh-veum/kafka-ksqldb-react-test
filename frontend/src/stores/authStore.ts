@@ -1,4 +1,4 @@
-import type { User } from "@/models/User";
+import type { UserDto } from "@/models/UserDto";
 import axios from "axios";
 import { defineStore } from "pinia";
 import { ref } from "vue";
@@ -13,7 +13,7 @@ export const useAuthStore = defineStore("auth", () => {
   const loading = ref(false);
   const error = ref<string | null>(null);
 
-  const login = async (user: User) => {
+  const login = async (user: UserDto) => {
     loading.value = true;
     error.value = null;
 
@@ -31,7 +31,7 @@ export const useAuthStore = defineStore("auth", () => {
     }
   };
 
-  const register = async (user: User) => {
+  const register = async (user: UserDto) => {
     loading.value = true;
     error.value = null;
 

@@ -2,6 +2,7 @@ using KafkaAuction.Constants;
 using KafkaAuction.Data;
 using KafkaAuction.Http;
 using KafkaAuction.Initializers;
+using KafkaAuction.Json;
 using KafkaAuction.Middleware;
 using KafkaAuction.Models;
 using KafkaAuction.Services;
@@ -20,7 +21,10 @@ var configuration = builder.Configuration;
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.PropertyNamingPolicy = new UpperCaseNamingPolicy();
+});
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -215,8 +219,9 @@ using (var scope = app.Services.CreateScope())
     {
         var auctionService = services.GetRequiredService<IAuctionService>();
         var chatService = services.GetRequiredService<IChatService>();
+        var ksqlDbService = services.GetRequiredService<IKsqlDbService>();
 
-        await KsqlDbInitializer.InitializeAsync(auctionService, chatService);
+        await KsqlDbInitializer.InitializeAsync(auctionService, chatService, ksqlDbService, logger);
     }
     catch (Exception ex)
     {

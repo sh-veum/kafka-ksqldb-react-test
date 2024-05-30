@@ -88,6 +88,13 @@ public class ChatService : IChatService
         return chatMessageDtos;
     }
 
+    /// <summary>
+    /// Gets messages for an auction using a pull query<br />
+    /// Pro: Fast-ish<br />
+    /// Con: Response is not sorted
+    /// </summary>
+    /// <param name="auction_id">Id of auction to get messages from</param>
+    /// <returns>A list of chat messages</returns>
     public async Task<List<ChatMessageDto>> GetMessagesForAuction(string auction_id)
     {
         var chatMessages = _context.CreatePullQuery<Chat_Message>($"queryable_{_chatMessageTableName}")
@@ -109,7 +116,14 @@ public class ChatService : IChatService
         return chatMessageDtos;
     }
 
-    public async Task<List<ChatMessageDto>> GetMessagesForAuctionAlternative(string auction_id)
+    /// <summary>
+    /// Get messages for an auction using a push query<br />
+    /// Pro: Response is already sorted<br />
+    /// Con: Slow as hell compared to pull queries
+    /// </summary>
+    /// <param name="auction_id">Id of auction to get messages from</param>
+    /// <returns>A list of chat messages</returns>
+    public async Task<List<ChatMessageDto>> GetMessagesForAuctionPushQuery(string auction_id)
     {
         var messages = new ConcurrentBag<ChatMessageDto>();
         var tcs = new TaskCompletionSource<List<ChatMessageDto>>();
