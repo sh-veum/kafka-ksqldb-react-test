@@ -35,12 +35,12 @@
 </template>
 
 <script setup lang="ts">
-import CheckStreams from "@/components/auction/CheckStreams.vue";
-import CheckTables from "@/components/auction/CheckTables.vue";
-import CreateStreams from "@/components/auction/CreateStreams.vue";
-import CreateTables from "@/components/auction/CreateTables.vue";
-import DropStreams from "@/components/auction/DropStreams.vue";
-import DropTables from "@/components/auction/DropTables.vue";
-import InsertAuction from "@/components/auction/InsertAuction.vue";
-import InsertAuctionBid from "@/components/auction/DebugInsertAuctionBid.vue";
+import CheckStreams from "@/components/debugComponents/CheckStreams.vue";
+import CheckTables from "@/components/debugComponents/CheckTables.vue";
+import CreateStreams from "@/components/debugComponents/CreateStreams.vue";
+import CreateTables from "@/components/debugComponents/CreateTables.vue";
+import DropStreams from "@/components/debugComponents/DropStreams.vue";
+import DropTables from "@/components/debugComponents/DropTables.vue";
+import InsertAuction from "@/components/debugComponents/InsertAuction.vue";
+import InsertAuctionBid from "@/components/debugComponents/InsertAuctionBid.vue";
 </script>

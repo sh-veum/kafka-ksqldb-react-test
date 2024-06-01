@@ -105,10 +105,6 @@ class WebSocketService {
 
     this.chatSocket.onerror = (error) => {
       console.error("Chat WebSocket error:", error);
-    };
-
-    this.chatSocket.onerror = (error) => {
-      console.error("Chat WebSocket error:", error);
       onError("Failed to connect to the WebSocket.");
     };
   }

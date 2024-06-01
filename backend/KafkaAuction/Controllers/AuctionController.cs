@@ -51,7 +51,8 @@ public class AuctionController : ControllerBase
             Auction_Id = Guid.NewGuid().ToString(),
             Title = auctionCreatorDto.Title,
             Description = auctionCreatorDto.Description,
-            Starting_Price = auctionCreatorDto.Starting_Price
+            Starting_Price = auctionCreatorDto.Starting_Price,
+            Current_Price = auctionCreatorDto.Starting_Price
         };
 
         HttpResponseMessage result = await _auctionService.InsertAuctionAsync(auction);

@@ -2,6 +2,12 @@
   <v-card>
     <h1>Insert Auction Bid</h1>
     <v-form @submit.prevent="insertAuctionBid">
+      <v-text-field
+        v-model="auctionId"
+        label="Auction Id"
+        type="string"
+        required
+      ></v-text-field>
       <v-text-field v-model="username" label="Username" required></v-text-field>
       <v-text-field
         v-model="bidAmount"
@@ -37,18 +43,17 @@ const auctionStore = useAuctionStore();
 const username = ref<string | null>(null);
 const bidAmount = ref<number | null>(null);
 const result = ref<object | null>(null);
+const auctionId = ref<string | null>(null);
 const formattedResult = ref<string>("");
-
-const props = defineProps<{ auctionId: string }>();
 
 const insertAuctionBid = async () => {
   if (
-    props.auctionId !== null &&
+    auctionId.value !== null &&
     username.value !== null &&
     bidAmount.value !== null
   ) {
     const response = await auctionStore.insertAuctionBid({
-      Auction_Id: props.auctionId,
+      Auction_Id: auctionId.value,
       Username: username.value,
       Bid_Amount: bidAmount.value,
     });

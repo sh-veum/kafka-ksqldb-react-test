@@ -1,5 +1,6 @@
 using KafkaAuction.Models;
 using KafkaAuction.Services.Interfaces;
+using ksqlDb.RestApi.Client.FluentAPI.Builders;
 using ksqlDB.RestApi.Client.KSql.RestApi.Responses.Streams;
 using ksqlDB.RestApi.Client.KSql.RestApi.Responses.Tables;
 
@@ -69,6 +70,7 @@ public static class KsqlDbInitializer
                 Title = $"Auction {i}",
                 Description = $"Description for Auction {i}",
                 Starting_Price = 1,
+                Current_Price = 1,
                 Created_At = DateTime.UtcNow.AddSeconds(+i).ToString("yyyy-MM-dd HH:mm:ss"),
             };
             auctions.Add(auction);

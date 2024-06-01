@@ -35,6 +35,7 @@ export const useChatStore = defineStore("chat", () => {
         `${baseUrl}/api/chat/get_messages_for_auction?auction_Id=${auctionId}&sortByDate=true`
       );
       chatMessages.value = response.data;
+      console.log(chatMessages.value);
       return true;
     } catch (err) {
       error.value = "Failed to retrieve chat messages";
@@ -55,6 +56,7 @@ export const useChatStore = defineStore("chat", () => {
         `${baseUrl}/api/chat/get_messages_for_auction_push_query?auction_Id=${auctionId}`
       );
       chatMessagesAlt.value = response.data;
+      console.log(chatMessagesAlt.value);
       return true;
     } catch (err) {
       error.value = "Failed to retrieve chat messages";

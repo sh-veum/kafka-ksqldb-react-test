@@ -61,7 +61,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useAuctionStore } from "@/stores/auctionStore";
 import router from "@/router";
-import InsertAuction from "@/components/auction/InsertAuction.vue";
+import InsertAuction from "@/components/debugComponents/InsertAuction.vue";
 
 const auctionStore = useAuctionStore();
 const sortOrder = ref("Latest");

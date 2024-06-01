@@ -14,6 +14,7 @@ using ksqlDB.RestApi.Client.KSql.Query.Context;
 using ksqlDB.RestApi.Client.KSql.RestApi;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using KsqlDBModelBuilder = ksqlDb.RestApi.Client.FluentAPI.Builders.ModelBuilder;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -93,7 +94,6 @@ builder.Services.AddHttpClient();
 
 var httpClientFactory = new HttpClientFactory(new Uri(ksqlDbUrl!));
 
-
 builder.Services.AddSingleton<IKSqlDbRestApiClient>(new KSqlDbRestApiClient(httpClientFactory));
 
 // AuctionService
@@ -129,6 +129,8 @@ builder.Services.AddScoped(typeof(StreamCreator<>));
 builder.Services.AddSingleton<IAuctionWebSocketService, AuctionWebSocketService>();
 builder.Services.AddSingleton<IChatWebSocketService, ChatWebSocketService>();
 builder.Services.AddSingleton<IWebSocketHandler, WebSocketHandler>();
+
+builder.Services.AddHostedService<WebSocketLoggerService>();
 
 // CORS policy with the frontend
 builder.Services.AddCors(options =>

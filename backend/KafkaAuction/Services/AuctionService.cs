@@ -46,8 +46,7 @@ public class AuctionService : IAuctionService
         var auctionTableCreator = new TableCreator<Auction>(_restApiProvider, _logger);
         if (!await auctionTableCreator.CreateTableAsync(_auctionsTableName, cancellationToken))
         {
-            throw new InvalidOperationException("Failed to create table");
-
+            throw new InvalidOperationException($"Failed to create {_auctionsTableName} table");
         }
 
         // Create a queryable table of the auctions table
@@ -63,7 +62,7 @@ public class AuctionService : IAuctionService
 
         if (!await auctionBidTableCreator.CreateStreamAsync(_auctionBidsStreamName, cancellationToken))
         {
-            throw new InvalidOperationException("Failed to create stream");
+            throw new InvalidOperationException($"Failed to create {_auctionBidsStreamName} stream");
         }
 
         // Return all streams
