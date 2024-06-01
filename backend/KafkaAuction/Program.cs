@@ -2,6 +2,7 @@ using KafkaAuction.Constants;
 using KafkaAuction.Data;
 using KafkaAuction.Http;
 using KafkaAuction.Initializers;
+using KafkaAuction.Json;
 using KafkaAuction.Middleware;
 using KafkaAuction.Models;
 using KafkaAuction.Services;
@@ -13,6 +14,7 @@ using ksqlDB.RestApi.Client.KSql.Query.Context;
 using ksqlDB.RestApi.Client.KSql.RestApi;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using KsqlDBModelBuilder = ksqlDb.RestApi.Client.FluentAPI.Builders.ModelBuilder;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,10 +22,45 @@ var configuration = builder.Configuration;
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.PropertyNamingPolicy = new UpperCaseNamingPolicy();
+});
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "My API", Version = "v1" });
+
+    // Define the Bearer Authentication Scheme
+    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Description = "Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+        Name = "Authorization",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "Bearer"
+    });
+
+    // Ensure every request is authorized using the defined scheme
+    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                },
+                Scheme = "oauth2",
+                Name = "Bearer",
+                In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+            },
+            new List<string>()
+        }
+    });
+});
 
 builder.Services.AddAuthentication()
     .AddBearerToken(IdentityConstants.BearerScheme);
@@ -56,7 +93,6 @@ builder.Services.AddSingleton<KSqlDBContext>(provider =>
 builder.Services.AddHttpClient();
 
 var httpClientFactory = new HttpClientFactory(new Uri(ksqlDbUrl!));
-
 
 builder.Services.AddSingleton<IKSqlDbRestApiClient>(new KSqlDbRestApiClient(httpClientFactory));
 
@@ -93,6 +129,8 @@ builder.Services.AddScoped(typeof(StreamCreator<>));
 builder.Services.AddSingleton<IAuctionWebSocketService, AuctionWebSocketService>();
 builder.Services.AddSingleton<IChatWebSocketService, ChatWebSocketService>();
 builder.Services.AddSingleton<IWebSocketHandler, WebSocketHandler>();
+
+builder.Services.AddHostedService<WebSocketLoggerService>();
 
 // CORS policy with the frontend
 builder.Services.AddCors(options =>
@@ -183,8 +221,9 @@ using (var scope = app.Services.CreateScope())
     {
         var auctionService = services.GetRequiredService<IAuctionService>();
         var chatService = services.GetRequiredService<IChatService>();
+        var ksqlDbService = services.GetRequiredService<IKsqlDbService>();
 
-        await KsqlDbInitializer.InitializeAsync(auctionService, chatService);
+        await KsqlDbInitializer.InitializeAsync(auctionService, chatService, ksqlDbService, logger);
     }
     catch (Exception ex)
     {

@@ -27,7 +27,7 @@ public class ChatWebSocketService : IChatWebSocketService
         _logger.LogInformation($"Subscribing to Chat Messages for auctionId: {auctionId}");
 
         var subscription = _context.CreatePushQuery<Chat_Message>()
-            .WithOffsetResetPolicy(AutoOffsetReset.Earliest)
+            .WithOffsetResetPolicy(AutoOffsetReset.Latest)
             .Where(p => p.Auction_Id == auctionId)
             .Select(l => new ChatMessageDto
             {

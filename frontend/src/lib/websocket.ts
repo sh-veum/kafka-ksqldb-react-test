@@ -1,6 +1,6 @@
 import { WebPage } from "@/Enums/webPage";
 
-const baseUrl = `${import.meta.env.VITE_API_URL}/ws`;
+const baseUrl = `${import.meta.env.VITE_API_WEBSOCKET_URL}`;
 
 class WebSocketService {
   private auctionOverviewSocket: WebSocket | null = null;
@@ -18,6 +18,10 @@ class WebSocketService {
     this.auctionOverviewSocket = new WebSocket(
       `${baseUrl}?auctionId=none&webPage=${WebPage.AuctionOverview}`
     );
+
+    this.auctionOverviewSocket.onopen = () => {
+      console.log("Auction overview WebSocket connection opened");
+    };
 
     this.auctionOverviewSocket.onmessage = (event) => {
       const data = JSON.parse(event.data);
@@ -52,6 +56,10 @@ class WebSocketService {
       `${baseUrl}?auctionId=${auctionId}&webPage=${WebPage.SpesificAuction}`
     );
 
+    this.bidSocket.onopen = () => {
+      console.log("Bid WebSocket connection opened");
+    };
+
     this.bidSocket.onmessage = (event) => {
       const data = JSON.parse(event.data);
       console.log("Bid WebSocket message received:", data);
@@ -81,6 +89,10 @@ class WebSocketService {
       `${baseUrl}?auctionId=${auctionId}&webPage=${WebPage.Chat}`
     );
 
+    this.chatSocket.onopen = () => {
+      console.log("Chat WebSocket connection opened");
+    };
+
     this.chatSocket.onmessage = (event) => {
       const data = JSON.parse(event.data);
       console.log("Chat WebSocket message received:", data);
@@ -89,10 +101,6 @@ class WebSocketService {
 
     this.chatSocket.onclose = () => {
       console.log("Chat WebSocket connection closed");
-    };
-
-    this.chatSocket.onerror = (error) => {
-      console.error("Chat WebSocket error:", error);
     };
 
     this.chatSocket.onerror = (error) => {

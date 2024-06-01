@@ -11,4 +11,5 @@ public interface IChatService
     Task DropTablesAsync();
     Task<List<ChatMessageWithAuctionIdDto>> GetAllMessages();
     Task<List<ChatMessageDto>> GetMessagesForAuction(string auction_id);
+    Task<List<ChatMessageDto>> GetMessagesForAuctionPushQuery(string auction_id);
 }

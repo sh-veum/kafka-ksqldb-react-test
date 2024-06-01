@@ -1,9 +1,8 @@
 using System.ComponentModel.DataAnnotations;
-using ksqlDB.RestApi.Client.KSql.Query;
 
 namespace KafkaAuction.Models;
 
-public class User_Activity : Record
+public record User_Activity
 {
     [Key]
     public required string User_Id { get; set; }

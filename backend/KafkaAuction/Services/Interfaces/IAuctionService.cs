@@ -17,4 +17,6 @@ public interface IAuctionService
     Task<Auction?> GetAuction(string auction_id);
     Task<List<AuctionBidDtoWithTimeStamp>> GetAllBids();
     Task<StreamsResponse[]> CreateAuctionsWithBidsStreamAsync(CancellationToken cancellationToken = default);
+    Task<List<AuctionBidDtoWithTimeStamp>> GetBidsForAuction(string auction_id);
+    Task<List<AuctionBidMessageDto>> GetBidMessagesForAuction(string auction_id);
 }

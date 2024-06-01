@@ -1,6 +1,7 @@
 using KafkaAuction.Dtos;
 using KafkaAuction.Models;
 using KafkaAuction.Services.Interfaces;
+using KafkaAuction.Utilities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KafkaAuction.Controllers;
@@ -50,7 +51,8 @@ public class AuctionController : ControllerBase
             Auction_Id = Guid.NewGuid().ToString(),
             Title = auctionCreatorDto.Title,
             Description = auctionCreatorDto.Description,
-            Starting_Price = auctionCreatorDto.Starting_Price
+            Starting_Price = auctionCreatorDto.Starting_Price,
+            Current_Price = auctionCreatorDto.Starting_Price
         };
 
         HttpResponseMessage result = await _auctionService.InsertAuctionAsync(auction);
@@ -101,9 +103,14 @@ public class AuctionController : ControllerBase
 
     [HttpGet("get_all_auctions")]
     [ProducesResponseType(typeof(AuctionDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAllAuctions()
+    public async Task<IActionResult> GetAllAuctions([FromQuery] bool sortByDate = false)
     {
         var auctions = await _auctionService.GetAllAuctions();
+
+        if (sortByDate)
+        {
+            auctions = Sorter.SortByDate(auctions, auction => auction.Created_At);
+        }
 
         return Ok(auctions);
     }
@@ -119,12 +126,23 @@ public class AuctionController : ControllerBase
 
     [HttpGet("get_auctions")]
     [ProducesResponseType(typeof(AuctionDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetActions([FromQuery] int limit)
+    public async Task<IActionResult> GetAuctions([FromQuery] int limit, [FromQuery] bool sortByDate = false)
     {
         var auctions = await _auctionService.GetAuctions(limit);
+
+        if (sortByDate)
+        {
+            auctions = Sorter.SortByDate(auctions, auction => auction.Created_At);
+        }
 
         return Ok(auctions);
     }
 
+    [HttpGet("get_bid_messages_for_auction")]
+    public async Task<IActionResult> GetBidMessagesForAuction(string auction_Id)
+    {
+        var messages = await _auctionService.GetBidMessagesForAuction(auction_Id);
 
+        return Ok(messages);
+    }
 }

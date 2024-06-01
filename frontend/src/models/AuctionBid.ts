@@ -1,5 +1,5 @@
 export interface AuctionBid {
-  auction_Id: string;
-  username: string;
-  bid_Amount: number;
+  Auction_Id: string;
+  Username: string;
+  Bid_Amount: number;
 }

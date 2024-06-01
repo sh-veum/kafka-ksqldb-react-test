@@ -1,20 +1,26 @@
 <template>
   <main>
-    <h1>Auction Overview</h1>
-    <div>
-      <InsertAuction />
-    </div>
     <v-container fluid>
+      <h1>Auction Overview</h1>
+      <div>
+        <InsertAuction />
+      </div>
+      <div class="mt-4">
+        <v-select
+          v-model="sortOrder"
+          :items="['Latest', 'Earliest']"
+          label="Sort by"
+          variant="outlined"
+        ></v-select>
+      </div>
       <v-row>
-        <v-col cols="12">
-          <v-select
-            v-model="sortOrder"
-            :items="['Latest', 'Earliest']"
-            label="Sort by"
-            variant="outlined"
-          ></v-select>
+        <v-col cols="12" md="4" v-if="loading" v-for="n in 3" :key="n">
+          <v-skeleton-loader
+            type="heading, list-item-two-line, list-item@4, button"
+          ></v-skeleton-loader>
         </v-col>
         <v-col
+          v-else
           v-for="(auction, index) in sortedMessages"
           :key="index"
           cols="12"
@@ -55,7 +61,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useAuctionStore } from "@/stores/auctionStore";
 import router from "@/router";
-import InsertAuction from "@/components/auction/InsertAuction.vue";
+import InsertAuction from "@/components/debugComponents/InsertAuction.vue";
 
 const auctionStore = useAuctionStore();
 const sortOrder = ref("Latest");
@@ -78,19 +84,18 @@ const navigateToAuction = (auctionId: string) => {
   router.push(`/auction/${auctionId}`);
 };
 
-onMounted(() => {
-  auctionStore.connectAuctionOverviewWebSocket(onFirstMessage, onError);
+onMounted(async () => {
+  await auctionStore.getAllTables();
+  loading.value = false;
+  auctionStore.connectAuctionOverviewWebSocket(onError);
 });
 
 onBeforeUnmount(() => {
   auctionStore.disconnectAuctionOverviewWebSocket();
 });
 
-function onFirstMessage() {
-  loading.value = false;
-}
-
 function onError(err: string) {
+  console.log("Error occured");
   loading.value = false;
   error.value = err;
 }

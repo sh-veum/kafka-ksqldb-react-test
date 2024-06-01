@@ -46,8 +46,7 @@ public class AuctionService : IAuctionService
         var auctionTableCreator = new TableCreator<Auction>(_restApiProvider, _logger);
         if (!await auctionTableCreator.CreateTableAsync(_auctionsTableName, cancellationToken))
         {
-            throw new InvalidOperationException("Failed to create table");
-
+            throw new InvalidOperationException($"Failed to create {_auctionsTableName} table");
         }
 
         // Create a queryable table of the auctions table
@@ -63,7 +62,7 @@ public class AuctionService : IAuctionService
 
         if (!await auctionBidTableCreator.CreateStreamAsync(_auctionBidsStreamName, cancellationToken))
         {
-            throw new InvalidOperationException("Failed to create stream");
+            throw new InvalidOperationException($"Failed to create {_auctionBidsStreamName} stream");
         }
 
         // Return all streams
@@ -187,9 +186,9 @@ public class AuctionService : IAuctionService
                 Auction_Id = auction.Auction_Id,
                 Title = auction.Title,
                 Description = auction.Description,
+                Number_Of_Bids = auction.Number_Of_Bids,
                 Starting_Price = auction.Starting_Price,
                 Current_Price = auction.Current_Price,
-                Number_Of_Bids = auction.Number_Of_Bids,
                 Winner = auction.Winner,
                 Created_At = auction.Created_At
             });
@@ -249,6 +248,47 @@ public class AuctionService : IAuctionService
             auctionBidDtos.Add(new AuctionBidDtoWithTimeStamp
             {
                 Auction_Id = auctionBid.Auction_Id,
+                Username = auctionBid.Username,
+                Bid_Amount = auctionBid.Bid_Amount,
+                Timestamp = auctionBid.Timestamp
+            });
+        }
+
+        return auctionBidDtos;
+    }
+
+    public async Task<List<AuctionBidDtoWithTimeStamp>> GetBidsForAuction(string auction_id)
+    {
+        var auctionBids = _context.CreatePullQuery<Auction_Bid>()
+            .Where(a => a.Auction_Id == auction_id);
+
+        List<AuctionBidDtoWithTimeStamp> auctionBidDtos = [];
+
+        await foreach (var auctionBid in auctionBids.GetManyAsync().ConfigureAwait(false))
+        {
+            auctionBidDtos.Add(new AuctionBidDtoWithTimeStamp
+            {
+                Auction_Id = auctionBid.Auction_Id,
+                Username = auctionBid.Username,
+                Bid_Amount = auctionBid.Bid_Amount,
+                Timestamp = auctionBid.Timestamp
+            });
+        }
+
+        return auctionBidDtos;
+    }
+
+    public async Task<List<AuctionBidMessageDto>> GetBidMessagesForAuction(string auction_id)
+    {
+        var auctionBids = _context.CreatePullQuery<Auction_Bid>()
+            .Where(a => a.Auction_Id == auction_id);
+
+        List<AuctionBidMessageDto> auctionBidDtos = [];
+
+        await foreach (var auctionBid in auctionBids.GetManyAsync().ConfigureAwait(false))
+        {
+            auctionBidDtos.Add(new AuctionBidMessageDto
+            {
                 Username = auctionBid.Username,
                 Bid_Amount = auctionBid.Bid_Amount,
                 Timestamp = auctionBid.Timestamp

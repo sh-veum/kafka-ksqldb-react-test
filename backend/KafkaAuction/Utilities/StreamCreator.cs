@@ -47,15 +47,15 @@ public class StreamCreator<T>
             var columnType = TypeMapper.GetKSqlType(property.PropertyType);
 
             // Exclude unwanted properties
-            if (
-                columnName == "headers" ||
-                columnName == "rowoffset" ||
-                columnName == "rowpartition" ||
-                columnName == "rowtime"
-                )
-            {
-                continue;
-            }
+            // if (
+            //     columnName == "headers" ||
+            //     columnName == "rowoffset" ||
+            //     columnName == "rowpartition" ||
+            //     columnName == "rowtime"
+            //     )
+            // {
+            //     continue;
+            // }
 
             if (property.GetCustomAttribute<KeyAttribute>() != null)
             {

@@ -41,10 +41,9 @@ services:
       KAFKA_LOG_RETENTION_BYTES: -1 # This sets the retention size to indefinite
     # volumes:
     #   - ./backend/.containers/kafka:/var/lib/kafka/data
-    restart: on-failure
     deploy:
       restart_policy:
-        condition: any
+        condition: on-failure
         delay: 5s
         window: 120s
 
@@ -84,6 +83,7 @@ services:
       KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: "true"
       KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: "true"
       # Configuration to embed Kafka Connect support.
+      # No clue if this is needed, but it's here.
       KSQL_CONNECT_GROUP_ID: "ksql-connect-cluster"
       KSQL_CONNECT_BOOTSTRAP_SERVERS: "kafka:9092"
       KSQL_CONNECT_KEY_CONVERTER: "org.apache.kafka.connect.storage.StringConverter"
@@ -154,11 +154,11 @@ services:
       - dev
     volumes:
       - dataprotection-keys:/root/.aspnet/DataProtection-Keys
-    restart: on-failure
     deploy:
       restart_policy:
-        condition: any
-        delay: 5s
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
         window: 120s
 
   auctionDB:
