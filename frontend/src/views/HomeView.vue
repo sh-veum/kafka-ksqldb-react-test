@@ -53,6 +53,9 @@
           </v-card>
         </v-col>
       </v-row>
+      <v-row>
+        <RecentBidsContainer />
+      </v-row>
     </v-container>
   </main>
 </template>
@@ -62,6 +65,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useAuctionStore } from "@/stores/auctionStore";
 import router from "@/router";
 import InsertAuction from "@/components/debugComponents/InsertAuction.vue";
+import RecentBidsContainer from "@/components/bids/RecentBidsContainer.vue";
 
 const auctionStore = useAuctionStore();
 const sortOrder = ref("Latest");
@@ -69,7 +73,8 @@ const loading = ref(true);
 const error = ref<string | null>(null);
 
 const sortedMessages = computed(() => {
-  return auctionStore.auctionMessages.sort((a, b) => {
+  const messagesArray = Array.from(auctionStore.auctionMessages.values());
+  return messagesArray.sort((a, b) => {
     const dateA = new Date(a.Created_At);
     const dateB = new Date(b.Created_At);
     if (sortOrder.value === "Latest") {
@@ -95,7 +100,7 @@ onBeforeUnmount(() => {
 });
 
 function onError(err: string) {
-  console.log("Error occured");
+  console.log("Error occurred");
   loading.value = false;
   error.value = err;
 }

@@ -1,5 +1,6 @@
-export enum WebPage {
+export enum WebSocketSubscription {
   AuctionOverview = "AuctionOverview",
   SpesificAuction = "SpesificAuction",
   Chat = "Chat",
+  AllRecentBids = "AllRecentBids",
 }

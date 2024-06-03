@@ -2,11 +2,14 @@ using KafkaAuction.Services.Interfaces.WebSocketService;
 
 namespace KafkaAuction.Services.WebSocketService;
 
+/// <summary>
+/// Used for logging the number of active WebSocket connections.
+/// </summary>
 public class WebSocketLoggerService : BackgroundService
 {
     private readonly ILogger<WebSocketLoggerService> _logger;
     private readonly IWebSocketHandler _webSocketHandler;
-    private readonly TimeSpan _interval = TimeSpan.FromSeconds(10);
+    private readonly TimeSpan _interval = TimeSpan.FromSeconds(30);
 
     public WebSocketLoggerService(ILogger<WebSocketLoggerService> logger, IWebSocketHandler webSocketHandler)
     {

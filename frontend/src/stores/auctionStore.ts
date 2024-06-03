@@ -6,6 +6,7 @@ import { webSocketService } from "@/lib/webSocket";
 import type { AuctionCreator } from "@/models/AuctionCreator";
 import type { AuctionMessage } from "@/models/AuctionMessage";
 import type { AuctionBidsMessage } from "@/models/AuctionBidsMessage";
+import type { RecentBidMessage } from "@/models/RecentBidMessage";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
@@ -13,8 +14,9 @@ export const useAuctionStore = defineStore("auction", () => {
   // is this even used?
   const loading = ref(false);
   const error = ref<string | null>(null);
-  const auctionMessages = ref<AuctionMessage[]>([]);
+  const auctionMessages = ref<Map<string, AuctionMessage>>(new Map());
   const auctionBidsMessages = ref<AuctionBidsMessage[]>([]);
+  const allRecentBidsMessages = ref<RecentBidMessage[]>([]);
 
   const createTables = async () => {
     loading.value = true;
@@ -109,7 +111,11 @@ export const useAuctionStore = defineStore("auction", () => {
       const response = await axios.get(
         `${baseUrl}/api/auction/get_all_auctions?sortByDate=true`
       );
-      auctionMessages.value = response.data;
+      const messages: AuctionMessage[] = response.data;
+      auctionMessages.value.clear();
+      messages.forEach((message) => {
+        auctionMessages.value.set(message.Auction_Id, message);
+      });
     } catch (err) {
       error.value = "Failed to retrieve tables";
       console.error(err);
@@ -140,8 +146,11 @@ export const useAuctionStore = defineStore("auction", () => {
   };
 
   function connectAuctionOverviewWebSocket(onError: (err: string) => void) {
-    webSocketService.connectAuctionOverview((data) => {
-      auctionMessages.value.push(data);
+    webSocketService.connectAuctionOverview((data: AuctionMessage) => {
+      if (!auctionMessages.value) {
+        auctionMessages.value = new Map();
+      }
+      auctionMessages.value.set(data.Auction_Id, data);
     }, onError);
   }
 
@@ -158,6 +167,12 @@ export const useAuctionStore = defineStore("auction", () => {
     );
   }
 
+  function connectAllRecentBidsWebSocket(onError: (err: string) => void) {
+    webSocketService.connectAllRecentBids((data) => {
+      allRecentBidsMessages.value.push(data);
+    }, onError);
+  }
+
   function disconnectAuctionOverviewWebSocket() {
     webSocketService.disconnectAuctionOverview();
   }
@@ -166,101 +181,28 @@ export const useAuctionStore = defineStore("auction", () => {
     webSocketService.disconnectBids();
   }
 
+  function disconnectAllRecentBidsWebSocket() {
+    webSocketService.disconnectAllRecentBids();
+  }
+
   return {
     loading,
     error,
+    auctionMessages,
+    auctionBidsMessages,
+    allRecentBidsMessages,
     createTables,
     createStreams,
     insertAuction,
     insertAuctionBid,
     dropTables,
-    auctionMessages,
-    auctionBidsMessages,
-    connectAuctionOverviewWebSocket,
-    connectBidsWebSocket,
-    disconnectAuctionOverviewWebSocket,
-    disconnectBidsWebSocket,
     getAllTables,
     getAuctionBidsForAuction,
-  };
-});
-
-export const useOverviewStore = defineStore("overview", () => {
-  const loading = ref(false);
-  const error = ref<string | null>(null);
-
-  const checkTables = async () => {
-    loading.value = true;
-    error.value = null;
-    try {
-      const response = await axios.get(`${baseUrl}/api/overview/check_tables`);
-      return response.data;
-    } catch (err) {
-      error.value = "Failed to check tables";
-      console.error(err);
-    } finally {
-      loading.value = false;
-    }
-  };
-
-  const checkStreams = async () => {
-    loading.value = true;
-    error.value = null;
-    try {
-      const response = await axios.get(`${baseUrl}/api/overview/check_streams`);
-      return response.data;
-    } catch (err) {
-      error.value = "Failed to check streams";
-      console.error(err);
-    } finally {
-      loading.value = false;
-    }
-  };
-
-  const dropTable = async (tableName: string) => {
-    loading.value = true;
-    error.value = null;
-    try {
-      const response = await axios.delete(
-        `${baseUrl}/api/overview/drop_table`,
-        {
-          params: { tableName },
-        }
-      );
-      return response.data;
-    } catch (err) {
-      error.value = "Failed to drop table";
-      console.error(err);
-    } finally {
-      loading.value = false;
-    }
-  };
-
-  const dropStream = async (streamName: string) => {
-    loading.value = true;
-    error.value = null;
-    try {
-      const response = await axios.delete(
-        `${baseUrl}/api/overview/drop_stream`,
-        {
-          params: { streamName },
-        }
-      );
-      return response.data;
-    } catch (err) {
-      error.value = "Failed to drop stream";
-      console.error(err);
-    } finally {
-      loading.value = false;
-    }
-  };
-
-  return {
-    loading,
-    error,
-    checkTables,
-    checkStreams,
-    dropTable,
-    dropStream,
+    connectAuctionOverviewWebSocket,
+    connectBidsWebSocket,
+    connectAllRecentBidsWebSocket,
+    disconnectAuctionOverviewWebSocket,
+    disconnectBidsWebSocket,
+    disconnectAllRecentBidsWebSocket,
   };
 });

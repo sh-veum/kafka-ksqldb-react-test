@@ -1,4 +1,4 @@
-import { WebPage } from "@/Enums/webPage";
+import { WebSocketSubscription } from "@/Enums/webSocketSubscription";
 
 const baseUrl = `${import.meta.env.VITE_API_WEBSOCKET_URL}`;
 
@@ -6,6 +6,7 @@ class WebSocketService {
   private auctionOverviewSocket: WebSocket | null = null;
   private bidSocket: WebSocket | null = null;
   private chatSocket: WebSocket | null = null;
+  private allRecentBidsSocket: WebSocket | null = null;
 
   connectAuctionOverview(
     onMessage: (data: any) => void,
@@ -16,7 +17,7 @@ class WebSocketService {
     }
 
     this.auctionOverviewSocket = new WebSocket(
-      `${baseUrl}?auctionId=none&webPage=${WebPage.AuctionOverview}`
+      `${baseUrl}?auctionId=none&webSocketSubscription=${WebSocketSubscription.AuctionOverview}`
     );
 
     this.auctionOverviewSocket.onopen = () => {
@@ -53,7 +54,7 @@ class WebSocketService {
     }
 
     this.bidSocket = new WebSocket(
-      `${baseUrl}?auctionId=${auctionId}&webPage=${WebPage.SpesificAuction}`
+      `${baseUrl}?auctionId=${auctionId}&webSocketSubscription=${WebSocketSubscription.SpesificAuction}`
     );
 
     this.bidSocket.onopen = () => {
@@ -86,7 +87,7 @@ class WebSocketService {
     }
 
     this.chatSocket = new WebSocket(
-      `${baseUrl}?auctionId=${auctionId}&webPage=${WebPage.Chat}`
+      `${baseUrl}?auctionId=${auctionId}&webSocketSubscription=${WebSocketSubscription.Chat}`
     );
 
     this.chatSocket.onopen = () => {
@@ -109,6 +110,42 @@ class WebSocketService {
     };
   }
 
+  connectAllRecentBids(
+    onMessage: (data: any) => void,
+    onError: (err: string) => void
+  ) {
+    if (this.allRecentBidsSocket) {
+      this.allRecentBidsSocket.close();
+    }
+
+    this.allRecentBidsSocket = new WebSocket(
+      `${baseUrl}?auctionId=none&webSocketSubscription=${WebSocketSubscription.AllRecentBids}`
+    );
+
+    this.allRecentBidsSocket.onopen = () => {
+      console.log("All recent bids WebSocket connection opened");
+    };
+
+    this.allRecentBidsSocket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log("All recent bids WebSocket message received:", data);
+      onMessage(data);
+    };
+
+    this.allRecentBidsSocket.onclose = () => {
+      console.log("All recent bids WebSocket connection closed");
+    };
+
+    this.allRecentBidsSocket.onerror = (error) => {
+      console.error("All recent bids WebSocket error:", error);
+    };
+
+    this.allRecentBidsSocket.onerror = (error) => {
+      console.error("All recent bids WebSocket error:", error);
+      onError("Failed to connect to the WebSocket.");
+    };
+  }
+
   disconnectAuctionOverview() {
     if (this.auctionOverviewSocket) {
       this.auctionOverviewSocket.close();
@@ -124,6 +161,12 @@ class WebSocketService {
   disconnectChat() {
     if (this.chatSocket) {
       this.chatSocket.close();
+    }
+  }
+
+  disconnectAllRecentBids() {
+    if (this.allRecentBidsSocket) {
+      this.allRecentBidsSocket.close();
     }
   }
 }

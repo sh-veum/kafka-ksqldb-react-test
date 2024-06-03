@@ -24,10 +24,10 @@ public class WebSocketMiddleware
             {
                 var auctionId = context.Request.Query["auctionId"].ToString();
                 _logger.LogInformation("WebSocket connection requested for auctionId {AuctionId}.", auctionId);
-                var webPage = Enum.Parse<WebPages>(context.Request.Query["webPage"].ToString());
-                _logger.LogInformation("WebSocket connection requested for {Page}", webPage);
+                var webSocketSubscription = Enum.Parse<WebSocketSubscription>(context.Request.Query["webSocketSubscription"].ToString());
+                _logger.LogInformation("WebSocket connection requested for {Page}", webSocketSubscription);
                 var webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                await _webSocketHandler.HandleWebSocketAsync(context, webSocket, auctionId, webPage);
+                await _webSocketHandler.HandleWebSocketAsync(context, webSocket, auctionId, webSocketSubscription);
             }
             else
             {
