@@ -1,8 +1,9 @@
 namespace KafkaAuction.Enums;
 
-public enum WebPages
+public enum WebSocketSubscription
 {
     AuctionOverview,
     SpesificAuction,
-    Chat
+    Chat,
+    AllRecentBids
 }

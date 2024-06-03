@@ -59,13 +59,13 @@ public class AuctionWebSocketService : IAuctionWebSocketService
                 var buffer = Encoding.UTF8.GetBytes(message);
                 var segment = new ArraySegment<byte>(buffer);
 
-                _logger.LogInformation($"Sending message: {message}");
+                _logger.LogInformation($"Sending message from auction bid socket: {message}");
 
                 webSocket.SendAsync(segment, WebSocketMessageType.Text, true, CancellationToken.None);
             },
-            error => _logger.LogError(error, "Error in WebSocket subscription"));
+            error => _logger.LogError(error, "Error in SubscribeToAuctionBidUpdatesAsync WebSocket subscription"));
 
-        _logger.LogInformation("WebSocket subscription completed");
+        _logger.LogInformation("SubscribeToAuctionBidUpdatesAsync WebSocket subscription completed");
 
         // Keep the WebSocket open until closed by the client
         var buffer = new byte[1024 * 4];
@@ -101,13 +101,52 @@ public class AuctionWebSocketService : IAuctionWebSocketService
                 var buffer = Encoding.UTF8.GetBytes(message);
                 var segment = new ArraySegment<byte>(buffer);
 
-                _logger.LogInformation($"Sending message: {message}");
+                _logger.LogInformation($"Sending message from auction overview socket: {message}");
 
                 webSocket.SendAsync(segment, WebSocketMessageType.Text, true, CancellationToken.None);
             },
-            error => _logger.LogError(error, "Error in WebSocket subscription"));
+            error => _logger.LogError(error, "Error in SubscribeToAuctionOverviewUpdatesAsync WebSocket subscription"));
 
-        _logger.LogInformation("WebSocket subscription completed");
+        _logger.LogInformation("SubscribeToAuctionOverviewUpdatesAsync WebSocket subscription completed");
+
+        // Keep the WebSocket open until closed by the client
+        var buffer = new byte[1024 * 4];
+        WebSocketReceiveResult result;
+        do
+        {
+            result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+        } while (!result.CloseStatus.HasValue);
+
+        await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
+    }
+
+    public async Task SubscribeToAllRecentBidsAsync(WebSocket webSocket)
+    {
+        _logger.LogInformation("Subscribing to WebSocket for all recent bids");
+
+        var subscription = _context.CreatePushQuery<Auction_With_Bids>("AUCTIONS_WITH_BIDS")
+            .WithOffsetResetPolicy(AutoOffsetReset.Latest)
+            .Select(l => new AuctionWithBidDto
+            {
+                Title = l.Title,
+                Username = l.Username,
+                Bid_Amount = l.Bid_Amount,
+                Timestamp = l.Timestamp
+            })
+            .Subscribe(AuctionWithBids =>
+            {
+                var message = JsonConvert.SerializeObject(AuctionWithBids);
+                var buffer = Encoding.UTF8.GetBytes(message);
+                var segment = new ArraySegment<byte>(buffer);
+
+                var socketId = webSocket.GetHashCode();
+                _logger.LogInformation($"Sending message from socket {socketId}: {message}");
+
+                webSocket.SendAsync(segment, WebSocketMessageType.Text, true, CancellationToken.None);
+            },
+            error => _logger.LogError(error, "Error in SubscribeToAllRecentBidsAsync WebSocket subscription"));
+
+        _logger.LogInformation("SubscribeToAllRecentBidsAsync WebSocket subscription completed");
 
         // Keep the WebSocket open until closed by the client
         var buffer = new byte[1024 * 4];

@@ -28,8 +28,8 @@
 </template>
 
 <script setup lang="ts">
+import { useOverviewStore } from "@/stores/overviewStore";
 import { ref, watch } from "vue";
-import { useOverviewStore } from "@/stores/auctionStore";
 
 const overviewStore = useOverviewStore();
 const tableName = ref<string | null>(null);

@@ -20,24 +20,28 @@ public class WebSocketHandler : IWebSocketHandler
         _connections = new ConcurrentDictionary<WebSocket, bool>();
     }
 
-    public async Task HandleWebSocketAsync(HttpContext context, WebSocket webSocket, string auctionId, WebPages page)
+    public async Task HandleWebSocketAsync(HttpContext context, WebSocket webSocket, string auctionId, WebSocketSubscription webSocketSubscription)
     {
         _connections.TryAdd(webSocket, true);
-        _logger.LogInformation("WebSocket connection established for {Page} with auctionId {AuctionId}.", page, auctionId);
+        _logger.LogInformation("WebSocket connection established for {Page} with auctionId {AuctionId}.", webSocketSubscription, auctionId);
 
         try
         {
-            if (page == WebPages.AuctionOverview)
+            if (webSocketSubscription == WebSocketSubscription.AuctionOverview)
             {
                 await _auctionWebSocketService.SubscribeToAuctionOverviewUpdatesAsync(webSocket);
             }
-            else if (page == WebPages.SpesificAuction)
+            else if (webSocketSubscription == WebSocketSubscription.SpesificAuction)
             {
                 await _auctionWebSocketService.SubscribeToAuctionBidUpdatesAsync(webSocket, auctionId);
             }
-            else if (page == WebPages.Chat)
+            else if (webSocketSubscription == WebSocketSubscription.Chat)
             {
                 await _chatWebSocketService.SubscribeToChatMessagesForAuctionAsync(webSocket, auctionId);
+            }
+            else if (webSocketSubscription == WebSocketSubscription.AllRecentBids)
+            {
+                await _auctionWebSocketService.SubscribeToAllRecentBidsAsync(webSocket);
             }
             else
             {
