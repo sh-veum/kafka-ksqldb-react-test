@@ -7,14 +7,14 @@
         label="Stream Name"
         required
       ></v-text-field>
-      <v-btn type="submit" :loading="overviewStore.loading" color="error"
+      <v-btn type="submit" :loading="isLoading" color="error"
         >Drop Stream</v-btn
       >
     </v-form>
     <v-textarea
       label="Error"
-      v-if="overviewStore.error"
-      v-model="overviewStore.error"
+      v-if="errorMessage"
+      v-model="errorMessage"
       readonly
     ></v-textarea>
     <v-textarea
@@ -35,11 +35,17 @@ const overviewStore = useOverviewStore();
 const streamName = ref<string | null>(null);
 const result = ref<object | null>(null);
 const formattedResult = ref<string>("");
+const errorMessage = ref<string | null>(null);
+const isLoading = ref(true);
 
 const dropStream = async () => {
   if (streamName.value !== null) {
-    const response = await overviewStore.dropStream(streamName.value);
-    result.value = response;
+    const { data, loading, error } = await overviewStore.dropStream(
+      streamName.value
+    );
+    result.value = data;
+    isLoading.value = loading;
+    errorMessage.value = error;
   }
 };
 

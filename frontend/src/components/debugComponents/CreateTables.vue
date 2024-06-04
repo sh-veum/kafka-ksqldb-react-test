@@ -1,10 +1,8 @@
 <template>
   <v-card>
     <h1>Create Tables</h1>
-    <v-btn @click="createTables" :loading="auctionStore.loading"
-      >Create Tables</v-btn
-    >
-    <p v-if="auctionStore.error">{{ auctionStore.error }}</p>
+    <v-btn @click="createTables" :loading="isLoading">Create Tables</v-btn>
+    <p v-if="errorMessage">{{ errorMessage }}</p>
     <p v-if="result">{{ result }}</p>
   </v-card>
 </template>
@@ -14,9 +12,14 @@ import { ref } from "vue";
 import { useAuctionStore } from "@/stores/auctionStore";
 
 const auctionStore = useAuctionStore();
-const result = ref<string | null>(null);
+const result = ref<string>();
+const isLoading = ref(false);
+const errorMessage = ref<string | null>();
 
 const createTables = async () => {
-  result.value = await auctionStore.createTables();
+  const { data, loading, error } = await auctionStore.createTables();
+  result.value = data;
+  isLoading.value = loading;
+  errorMessage.value = error;
 };
 </script>

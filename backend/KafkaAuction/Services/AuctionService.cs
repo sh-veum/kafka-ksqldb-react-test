@@ -222,6 +222,30 @@ public class AuctionService : IAuctionService
         return auctionDtos;
     }
 
+    public async Task<AuctionDto?> GetAuctionById(string auction_id)
+    {
+        var auction = await _context.CreatePullQuery<Auction>($"queryable_{_auctionsTableName}")
+            .Where(a => a.Auction_Id == auction_id)
+            .FirstOrDefaultAsync();
+
+        if (auction == null)
+        {
+            return null;
+        }
+
+        return new AuctionDto
+        {
+            Auction_Id = auction.Auction_Id,
+            Title = auction.Title,
+            Description = auction.Description,
+            Starting_Price = auction.Starting_Price,
+            Current_Price = auction.Current_Price,
+            Number_Of_Bids = auction.Number_Of_Bids,
+            Winner = auction.Winner,
+            Created_At = auction.Created_At
+        };
+    }
+
     public async Task<Auction?> GetAuction(string auction_id)
     {
         var auction = await _context.CreatePullQuery<Auction>($"queryable_{_auctionsTableName}")

@@ -19,14 +19,12 @@
               type="number"
               required
             ></v-text-field>
-            <v-btn type="submit" :loading="auctionStore.loading"
-              >Insert Auction Bid</v-btn
-            >
+            <v-btn type="submit" :loading="loading">Insert Auction Bid</v-btn>
           </v-form>
           <v-textarea
             label="Error"
-            v-if="auctionStore.error"
-            v-model="auctionStore.error"
+            v-if="error"
+            v-model="error"
             readonly
           ></v-textarea>
           <v-textarea
@@ -55,6 +53,8 @@ const dialog = ref(false);
 const bidAmount = ref<number | null>(null);
 const result = ref<object | null>(null);
 const formattedResult = ref<string>("");
+const loading = ref(false);
+const error = ref<string | null>(null);
 
 const props = defineProps<{ auctionId: string; username: string }>();
 
@@ -64,13 +64,20 @@ const insertAuctionBid = async () => {
     props.username !== null &&
     bidAmount.value !== null
   ) {
-    const response = await auctionStore.insertAuctionBid({
-      Auction_Id: props.auctionId,
-      Username: props.username,
-      Bid_Amount: bidAmount.value,
-    });
-    console.log(response);
-    result.value = response;
+    loading.value = true;
+    error.value = null;
+    try {
+      const response = await auctionStore.insertAuctionBid({
+        Auction_Id: props.auctionId,
+        Username: props.username,
+        Bid_Amount: bidAmount.value,
+      });
+      result.value = response.data;
+    } catch (err) {
+      error.value = `Failed to insert auction bid: ${err}`;
+    } finally {
+      loading.value = false;
+    }
   }
 };
 

@@ -19,14 +19,12 @@
               type="number"
               required
             ></v-text-field>
-            <v-btn type="submit" :loading="auctionStore.loading"
-              >Insert Auction</v-btn
-            >
+            <v-btn type="submit" :loading="isLoading">Insert Auction</v-btn>
           </v-form>
           <v-textarea
             label="Error"
-            v-if="auctionStore.error"
-            v-model="auctionStore.error"
+            v-if="errorMessage"
+            v-model="errorMessage"
             readonly
           ></v-textarea>
           <v-textarea
@@ -57,20 +55,23 @@ const startingPrice = ref<number>(0);
 const result = ref<object | null>(null);
 const formattedResult = ref<string>("");
 const dialog = ref(false);
+const isLoading = ref(false);
+const errorMessage = ref<string | null>(null);
 
 const insertAuction = async () => {
-  if (
-    title.value !== null &&
-    description.value !== null &&
-    startingPrice.value !== null
-  ) {
-    const response = await auctionStore.insertAuction({
-      title: title.value,
-      description: description.value,
-      starting_Price: startingPrice.value,
-    });
-    result.value = response;
-  }
+  isLoading.value = true;
+  errorMessage.value = null;
+  result.value = null;
+
+  const { data, loading, error } = await auctionStore.insertAuction({
+    title: title.value,
+    description: description.value,
+    starting_Price: startingPrice.value,
+  });
+
+  result.value = data;
+  isLoading.value = loading;
+  errorMessage.value = error;
 };
 
 watch(result, (newResult) => {

@@ -1,5 +1,5 @@
 <template>
-  <v-col cols="12" md="6" class="d-flex flex-column">
+  <v-col cols="12" md="3" class="d-flex flex-column">
     <div v-if="chatLoading">
       <v-skeleton-loader type="list-item-two-line@8"></v-skeleton-loader>
     </div>
@@ -8,8 +8,8 @@
     </div>
     <v-container
       id="scroll-target"
-      class="overflow-y-auto"
-      style="max-height: 640px"
+      class="overflow-y-auto h-100"
+      style="max-height: 600px"
     >
       <template
         v-for="chatMessage in chatStore.chatMessages"

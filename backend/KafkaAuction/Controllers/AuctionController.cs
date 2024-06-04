@@ -115,15 +115,6 @@ public class AuctionController : ControllerBase
         return Ok(auctions);
     }
 
-    [HttpGet("get_all_bids")]
-    [ProducesResponseType(typeof(AuctionBidDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAllBids()
-    {
-        var auctionBids = await _auctionService.GetAllBids();
-
-        return Ok(auctionBids);
-    }
-
     [HttpGet("get_auctions")]
     [ProducesResponseType(typeof(AuctionDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAuctions([FromQuery] int limit, [FromQuery] bool sortByDate = false)
@@ -136,6 +127,24 @@ public class AuctionController : ControllerBase
         }
 
         return Ok(auctions);
+    }
+
+    [HttpGet("get_auction_by_id")]
+    [ProducesResponseType(typeof(AuctionDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAuctionById(string auction_id)
+    {
+        var auction = await _auctionService.GetAuctionById(auction_id);
+
+        return Ok(auction);
+    }
+
+    [HttpGet("get_all_bids")]
+    [ProducesResponseType(typeof(AuctionBidDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAllBids()
+    {
+        var auctionBids = await _auctionService.GetAllBids();
+
+        return Ok(auctionBids);
     }
 
     [HttpGet("get_bid_messages_for_auction")]
