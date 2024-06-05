@@ -114,6 +114,12 @@ builder.Services.AddScoped<IChatService, ChatService>(
         restApiProvider, configuration)
     );
 
+builder.Services.AddScoped<IUserLocationService, UserLocationService>(
+    sp => new UserLocationService(
+        sp.GetRequiredService<ILogger<UserLocationService>>(),
+        restApiProvider, configuration)
+    );
+
 builder.Services.AddScoped<IKsqlDbService, KsqlDbService>(
     sp => new KsqlDbService(
         sp.GetRequiredService<ILogger<KsqlDbService>>(),
@@ -221,9 +227,10 @@ using (var scope = app.Services.CreateScope())
     {
         var auctionService = services.GetRequiredService<IAuctionService>();
         var chatService = services.GetRequiredService<IChatService>();
+        var userLocationService = services.GetRequiredService<IUserLocationService>();
         var ksqlDbService = services.GetRequiredService<IKsqlDbService>();
 
-        await KsqlDbInitializer.InitializeAsync(auctionService, chatService, ksqlDbService, logger);
+        await KsqlDbInitializer.InitializeAsync(auctionService, chatService, userLocationService, ksqlDbService, logger);
     }
     catch (Exception ex)
     {
