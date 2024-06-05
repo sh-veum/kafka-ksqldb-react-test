@@ -1,4 +1,4 @@
-namespace NetBackend.Models.Dto;
+namespace NetBackend.Models.Dtos;
 
 public class UserInfoDto
 {

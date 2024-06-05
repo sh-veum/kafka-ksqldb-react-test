@@ -1,5 +1,6 @@
+<!-- TODO: New messages at the top -->
 <template>
-  <v-col cols="12" md="6" class="d-flex flex-column">
+  <v-col cols="12" class="d-flex flex-column">
     <div v-if="loading">
       <v-skeleton-loader type="list-item-two-line@8"></v-skeleton-loader>
     </div>
@@ -17,6 +18,7 @@
         :key="bidMessage.Timestamp"
       >
         <v-textarea
+          class="w-100"
           :label="formatTimestamp(bidMessage.Timestamp)"
           :model-value="formatBidMessage(bidMessage)"
           rows="1"

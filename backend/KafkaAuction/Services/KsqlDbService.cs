@@ -49,7 +49,7 @@ public class KsqlDbService : IKsqlDbService
         return await _restApiProvider.GetTablesAsync();
     }
 
-    public async Task<StreamsResponse[]> CheckStreams()
+    public async Task<StreamsResponse[]> CheckStreamsAsync()
     {
         return await _restApiProvider.GetStreamsAsync();
     }

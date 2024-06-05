@@ -14,6 +14,7 @@ public interface IAuctionService
     Task DropTablesAsync();
     Task<List<AuctionDto>> GetAllAuctions();
     Task<List<AuctionDto>> GetAuctions(int limit);
+    Task<AuctionDto?> GetAuctionById(string auction_id);
     Task<Auction?> GetAuction(string auction_id);
     Task<List<AuctionBidDtoWithTimeStamp>> GetAllBids();
     Task<StreamsResponse[]> CreateAuctionsWithBidsStreamAsync(CancellationToken cancellationToken = default);

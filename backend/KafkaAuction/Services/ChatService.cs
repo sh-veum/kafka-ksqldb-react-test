@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Reactive.Linq;
 using System.Text;
+using KafkaAuction.Constants;
 using KafkaAuction.Dtos;
 using KafkaAuction.Enums;
 using KafkaAuction.Models;
@@ -19,7 +20,7 @@ public class ChatService : IChatService
     private readonly ILogger<ChatService> _logger;
     private readonly IKSqlDbRestApiProvider _restApiProvider;
     private readonly KSqlDBContext _context;
-    private readonly string _chatMessageTableName = "CHAT_MESSAGES";
+    private readonly string _chatMessageTableName = TableNameConstants.ChatMessages;
 
     public ChatService(ILogger<ChatService> logger, IKSqlDbRestApiProvider restApiProvider, IConfiguration configuration)
     {

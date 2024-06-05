@@ -61,7 +61,7 @@ public class EntityInserter<T>
                 if (values.Length > 0) values.Append(", ");
 
                 columns.Append(property.Name);
-                values.Append(EntityInserter<T>.FormatValue(value));
+                values.Append(FormatValue(value));
             }
         }
 
@@ -77,6 +77,7 @@ public class EntityInserter<T>
         {
             DateTime dt => $"'{dt:yyyy-MM-dd HH:mm:ss}'", // Use a standard SQL datetime format
             string str => $"'{str.Replace("'", "''")}'", // Ensure strings are correctly escaped
+            string[] arr => $"ARRAY[{string.Join(", ", arr.Select(s => $"'{s.Replace("'", "''")}'"))}]", // Correctly format string arrays
             _ => value.ToString()
         };
     }

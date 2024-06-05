@@ -15,14 +15,12 @@
         type="number"
         required
       ></v-text-field>
-      <v-btn type="submit" :loading="auctionStore.loading"
-        >Insert Auction Bid</v-btn
-      >
+      <v-btn type="submit" :loading="isLoading">Insert Auction Bid</v-btn>
     </v-form>
     <v-textarea
       label="Error"
-      v-if="auctionStore.error"
-      v-model="auctionStore.error"
+      v-if="errorMessage"
+      v-model="errorMessage"
       readonly
     ></v-textarea>
     <v-textarea
@@ -40,25 +38,24 @@ import { ref, watch } from "vue";
 import { useAuctionStore } from "@/stores/auctionStore";
 
 const auctionStore = useAuctionStore();
+const auctionId = ref<string | null>(null);
 const username = ref<string | null>(null);
 const bidAmount = ref<number | null>(null);
 const result = ref<object | null>(null);
-const auctionId = ref<string | null>(null);
 const formattedResult = ref<string>("");
+const isLoading = ref(false);
+const errorMessage = ref<string | null>(null);
 
 const insertAuctionBid = async () => {
-  if (
-    auctionId.value !== null &&
-    username.value !== null &&
-    bidAmount.value !== null
-  ) {
-    const response = await auctionStore.insertAuctionBid({
+  if (auctionId.value && username.value && bidAmount.value) {
+    const { data, loading, error } = await auctionStore.insertAuctionBid({
       Auction_Id: auctionId.value,
       Username: username.value,
       Bid_Amount: bidAmount.value,
     });
-    console.log(response);
-    result.value = response;
+    result.value = data;
+    isLoading.value = loading;
+    errorMessage.value = error;
   }
 };
 

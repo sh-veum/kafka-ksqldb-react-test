@@ -14,7 +14,6 @@ using ksqlDB.RestApi.Client.KSql.Query.Context;
 using ksqlDB.RestApi.Client.KSql.RestApi;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using KsqlDBModelBuilder = ksqlDb.RestApi.Client.FluentAPI.Builders.ModelBuilder;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -111,6 +110,12 @@ builder.Services.AddScoped<IAuctionService, AuctionService>(
 builder.Services.AddScoped<IChatService, ChatService>(
     sp => new ChatService(
         sp.GetRequiredService<ILogger<ChatService>>(),
+        restApiProvider, configuration)
+    );
+
+builder.Services.AddScoped<IUserLocationService, UserLocationService>(
+    sp => new UserLocationService(
+        sp.GetRequiredService<ILogger<UserLocationService>>(),
         restApiProvider, configuration)
     );
 
@@ -221,9 +226,10 @@ using (var scope = app.Services.CreateScope())
     {
         var auctionService = services.GetRequiredService<IAuctionService>();
         var chatService = services.GetRequiredService<IChatService>();
+        var userLocationService = services.GetRequiredService<IUserLocationService>();
         var ksqlDbService = services.GetRequiredService<IKsqlDbService>();
 
-        await KsqlDbInitializer.InitializeAsync(auctionService, chatService, ksqlDbService, logger);
+        await KsqlDbInitializer.InitializeAsync(auctionService, chatService, userLocationService, ksqlDbService, logger);
     }
     catch (Exception ex)
     {

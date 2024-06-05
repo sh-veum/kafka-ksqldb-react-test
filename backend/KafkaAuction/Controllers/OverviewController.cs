@@ -37,7 +37,7 @@ public class OverviewController : ControllerBase
     [HttpGet("check_streams")]
     public async Task<IActionResult> CheckStreams()
     {
-        var result = await _ksqlDbService.CheckStreams();
+        var result = await _ksqlDbService.CheckStreamsAsync();
 
         if (result == null)
         {

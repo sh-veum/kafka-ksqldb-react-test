@@ -26,8 +26,22 @@ public class WebSocketMiddleware
                 _logger.LogInformation("WebSocket connection requested for auctionId {AuctionId}.", auctionId);
                 var webSocketSubscription = Enum.Parse<WebSocketSubscription>(context.Request.Query["webSocketSubscription"].ToString());
                 _logger.LogInformation("WebSocket connection requested for {Page}", webSocketSubscription);
+
+                var page = context.Request.Query["page"].ToString();
+                _logger.LogInformation("WebSocket connection requested for {Page}", page);
+                var userId = context.Request.Query["userId"].ToString() ?? Guid.NewGuid().ToString();
+                _logger.LogInformation("WebSocket connection requested for {UserId}", userId);
+
                 var webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                await _webSocketHandler.HandleWebSocketAsync(context, webSocket, auctionId, webSocketSubscription);
+
+                if (!string.IsNullOrEmpty(page) && !string.IsNullOrEmpty(userId))
+                {
+                    // await _webSocketHandler.HandlePageWebSocketAsync(context, page, userId);
+                }
+                else
+                {
+                    await _webSocketHandler.HandleWebSocketAsync(context, webSocket, auctionId, webSocketSubscription);
+                }
             }
             else
             {

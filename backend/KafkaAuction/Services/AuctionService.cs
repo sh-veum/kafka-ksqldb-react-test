@@ -1,5 +1,6 @@
 
 using System.Net;
+using KafkaAuction.Constants;
 using KafkaAuction.Dtos;
 using KafkaAuction.Enums;
 using KafkaAuction.Models;
@@ -7,6 +8,7 @@ using KafkaAuction.Services.Interfaces;
 using KafkaAuction.Utilities;
 using ksqlDB.RestApi.Client.KSql.Linq.PullQueries;
 using ksqlDB.RestApi.Client.KSql.Query.Context;
+using ksqlDB.RestApi.Client.KSql.RestApi.Extensions;
 using ksqlDB.RestApi.Client.KSql.RestApi.Responses.Streams;
 using ksqlDB.RestApi.Client.KSql.RestApi.Responses.Tables;
 using ksqlDB.RestApi.Client.KSql.RestApi.Statements;
@@ -18,9 +20,9 @@ public class AuctionService : IAuctionService
     private readonly ILogger<AuctionService> _logger;
     private readonly IKSqlDbRestApiProvider _restApiProvider;
     private readonly KSqlDBContext _context;
-    private readonly string _auctionsTableName = "AUCTIONS";
-    private readonly string _auctionBidsStreamName = "AUCTION_BIDS";
-    private readonly string _auctionsWithBidsStreamName = "AUCTIONS_WITH_BIDS";
+    private readonly string _auctionsTableName = TableNameConstants.Auctions;
+    private readonly string _auctionBidsStreamName = StreamNameConstants.AuctionBids;
+    private readonly string _auctionsWithBidsStreamName = StreamNameConstants.AuctionWithBids;
 
     public AuctionService(ILogger<AuctionService> logger, IKSqlDbRestApiProvider restApiProvider, IConfiguration configuration)
     {
@@ -172,7 +174,7 @@ public class AuctionService : IAuctionService
 
     public async Task<List<AuctionDto>> GetAllAuctions()
     {
-        var auctions = _context.CreatePullQuery<Auction>($"queryable_{_auctionsTableName}")
+        var auctions = _context.CreatePullQuery<Auction>($"QUERYABLE_{_auctionsTableName}")
             .GetManyAsync();
 
         // _logger.LogInformation("Found {amount} auctions", await auctions.CountAsync());
@@ -220,6 +222,30 @@ public class AuctionService : IAuctionService
         }
 
         return auctionDtos;
+    }
+
+    public async Task<AuctionDto?> GetAuctionById(string auction_id)
+    {
+        var auction = await _context.CreatePullQuery<Auction>($"queryable_{_auctionsTableName}")
+            .Where(a => a.Auction_Id == auction_id)
+            .FirstOrDefaultAsync();
+
+        if (auction == null)
+        {
+            return null;
+        }
+
+        return new AuctionDto
+        {
+            Auction_Id = auction.Auction_Id,
+            Title = auction.Title,
+            Description = auction.Description,
+            Starting_Price = auction.Starting_Price,
+            Current_Price = auction.Current_Price,
+            Number_Of_Bids = auction.Number_Of_Bids,
+            Winner = auction.Winner,
+            Created_At = auction.Created_At
+        };
     }
 
     public async Task<Auction?> GetAuction(string auction_id)

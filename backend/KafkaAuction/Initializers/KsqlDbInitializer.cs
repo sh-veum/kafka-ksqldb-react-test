@@ -1,8 +1,9 @@
+using KafkaAuction.Constants;
 using KafkaAuction.Models;
 using KafkaAuction.Services.Interfaces;
-using ksqlDb.RestApi.Client.FluentAPI.Builders;
 using ksqlDB.RestApi.Client.KSql.RestApi.Responses.Streams;
 using ksqlDB.RestApi.Client.KSql.RestApi.Responses.Tables;
+using Stream = ksqlDB.RestApi.Client.KSql.RestApi.Responses.Streams.Stream;
 
 namespace KafkaAuction.Initializers;
 
@@ -12,22 +13,30 @@ public static class KsqlDbInitializer
     private const int numBidsPerAuction = 6;
     private const int numMessagesPerAuction = 8;
 
-    public static async Task InitializeAsync(IAuctionService auctionService, IChatService chatService, IKsqlDbService ksqlDbService, ILogger logger)
+    public static async Task InitializeAsync(IAuctionService auctionService, IChatService chatService, IUserLocationService userLocationService, IKsqlDbService ksqlDbService, ILogger logger)
     {
-        TablesResponse[] tables = ksqlDbService.CheckTablesAsync().Result;
-        StreamsResponse[] streams = ksqlDbService.CheckStreams().Result;
-        logger.LogInformation("Tables Length: {Tables}", tables.Length);
-        logger.LogInformation("Streams Length: {Streams}", streams.Length);
+        TablesResponse[] tablesResponse = await ksqlDbService.CheckTablesAsync();
+        StreamsResponse[] streamsResponse = await ksqlDbService.CheckStreamsAsync();
 
-        await CreateAuctionTable(auctionService);
-        await CreateChatMessageTable(chatService);
+        var tables = tablesResponse[0]?.Tables ?? [];
+        var streams = streamsResponse[0]?.Streams ?? [];
 
-        await CreateAuctionBidStream(auctionService);
-        await CreateAuctionWithBidsStream(auctionService);
+        if (tables != null)
+        {
+            logger.LogInformation("Existing Tables: " + string.Join(", ", tables.Select(t => t.Name)));
+        }
 
-        Thread.Sleep(5000);
+        if (streams != null)
+        {
+            logger.LogInformation("Existing Streams: " + string.Join(", ", streams.Select(s => s.Name)));
+        }
 
-        // Sleep for 5 seconds because creating tables is slow as hell
+        var createdAny = await EnsureTablesAndStreamsExist(auctionService, chatService, userLocationService, tables!, streams!, logger);
+
+        if (createdAny)
+        {
+            Thread.Sleep(5000);
+        }
 
         var auctions = await auctionService.GetAllAuctions();
         if (auctions.Count == 0)
@@ -36,24 +45,46 @@ public static class KsqlDbInitializer
         }
     }
 
-    private static async Task CreateAuctionTable(IAuctionService auctionService)
+    private static async Task<bool> EnsureTablesAndStreamsExist(IAuctionService auctionService, IChatService chatService, IUserLocationService userLocationService, Table[] tables, Stream[] streams, ILogger logger)
     {
-        await auctionService.CreateAuctionTableAsync();
-    }
+        var createdAny = false;
 
-    private static async Task CreateAuctionBidStream(IAuctionService auctionService)
-    {
-        await auctionService.CreateAuctionBidStreamAsync();
-    }
+        if (!tables.Any(t => t.Name == TableNameConstants.Auctions))
+        {
+            logger.LogInformation("{TableName} missing, creating new table.", TableNameConstants.Auctions);
+            await auctionService.CreateAuctionTableAsync();
+            createdAny = true;
+        }
 
-    private static async Task CreateAuctionWithBidsStream(IAuctionService auctionService)
-    {
-        await auctionService.CreateAuctionsWithBidsStreamAsync();
-    }
+        if (!tables.Any(t => t.Name == TableNameConstants.ChatMessages))
+        {
+            logger.LogInformation("{TableName} missing, creating new table.", TableNameConstants.ChatMessages);
+            await chatService.CreateChatTableAsync();
+            createdAny = true;
+        }
 
-    private static async Task CreateChatMessageTable(IChatService chatService)
-    {
-        await chatService.CreateChatTableAsync();
+        if (!tables.Any(t => t.Name == TableNameConstants.UserLocation))
+        {
+            logger.LogInformation("{TableName} missing, creating new table.", TableNameConstants.UserLocation);
+            await userLocationService.CreateUserLocationTableAsync();
+            createdAny = true;
+        }
+
+        if (!streams.Any(s => s.Name == StreamNameConstants.AuctionBids))
+        {
+            logger.LogInformation("{StreamName} missing, creating new stream.", StreamNameConstants.AuctionBids);
+            await auctionService.CreateAuctionBidStreamAsync();
+            createdAny = true;
+        }
+
+        if (!streams.Any(s => s.Name == StreamNameConstants.AuctionWithBids))
+        {
+            logger.LogInformation("{StreamName} missing, creating new stream.", StreamNameConstants.AuctionWithBids);
+            await auctionService.CreateAuctionsWithBidsStreamAsync();
+            createdAny = true;
+        }
+
+        return createdAny;
     }
 
     private static async Task InsertAuctionsAndBidsAndMessages(IAuctionService auctionService, IChatService chatService, int numAuctions, int numBidsPerAuction, int numMessagesPerAuction)

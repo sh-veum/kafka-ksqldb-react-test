@@ -1,8 +1,8 @@
 <template>
   <v-col cols="12" md="6">
     <v-data-table
-      :items="sortedBids"
-      :loading="bidsLoading"
+      :items="auctionStore.auctionBidsMessages"
+      :loading="isLoading"
       item-key="BidId"
       :sort-by="[{ key: 'Bid_Amount', order: 'desc' }]"
     >
@@ -14,24 +14,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useAuctionStore } from "@/stores/auctionStore";
 
 const auctionStore = useAuctionStore();
-const bidsLoading = ref(true);
+const isLoading = ref(true);
 const props = defineProps<{ auctionId: string }>();
 
-const sortedBids = computed(() => {
-  return auctionStore.auctionBidsMessages.sort((a, b) => {
-    return b.Bid_Amount - a.Bid_Amount;
-  });
-});
-
 onMounted(async () => {
-  bidsLoading.value = !(await auctionStore.getAuctionBidsForAuction(
+  const { loading, error } = await auctionStore.getAuctionBidsForAuction(
     props.auctionId
-  ));
-  auctionStore.connectBidsWebSocket(props.auctionId, onBidError);
+  );
+  isLoading.value = loading;
+  if (error) {
+    console.error("Failed to retrieve auction bids:", error);
+  } else {
+    auctionStore.connectBidsWebSocket(props.auctionId, onBidError);
+  }
 });
 
 onBeforeUnmount(() => {
@@ -39,7 +38,7 @@ onBeforeUnmount(() => {
 });
 
 function onBidError(err: string) {
-  bidsLoading.value = false;
+  isLoading.value = false;
   console.error("Bid error:", err);
 }
 </script>

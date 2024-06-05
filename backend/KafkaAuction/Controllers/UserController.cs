@@ -2,7 +2,7 @@ using KafkaAuction.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using NetBackend.Models.Dto;
+using NetBackend.Models.Dtos;
 
 [ApiController]
 [Route("api/user")]
