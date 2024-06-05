@@ -1,5 +1,8 @@
 namespace KafkaAuction.Utilities;
 
+/// <summary>
+/// Placehodler since CreateOrReplaceStreamAsync and CreateOrReplaceTableAsync didnt work 
+/// </summary>
 public static class TypeMapper
 {
     public static string GetKSqlType(Type type)
@@ -23,6 +26,8 @@ public static class TypeMapper
             var t when t == typeof(ulong) => "BIGINT",  // Map unsigned long to BIGINT
             var t when t == typeof(char) => "VARCHAR",  // Map char to VARCHAR
             var t when t == typeof(DateTime) => "VARCHAR",
+            var t when t == typeof(string[]) => "ARRAY<STRING>",
+            var t when t == typeof(int[]) => "ARRAY<INTEGER>",
             _ => throw new NotSupportedException($"Type {type.Name} is not supported.")
         };
     }

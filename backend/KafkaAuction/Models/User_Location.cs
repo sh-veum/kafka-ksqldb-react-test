@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+using ksqlDB.RestApi.Client.KSql.RestApi.Statements.Annotations;
 
 namespace KafkaAuction.Models;
 

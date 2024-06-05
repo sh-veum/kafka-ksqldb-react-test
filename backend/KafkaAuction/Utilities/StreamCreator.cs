@@ -6,6 +6,9 @@ using ksqlDB.RestApi.Client.KSql.RestApi.Statements.Annotations;
 
 namespace KafkaAuction.Utilities;
 
+/// <summary>
+/// Placehodler since CreateOrReplaceStreamAsync and CreateOrReplaceTableAsync didnt work 
+/// </summary>
 public class StreamCreator<T>
 {
     private readonly IKSqlDbRestApiProvider _restApiProvider;
