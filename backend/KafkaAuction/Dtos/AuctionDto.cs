@@ -1,5 +1,3 @@
-
-
 namespace KafkaAuction.Dtos;
 
 public class AuctionDto

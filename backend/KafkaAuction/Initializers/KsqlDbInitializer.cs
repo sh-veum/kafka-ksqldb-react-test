@@ -13,7 +13,7 @@ public static class KsqlDbInitializer
     private const int numBidsPerAuction = 6;
     private const int numMessagesPerAuction = 8;
 
-    public static async Task InitializeAsync(IAuctionService auctionService, IChatService chatService, IKsqlDbService ksqlDbService, ILogger logger)
+    public static async Task InitializeAsync(IAuctionService auctionService, IChatService chatService, IUserLocationService userLocationService, IKsqlDbService ksqlDbService, ILogger logger)
     {
         TablesResponse[] tablesResponse = await ksqlDbService.CheckTablesAsync();
         StreamsResponse[] streamsResponse = await ksqlDbService.CheckStreamsAsync();
@@ -31,7 +31,7 @@ public static class KsqlDbInitializer
             logger.LogInformation("Existing Streams: " + string.Join(", ", streams.Select(s => s.Name)));
         }
 
-        var createdAny = await EnsureTablesAndStreamsExist(auctionService, chatService, tables!, streams!, logger);
+        var createdAny = await EnsureTablesAndStreamsExist(auctionService, chatService, userLocationService, tables!, streams!, logger);
 
         if (createdAny)
         {
@@ -45,7 +45,7 @@ public static class KsqlDbInitializer
         }
     }
 
-    private static async Task<bool> EnsureTablesAndStreamsExist(IAuctionService auctionService, IChatService chatService, Table[] tables, Stream[] streams, ILogger logger)
+    private static async Task<bool> EnsureTablesAndStreamsExist(IAuctionService auctionService, IChatService chatService, IUserLocationService userLocationService, Table[] tables, Stream[] streams, ILogger logger)
     {
         var createdAny = false;
 
@@ -60,6 +60,13 @@ public static class KsqlDbInitializer
         {
             logger.LogInformation("{TableName} missing, creating new table.", TableNameConstants.ChatMessages);
             await chatService.CreateChatTableAsync();
+            createdAny = true;
+        }
+
+        if (!tables.Any(t => t.Name == TableNameConstants.UserLocation))
+        {
+            logger.LogInformation("{TableName} missing, creating new table.", TableNameConstants.UserLocation);
+            await userLocationService.CreateUserLocationTableAsync();
             createdAny = true;
         }
 

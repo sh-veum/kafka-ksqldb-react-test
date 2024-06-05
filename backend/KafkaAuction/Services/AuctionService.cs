@@ -173,7 +173,7 @@ public class AuctionService : IAuctionService
 
     public async Task<List<AuctionDto>> GetAllAuctions()
     {
-        var auctions = _context.CreatePullQuery<Auction>($"queryable_{_auctionsTableName}")
+        var auctions = _context.CreatePullQuery<Auction>($"QUERYABLE_{_auctionsTableName}")
             .GetManyAsync();
 
         // _logger.LogInformation("Found {amount} auctions", await auctions.CountAsync());
