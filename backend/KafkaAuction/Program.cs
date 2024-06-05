@@ -14,7 +14,6 @@ using ksqlDB.RestApi.Client.KSql.Query.Context;
 using ksqlDB.RestApi.Client.KSql.RestApi;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using KsqlDBModelBuilder = ksqlDb.RestApi.Client.FluentAPI.Builders.ModelBuilder;
 
 var builder = WebApplication.CreateBuilder(args);
 

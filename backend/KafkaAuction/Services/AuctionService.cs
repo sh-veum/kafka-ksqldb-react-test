@@ -8,6 +8,7 @@ using KafkaAuction.Services.Interfaces;
 using KafkaAuction.Utilities;
 using ksqlDB.RestApi.Client.KSql.Linq.PullQueries;
 using ksqlDB.RestApi.Client.KSql.Query.Context;
+using ksqlDB.RestApi.Client.KSql.RestApi.Extensions;
 using ksqlDB.RestApi.Client.KSql.RestApi.Responses.Streams;
 using ksqlDB.RestApi.Client.KSql.RestApi.Responses.Tables;
 using ksqlDB.RestApi.Client.KSql.RestApi.Statements;
