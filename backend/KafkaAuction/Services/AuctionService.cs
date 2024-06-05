@@ -1,5 +1,6 @@
 
 using System.Net;
+using KafkaAuction.Constants;
 using KafkaAuction.Dtos;
 using KafkaAuction.Enums;
 using KafkaAuction.Models;
@@ -18,9 +19,9 @@ public class AuctionService : IAuctionService
     private readonly ILogger<AuctionService> _logger;
     private readonly IKSqlDbRestApiProvider _restApiProvider;
     private readonly KSqlDBContext _context;
-    private readonly string _auctionsTableName = "AUCTIONS";
-    private readonly string _auctionBidsStreamName = "AUCTION_BIDS";
-    private readonly string _auctionsWithBidsStreamName = "AUCTIONS_WITH_BIDS";
+    private readonly string _auctionsTableName = TableNameConstants.Auctions;
+    private readonly string _auctionBidsStreamName = StreamNameConstants.AuctionBids;
+    private readonly string _auctionsWithBidsStreamName = StreamNameConstants.AuctionWithBids;
 
     public AuctionService(ILogger<AuctionService> logger, IKSqlDbRestApiProvider restApiProvider, IConfiguration configuration)
     {

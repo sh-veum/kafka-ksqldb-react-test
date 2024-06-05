@@ -1,5 +1,4 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
 import { OverviewService } from "@/services/overviewService";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;

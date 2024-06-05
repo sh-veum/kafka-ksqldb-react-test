@@ -8,5 +8,5 @@ public interface IKsqlDbService
     Task<string?> DropSingleTablesAsync(string tableName);
     Task<string?> DropSingleStreamAsync(string streamName);
     Task<TablesResponse[]> CheckTablesAsync();
-    Task<StreamsResponse[]> CheckStreams();
+    Task<StreamsResponse[]> CheckStreamsAsync();
 }
