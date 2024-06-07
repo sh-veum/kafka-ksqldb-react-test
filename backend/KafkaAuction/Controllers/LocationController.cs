@@ -3,7 +3,6 @@ using System.Text;
 using KafkaAuction.Dtos;
 using KafkaAuction.Models;
 using KafkaAuction.Services.Interfaces;
-using ksqlDB.RestApi.Client.KSql.RestApi.Statements;
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
@@ -20,7 +19,7 @@ public class LocationController : ControllerBase
     }
 
 
-    [HttpGet("create_location_table")]
+    [HttpPost("create_location_table")]
     public async Task<IActionResult> CreateLocationTable()
     {
         var result = await _userLocationService.CreateUserLocationTableAsync();
@@ -28,10 +27,10 @@ public class LocationController : ControllerBase
         return Ok(result);
     }
 
-    [HttpPost("insert_location")]
-    public async Task<IActionResult> InsertLocation([FromBody] UserLocationDto userLocationDto)
+    [HttpPost("insert_locations")]
+    public async Task<IActionResult> InsertLocations([FromBody] UserLocationDto userLocationDto)
     {
-        var userLocationId = GetSessionUserLocationId();
+        var userLocationId = GetSessionUserLocationId(userLocationDto.User_Id);
         _logger.LogInformation("User Location Id: {UserLocationId}", userLocationId);
         var userLocation = new User_Location
         {
@@ -52,14 +51,55 @@ public class LocationController : ControllerBase
         }
     }
 
-    [HttpPost("remove_location")]
-    public async Task<IActionResult> RemoveLocation([FromBody] UserLocationRemoveDto userLocationDto)
+
+    [HttpPost("add_location")]
+    public async Task<IActionResult> AddLocation([FromBody] UserLocationUpdateDto userLocationDto)
     {
         string userLocationId;
 
         if (string.IsNullOrEmpty(userLocationDto.User_Location_Id))
         {
-            userLocationId = GetSessionUserLocationId();
+            userLocationId = GetSessionUserLocationId(userLocationDto.User_Id);
+        }
+        else
+        {
+            userLocationId = userLocationDto.User_Location_Id;
+        }
+
+        var userPages = await _userLocationService.GetPagesForUser(userLocationId) ?? [];
+
+        if (!userPages.Contains(userLocationDto.Page))
+        {
+            userPages.Add(userLocationDto.Page);
+        }
+
+        var userLocation = new User_Location
+        {
+            User_Location_Id = userLocationId,
+            User_Id = userLocationDto.User_Id,
+            Pages = [.. userPages]
+        };
+
+        var result = await _userLocationService.InsertOrUpdateUserLocationAsync(userLocation);
+
+        if (!result.IsSuccessStatusCode)
+        {
+            return BadRequest(result.ReasonPhrase);
+        }
+        else
+        {
+            return Ok(userLocation);
+        }
+    }
+
+    [HttpDelete("remove_location")]
+    public async Task<IActionResult> RemoveLocation([FromBody] UserLocationUpdateDto userLocationDto)
+    {
+        string userLocationId;
+
+        if (string.IsNullOrEmpty(userLocationDto.User_Location_Id))
+        {
+            userLocationId = GetSessionUserLocationId(userLocationDto.User_Id);
         }
         else
         {
@@ -75,6 +115,11 @@ public class LocationController : ControllerBase
             userPages = userPages.Where(p => p != userLocationDto.Page).ToList();
         }
 
+        if (userPages == null || userPages.Count == 0)
+        {
+            userPages = ["none"];
+        }
+
         _logger.LogInformation("User Pages after : {UserPages}", userPages);
 
         _logger.LogInformation("User Location Id: {UserLocationId}", userLocationId);
@@ -82,7 +127,7 @@ public class LocationController : ControllerBase
         {
             User_Location_Id = userLocationId,
             User_Id = userLocationDto.User_Id,
-            Pages = userPages?.ToArray() ?? []
+            Pages = userPages?.ToArray() ?? ["none"]
         };
 
         HttpResponseMessage result = await _userLocationService.InsertOrUpdateUserLocationAsync(userLocation);
@@ -97,7 +142,7 @@ public class LocationController : ControllerBase
         }
     }
 
-    [HttpPost("drop_location_table")]
+    [HttpDelete("drop_location_table")]
     public async Task<IActionResult> DropLocationTable()
     {
         await _userLocationService.DropTablesAsync();
@@ -125,11 +170,11 @@ public class LocationController : ControllerBase
 
     [HttpGet("get_pages_for_user")]
     [ProducesResponseType(typeof(string[]), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetPagesForUser([FromQuery] string? userLocationId)
+    public async Task<IActionResult> GetPagesForUser([FromQuery] string? userLocationId, [FromQuery] string userId = "anon")
     {
         if (string.IsNullOrEmpty(userLocationId))
         {
-            var userSessionLocationId = GetSessionUserLocationId();
+            var userSessionLocationId = GetSessionUserLocationId(userId);
             _logger.LogInformation("User Location Id: {UserLocationId}", userLocationId);
             var result = await _userLocationService.GetPagesForUser(userSessionLocationId);
             return Ok(result);
@@ -142,14 +187,17 @@ public class LocationController : ControllerBase
 
     }
 
-    private string GetSessionUserLocationId()
+    private string GetSessionUserLocationId(string userId = "anon")
     {
         var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
         _logger.LogInformation("IP Address: {IpAddress}", ipAddress);
         var userAgent = HttpContext.Request.Headers.UserAgent.ToString();
         _logger.LogInformation("User Agent: {UserAgent}", userAgent);
 
-        var combinedString = $"{ipAddress}-{userAgent}";
+        var combinedString = userId != "anon"
+            ? $"{ipAddress}-{userAgent}-{userId}"
+            : $"{ipAddress}-{userAgent}";
+
         _logger.LogInformation("Combined String: {CombinedString}", combinedString);
         var hash = SHA256.HashData(Encoding.UTF8.GetBytes(combinedString));
         return new Guid(hash.Take(16).ToArray()).ToString();

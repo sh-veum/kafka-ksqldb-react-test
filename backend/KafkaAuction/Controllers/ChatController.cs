@@ -48,7 +48,7 @@ public class ChatController : ControllerBase
         }
     }
 
-    [HttpPost("drop_tables")]
+    [HttpDelete("drop_tables")]
     public async Task<IActionResult> DropTables()
     {
         await _chatService.DropTablesAsync();

@@ -13,9 +13,9 @@ export class HttpService {
     }
   }
 
-  static async performGetRequest(url: string) {
+  static async performGetRequest(url: string, data?: any) {
     try {
-      const response = await axios.get(url);
+      const response = await axios.get(url, data);
       console.log("Get request response", response.data);
       return { data: response.data, loading: false, error: null };
     } catch (err) {
@@ -25,9 +25,10 @@ export class HttpService {
     }
   }
 
-  static async performDeleteRequest(url: string) {
+  static async performDeleteRequest(url: string, data?: any) {
+    console.log("Delete Data", data);
     try {
-      const response = await axios.delete(url);
+      const response = await axios.delete(url, { data: data });
       console.log("Delete request response", response.data);
       return { data: response.data, loading: false, error: null };
     } catch (err) {
