@@ -1,4 +1,6 @@
 import { LocationService } from "@/services/locationService";
+import { LocationWebSocketHandler } from "@/services/locationWebSocketHandler";
+import { connect } from "http2";
 import { defineStore } from "pinia";
 import { ref } from "vue";
 
@@ -8,6 +10,7 @@ export const useLocationStore = defineStore("userLocation", () => {
   const usersOnPage = ref<string[]>([]);
 
   const locationService = new LocationService(baseUrl);
+  const webSocketHandler = new LocationWebSocketHandler(usersOnPage);
 
   const getUsersOnPage = async (page: string) => {
     const { data, loading, error } = await locationService.getUsersOnPage(page);
@@ -24,5 +27,9 @@ export const useLocationStore = defineStore("userLocation", () => {
     getUsersOnPage,
     addLocation: locationService.addLocation.bind(locationService),
     removeLocation: locationService.removeLocation.bind(locationService),
+    connectWebSocket:
+      webSocketHandler.connectUserLocationWebSocket.bind(webSocketHandler),
+    disconnectWebSocket:
+      webSocketHandler.disconnectUserLocationWebSocket.bind(webSocketHandler),
   };
 });

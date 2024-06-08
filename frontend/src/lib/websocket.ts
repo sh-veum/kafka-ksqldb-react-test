@@ -146,6 +146,37 @@ class WebSocketService {
     };
   }
 
+  connectUserLocation(
+    page: string,
+    onMessage: (data: any) => void,
+    onError: (err: string) => void
+  ) {
+    if (this.chatSocket) {
+      this.chatSocket.close();
+    }
+
+    this.chatSocket = new WebSocket(`${baseUrl}?page=${page}`);
+
+    this.chatSocket.onopen = () => {
+      console.log("User location WebSocket connection opened");
+    };
+
+    this.chatSocket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      console.log("User location WebSocket message received:", data);
+      onMessage(data);
+    };
+
+    this.chatSocket.onclose = () => {
+      console.log("User location WebSocket connection closed");
+    };
+
+    this.chatSocket.onerror = (error) => {
+      console.error("User location WebSocket error:", error);
+      onError("Failed to connect to the WebSocket.");
+    };
+  }
+
   disconnectAuctionOverview() {
     if (this.auctionOverviewSocket) {
       this.auctionOverviewSocket.close();
@@ -167,6 +198,12 @@ class WebSocketService {
   disconnectAllRecentBids() {
     if (this.allRecentBidsSocket) {
       this.allRecentBidsSocket.close();
+    }
+  }
+
+  disconnectUserLocation() {
+    if (this.chatSocket) {
+      this.chatSocket.close();
     }
   }
 }
