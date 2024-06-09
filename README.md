@@ -1,4 +1,6 @@
-Just goofing around with kafka and ksqldb
+Just goofing around with kafka and ksqldb.
+
+Work in progress.
 
 ### docker-compose.py
 
