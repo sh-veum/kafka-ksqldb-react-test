@@ -1,0 +1,24 @@
+<Project Sdk="MSTest.Sdk/3.3.1">
+
+    <PropertyGroup>
+        <LangVersion>12.0</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="FluentAssertions" />
+        <PackageReference Include="Microsoft.Reactive.Testing" />
+        <PackageReference Include="Moq" />
+        <PackageReference Include="Ninject.MockingKernel.Moq" />
+        <PackageReference Include="NUnit" />
+        <PackageReference Include="NUnit3TestAdapter" />
+        <PackageReference Include="Microsoft.Extensions.Logging" />
+        <PackageReference Include="Joker" />
+    </ItemGroup>
+  
+</Project>

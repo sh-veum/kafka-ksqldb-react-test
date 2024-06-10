@@ -1,4 +1,5 @@
 using KafkaAuction.Services.Interfaces;
+using KafkaAuction.Utilities;
 using ksqlDB.RestApi.Client.KSql.RestApi.Responses.Streams;
 using ksqlDB.RestApi.Client.KSql.RestApi.Responses.Tables;
 using ksqlDB.RestApi.Client.KSql.RestApi.Statements;
@@ -42,6 +43,18 @@ public class KsqlDbService : IKsqlDbService
 
         var responseContent = await httpResult.Content.ReadAsStringAsync();
         return responseContent;
+    }
+
+    public async Task<bool> CreateSingleTableAsync<T>(string tableName, CancellationToken cancellationToken = default)
+    {
+        var tableCreator = new TableCreator<T>(_restApiProvider, _logger);
+
+        if (!await tableCreator.CreateTableAsync(tableName, cancellationToken))
+        {
+            throw new InvalidOperationException($"Failed to create {tableName} table");
+        }
+
+        return true;
     }
 
     public async Task<TablesResponse[]> CheckTablesAsync()
