@@ -25,7 +25,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\KafkaAuction\KafkaAuction.csproj" />
-    <ProjectReference Include="..\UnitTests\UnitTests.csproj" />
   </ItemGroup>
 
 </Project>
