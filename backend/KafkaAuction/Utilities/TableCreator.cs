@@ -8,7 +8,7 @@ using ksqlDB.RestApi.Client.KSql.RestApi.Statements.Annotations;
 namespace KafkaAuction.Utilities;
 
 /// <summary>
-/// Placehodler since CreateOrReplaceStreamAsync and CreateOrReplaceTableAsync didnt work 
+/// Placeholder since CreateOrReplaceStreamAsync and CreateOrReplaceTableAsync didn't work 
 /// </summary>
 public class TableCreator<T>
 {
@@ -17,8 +17,8 @@ public class TableCreator<T>
 
     public TableCreator(IKSqlDbRestApiProvider restApiProvider, ILogger logger)
     {
-        _restApiProvider = restApiProvider;
-        _logger = logger;
+        _restApiProvider = restApiProvider ?? throw new ArgumentNullException(nameof(restApiProvider));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     // public async Task<bool> CreateTableAsync(string tableName, CancellationToken cancellationToken = default)
