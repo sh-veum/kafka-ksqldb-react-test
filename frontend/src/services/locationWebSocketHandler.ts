@@ -1,5 +1,4 @@
 import { webSocketService } from "@/lib/webSocket";
-import type { UserLocationUpdate } from "@/models/UserLocationUpdate";
 import type { Ref } from "vue";
 
 export class LocationWebSocketHandler {

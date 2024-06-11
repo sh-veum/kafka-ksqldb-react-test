@@ -1,8 +1,8 @@
 import { type Ref } from "vue";
-import { webSocketService } from "@/lib/webSocket";
 import type { AuctionMessage } from "@/models/AuctionMessage";
 import type { AuctionBidsMessage } from "@/models/AuctionBidsMessage";
 import type { RecentBidMessage } from "@/models/RecentBidMessage";
+import { webSocketService } from "@/lib/webSocket";
 
 export class AuctionWebSocketHandler {
   private auctionMessages: Ref<Map<string, AuctionMessage>>;
