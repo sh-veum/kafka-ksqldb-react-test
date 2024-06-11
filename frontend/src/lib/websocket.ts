@@ -54,7 +54,7 @@ class WebSocketService {
     }
 
     this.bidSocket = new WebSocket(
-      `${baseUrl}?auctionId=${auctionId}&webSocketSubscription=${WebSocketSubscription.SpesificAuction}`
+      `${baseUrl}?auctionId=${auctionId}&webSocketSubscription=${WebSocketSubscription.SpecificAuction}`
     );
 
     this.bidSocket.onopen = () => {

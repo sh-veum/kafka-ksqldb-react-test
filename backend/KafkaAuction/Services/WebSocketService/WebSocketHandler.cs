@@ -27,25 +27,22 @@ public class WebSocketHandler : IWebSocketHandler
 
         try
         {
-            if (webSocketSubscription == WebSocketSubscription.AuctionOverview)
+            switch (webSocketSubscription)
             {
-                await _auctionWebSocketService.SubscribeToAuctionOverviewUpdatesAsync(webSocket);
-            }
-            else if (webSocketSubscription == WebSocketSubscription.SpesificAuction)
-            {
-                await _auctionWebSocketService.SubscribeToAuctionBidUpdatesAsync(webSocket, auctionId);
-            }
-            else if (webSocketSubscription == WebSocketSubscription.Chat)
-            {
-                await _chatWebSocketService.SubscribeToChatMessagesForAuctionAsync(webSocket, auctionId);
-            }
-            else if (webSocketSubscription == WebSocketSubscription.AllRecentBids)
-            {
-                await _auctionWebSocketService.SubscribeToAllRecentBidsAsync(webSocket);
-            }
-            else
-            {
-                throw new InvalidOperationException("Invalid page");
+                case WebSocketSubscription.AuctionOverview:
+                    await _auctionWebSocketService.SubscribeToAuctionOverviewUpdatesAsync(webSocket);
+                    break;
+                case WebSocketSubscription.SpecificAuction:
+                    await _auctionWebSocketService.SubscribeToAuctionBidUpdatesAsync(webSocket, auctionId);
+                    break;
+                case WebSocketSubscription.Chat:
+                    await _chatWebSocketService.SubscribeToChatMessagesForAuctionAsync(webSocket, auctionId);
+                    break;
+                case WebSocketSubscription.AllRecentBids:
+                    await _auctionWebSocketService.SubscribeToAllRecentBidsAsync(webSocket);
+                    break;
+                default:
+                    throw new InvalidOperationException("Invalid page");
             }
 
             // Keep the WebSocket open until closed by the client

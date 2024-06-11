@@ -1,6 +1,5 @@
 import { LocationService } from "@/services/locationService";
 import { LocationWebSocketHandler } from "@/services/locationWebSocketHandler";
-import { connect } from "http2";
 import { defineStore } from "pinia";
 import { ref } from "vue";
 

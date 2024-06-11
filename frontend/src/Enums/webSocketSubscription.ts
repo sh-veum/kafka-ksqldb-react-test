@@ -1,6 +1,6 @@
 export enum WebSocketSubscription {
   AuctionOverview = "AuctionOverview",
-  SpesificAuction = "SpesificAuction",
+  SpecificAuction = "SpecificAuction",
   Chat = "Chat",
   AllRecentBids = "AllRecentBids",
 }
