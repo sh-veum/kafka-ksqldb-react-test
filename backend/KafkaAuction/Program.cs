@@ -164,8 +164,8 @@ var app = builder.Build();
 
 app.MapIdentityApi<UserModel>();
 
-app.UseCors("AllowSpecificOrigin");
-// app.UseCors("AllowAnyOrigin"); 
+// app.UseCors("AllowSpecificOrigin");
+app.UseCors("AllowAnyOrigin");
 
 app.UseWebSockets();
 app.UseMiddleware<WebSocketMiddleware>();
