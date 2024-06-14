@@ -1,4 +1,4 @@
-import AuctionCard from "@/components/AuctionCard";
+import AuctionCard from "@/components/auction-card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Auction } from "@/models/Auction";
 import { allAuctionQueryOptions } from "@/utils/queryOptions";

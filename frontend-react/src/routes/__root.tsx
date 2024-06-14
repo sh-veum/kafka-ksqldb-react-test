@@ -7,7 +7,7 @@ import {
 import {
   ReactQueryDevtools,
   TanStackRouterDevtools,
-} from "../components/DevTools";
+} from "../components/dev-tools";
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -17,8 +17,10 @@ import {
 } from "@/components/ui/navigation-menu";
 import { Suspense } from "react";
 import { QueryClient } from "@tanstack/react-query";
-import { Spinner } from "@/components/Spinner";
+import { Spinner } from "@/components/spinner";
 import { Separator } from "@/components/ui/separator";
+import { ThemeProvider } from "@/components/theme-provider";
+import { ToggleThemeMode } from "@/components/theme-toggle";
 
 function RouterSpinner() {
   const isLoading = useRouterState({ select: (s) => s.status === "pending" });
@@ -33,10 +35,11 @@ export const Route = createRootRouteWithContext<{
 
 function RootComponent() {
   return (
-    <>
+    <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
       <div className={`min-h-screen flex flex-col`}>
         <div className={`flex items-center gap-2`}>
           <h1 className={`text-3xl p-2`}>Auction Site</h1>
+          <ToggleThemeMode />
           {/* Show a global spinner when the router is transitioning */}
           <div className={`text-3xl`}>
             <RouterSpinner />
@@ -78,6 +81,6 @@ function RootComponent() {
         <ReactQueryDevtools buttonPosition="top-right" />
         <TanStackRouterDevtools position="bottom-right" />
       </Suspense>
-    </>
+    </ThemeProvider>
   );
 }

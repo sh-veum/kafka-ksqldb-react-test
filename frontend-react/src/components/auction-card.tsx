@@ -18,7 +18,9 @@ export default function AuctionCard(auctionProps: Auction) {
             <CardDescription>{auctionProps.Created_At}</CardDescription>
           </CardHeader>
           <CardContent>
-            <p>{auctionProps.Description}</p>
+            <p>
+              <i>{auctionProps.Description}</i>
+            </p>
             <p>{auctionProps.Number_Of_Bids} bids</p>
             <p>Current Price: {auctionProps.Current_Price} NOK</p>
           </CardContent>
