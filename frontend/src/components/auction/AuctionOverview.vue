@@ -1,27 +1,29 @@
 <template>
-  <v-row>
-    <v-col cols="12" md="6" v-if="isLoading" v-for="n in 3" :key="n">
-      <v-skeleton-loader
-        type="heading, list-item-two-line, list-item@4, button"
-      ></v-skeleton-loader>
-    </v-col>
-    <v-col
-      v-else
-      v-for="(auction, index) in sortedMessages"
-      :key="index"
-      cols="12"
-      md="6"
-    >
-      <AuctionCard
-        :auction="auction"
-        @click="navigateToAuction(auction.Auction_Id)"
-      />
-    </v-col>
-  </v-row>
+  <v-container style="overflow-y: auto; margin-top: -16px; max-height: 75%">
+    <v-row>
+      <v-col cols="12" md="6" v-if="isLoading" v-for="n in 3" :key="n">
+        <v-skeleton-loader
+          type="heading, list-item-two-line, list-item@4, button"
+        ></v-skeleton-loader>
+      </v-col>
+      <v-col
+        v-else
+        v-for="(auction, index) in sortedMessages"
+        :key="index"
+        cols="12"
+        md="6"
+      >
+        <AuctionCard
+          :auction="auction"
+          @click="navigateToAuction(auction.Auction_Id)"
+        />
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useAuctionStore } from "@/stores/auctionStore";
 import router from "@/router";
 import AuctionCard from "@/components/auction/AuctionCard.vue";
@@ -32,7 +34,6 @@ const errorMessage = ref<string | null>(null);
 const props = defineProps<{ sortOrder: string }>();
 
 const sortedMessages = computed(() => {
-  console.log(`Sorting messages ${props.sortOrder}`);
   const messagesArray = Array.from(auctionStore.auctionMessages.values());
   return messagesArray.sort((a, b) => {
     const dateA = new Date(a.Created_At);
@@ -50,9 +51,8 @@ const navigateToAuction = (auctionId: string) => {
 };
 
 onMounted(async () => {
-  const { loading, error } = await auctionStore.getAllTables();
+  const { loading } = await auctionStore.getAllTables();
   isLoading.value = loading;
-  console.log("Error", error);
   auctionStore.connectAuctionOverviewWebSocket(onError);
 });
 
@@ -61,9 +61,7 @@ onBeforeUnmount(() => {
 });
 
 function onError(err: string) {
-  console.log("Error occurred");
   isLoading.value = false;
   errorMessage.value = err;
-  console.error(err);
 }
 </script>

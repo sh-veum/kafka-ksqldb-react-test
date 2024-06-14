@@ -29,12 +29,10 @@ public class WebSocketMiddleware
 
                 var page = context.Request.Query["page"].ToString();
                 _logger.LogInformation("WebSocket connection requested for {Page}", page);
-                var userId = context.Request.Query["userId"].ToString() ?? Guid.NewGuid().ToString();
-                _logger.LogInformation("WebSocket connection requested for {UserId}", userId);
 
                 var webSocket = await context.WebSockets.AcceptWebSocketAsync();
 
-                if (!string.IsNullOrEmpty(page) && !string.IsNullOrEmpty(userId))
+                if (!string.IsNullOrEmpty(page))
                 {
                     // await _webSocketHandler.HandlePageWebSocketAsync(context, page, userId);
                 }

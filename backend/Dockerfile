@@ -12,7 +12,7 @@ COPY ["KafkaAuction/KafkaAuction.csproj", "KafkaAuction/"]
 # COPY ["KafkaAuction.Tests/KafkaAuction.Tests.csproj", "KafkaAuction.Tests/"]
 # Restore packages for both projects
 RUN dotnet restore "KafkaAuction/KafkaAuction.csproj"
-#RUN dotnet restore "KafkaAuction.Tests/KafkaAuction.Tests.csproj"
+# RUN dotnet restore "KafkaAuction.Tests/KafkaAuction.Tests.csproj"
 # Copy the rest of the source code
 COPY . .
 # Build the main project

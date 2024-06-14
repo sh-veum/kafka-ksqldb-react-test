@@ -1,12 +1,15 @@
-import { defineStore } from "pinia";
-import axios from "axios";
-import { ref } from "vue";
 import type { UserInfo } from "@/models/UserInfo";
+import axios from "axios";
+import { defineStore } from "pinia";
+import { ref, watch } from "vue";
 
 const baseUrl = `${import.meta.env.VITE_API_URL}`;
 
 export const useUserStore = defineStore("user", () => {
-  const userInfo = ref<UserInfo | null>(null);
+  const storedUserInfo = localStorage.getItem("userInfo");
+  const userInfo = ref<UserInfo | null>(
+    storedUserInfo ? JSON.parse(storedUserInfo) : null
+  );
 
   const fetchUserInfo = async () => {
     try {
@@ -22,6 +25,15 @@ export const useUserStore = defineStore("user", () => {
       }
     }
   };
+
+  // Watch for changes in userInfo and update localStorage
+  watch(userInfo, (newValue) => {
+    if (newValue) {
+      localStorage.setItem("userInfo", JSON.stringify(newValue));
+    } else {
+      localStorage.removeItem("userInfo");
+    }
+  });
 
   return {
     userInfo,

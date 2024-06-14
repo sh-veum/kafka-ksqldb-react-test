@@ -10,8 +10,8 @@ public class KsqlResourceDropper
 
     public KsqlResourceDropper(IKSqlDbRestApiProvider restApiProvider, ILogger logger)
     {
-        _restApiProvider = restApiProvider;
-        _logger = logger;
+        _restApiProvider = restApiProvider ?? throw new ArgumentNullException(nameof(restApiProvider));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task DropResourceAsync(string resourceName, ResourceType resourceType)
