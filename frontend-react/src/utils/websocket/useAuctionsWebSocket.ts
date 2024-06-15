@@ -1,30 +1,31 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { WebSocketSubscription } from "@/Enums/webSocketSubscription";
-import { Bid } from "@/models/Bid";
+import { Auction } from "@/models/Auction";
+import { addOrUpdateData } from "@/utils/addOrUpdateData";
 
 const baseUrl = import.meta.env.VITE_API_WEBSOCKET_URL;
 
-const useBidsWebSocket = (auctionId: string, isEnabled: boolean) => {
+const useAuctionsWebSocket = (isEnabled: boolean) => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!isEnabled) return;
 
-    const webSocketUrl = `${baseUrl}?auctionId=${auctionId}&webSocketSubscription=${WebSocketSubscription.SpecificAuction}`;
+    const webSocketUrl = `${baseUrl}?auctionId=none&webSocketSubscription=${WebSocketSubscription.AuctionOverview}`;
     console.log("WebSocket URL:", webSocketUrl);
     const websocket = new WebSocket(webSocketUrl);
 
     websocket.onopen = () => {
-      console.log("connected to bids websocket");
+      console.log("connected to auctions websocket");
     };
 
     websocket.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      console.log("Bids WebSocket message received:", data);
+      console.log("Auctions WebSocket message received:", data);
 
-      queryClient.setQueryData(["auctionBids", auctionId], (oldData: Bid[]) => {
-        return [...(oldData || []), data];
+      queryClient.setQueryData(["allAuctions"], (oldData: Auction[]) => {
+        return addOrUpdateData(oldData, data, (auction) => auction.Auction_Id);
       });
     };
 
@@ -39,7 +40,7 @@ const useBidsWebSocket = (auctionId: string, isEnabled: boolean) => {
     return () => {
       websocket.close();
     };
-  }, [queryClient, auctionId, isEnabled]);
+  }, [queryClient, isEnabled]);
 };
 
-export default useBidsWebSocket;
+export default useAuctionsWebSocket;
