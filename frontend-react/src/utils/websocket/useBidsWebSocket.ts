@@ -1,45 +1,31 @@
-import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { WebSocketSubscription } from "@/Enums/webSocketSubscription";
 import { Bid } from "@/models/Bid";
+import useWebSocket from "@/utils/webSocket/useWebSocket";
+import { baseWebsocketUrl } from "@/lib/baseUrls";
 
-const baseUrl = import.meta.env.VITE_API_WEBSOCKET_URL;
-
+/**
+ * Custom hook to manage the WebSocket connection for bids.
+ *
+ * @param {string} auctionId - The ID of the auction.
+ * @param {boolean} isEnabled - Whether the WebSocket should be enabled.
+ */
 const useBidsWebSocket = (auctionId: string, isEnabled: boolean) => {
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (!isEnabled) return;
+  const getWebSocketUrl = () =>
+    `${baseWebsocketUrl}?auctionId=${auctionId}&webSocketSubscription=${WebSocketSubscription.SpecificAuction}`;
 
-    const webSocketUrl = `${baseUrl}?auctionId=${auctionId}&webSocketSubscription=${WebSocketSubscription.SpecificAuction}`;
-    console.log("WebSocket URL:", webSocketUrl);
-    const websocket = new WebSocket(webSocketUrl);
+  const onMessage = (event: MessageEvent) => {
+    const data = JSON.parse(event.data);
+    console.log("Bids WebSocket message received:", data);
 
-    websocket.onopen = () => {
-      console.log("connected to bids websocket");
-    };
+    queryClient.setQueryData(["auctionBids", auctionId], (oldData: Bid[]) => {
+      return [...(oldData || []), data];
+    });
+  };
 
-    websocket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      console.log("Bids WebSocket message received:", data);
-
-      queryClient.setQueryData(["auctionBids", auctionId], (oldData: Bid[]) => {
-        return [...(oldData || []), data];
-      });
-    };
-
-    websocket.onerror = (error) => {
-      console.error("WebSocket error:", error);
-    };
-
-    websocket.onclose = (event) => {
-      console.log("WebSocket closed:", event);
-    };
-
-    return () => {
-      websocket.close();
-    };
-  }, [queryClient, auctionId, isEnabled]);
+  useWebSocket(isEnabled, getWebSocketUrl, onMessage);
 };
 
 export default useBidsWebSocket;

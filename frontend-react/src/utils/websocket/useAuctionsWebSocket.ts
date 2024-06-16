@@ -1,46 +1,31 @@
-import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { WebSocketSubscription } from "@/Enums/webSocketSubscription";
 import { Auction } from "@/models/Auction";
 import { addOrUpdateData } from "@/utils/addOrUpdateData";
+import useWebSocket from "@/utils/webSocket/useWebSocket";
+import { baseWebsocketUrl } from "@/lib/baseUrls";
 
-const baseUrl = import.meta.env.VITE_API_WEBSOCKET_URL;
-
+/**
+ * Custom hook to manage the WebSocket connection for auctions.
+ *
+ * @param {boolean} isEnabled - Whether the WebSocket should be enabled.
+ */
 const useAuctionsWebSocket = (isEnabled: boolean) => {
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (!isEnabled) return;
+  const getWebSocketUrl = () =>
+    `${baseWebsocketUrl}?auctionId=none&webSocketSubscription=${WebSocketSubscription.AuctionOverview}`;
 
-    const webSocketUrl = `${baseUrl}?auctionId=none&webSocketSubscription=${WebSocketSubscription.AuctionOverview}`;
-    console.log("WebSocket URL:", webSocketUrl);
-    const websocket = new WebSocket(webSocketUrl);
+  const onMessage = (event: MessageEvent) => {
+    const data = JSON.parse(event.data);
+    console.log("Auctions WebSocket message received:", data);
 
-    websocket.onopen = () => {
-      console.log("connected to auctions websocket");
-    };
+    queryClient.setQueryData(["allAuctions"], (oldData: Auction[]) => {
+      return addOrUpdateData(oldData, data, (key) => key.Auction_Id);
+    });
+  };
 
-    websocket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      console.log("Auctions WebSocket message received:", data);
-
-      queryClient.setQueryData(["allAuctions"], (oldData: Auction[]) => {
-        return addOrUpdateData(oldData, data, (auction) => auction.Auction_Id);
-      });
-    };
-
-    websocket.onerror = (error) => {
-      console.error("WebSocket error:", error);
-    };
-
-    websocket.onclose = (event) => {
-      console.log("WebSocket closed:", event);
-    };
-
-    return () => {
-      websocket.close();
-    };
-  }, [queryClient, isEnabled]);
+  useWebSocket(isEnabled, getWebSocketUrl, onMessage);
 };
 
 export default useAuctionsWebSocket;

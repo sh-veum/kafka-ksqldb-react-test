@@ -7,4 +7,6 @@ export interface Auction {
   Number_Of_Bids: number;
   Winner: string;
   Created_At: string;
+  End_Date: string;
+  Is_Open: boolean;
 }

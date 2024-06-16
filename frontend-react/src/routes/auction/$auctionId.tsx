@@ -1,9 +1,9 @@
-import BidsTable from "@/components/bids-table";
+import BidsTable from "@/components/BidsTable";
 import {
   auctionBidsQueryOptions,
   auctionQueryOptions,
 } from "@/utils/queryOptions";
-import useBidsWebSocket from "@/utils/websocket/useBidsWebSocket";
+import useBidsWebSocket from "@/utils/webSocket/useBidsWebSocket";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
@@ -42,11 +42,9 @@ function SpecificAuctionComponent() {
   useBidsWebSocket(params.auctionId, isDataLoaded);
 
   return (
-    <div>
-      <h1>{auction.Title}</h1>
-      {/* <pre className="text-sm whitespace-pre-wrap">
-        {JSON.stringify(auction, null, 2)}
-      </pre> */}
+    <div className="max-w-full">
+      <h1 className="text-2xl font-bold">{auction.Title}</h1>
+      <p className="italic break-words">{auction.Description}</p>
       <BidsTable bids={bids} />
     </div>
   );
