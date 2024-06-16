@@ -9,8 +9,8 @@ namespace KafkaAuction.Services.Interfaces;
 public interface IUserLocationService
 {
     Task<TablesResponse[]> CreateUserLocationTableAsync(CancellationToken cancellationToken = default);
-    Task<HttpResponseMessage> InsertOrUpdateUserLocationAsync(User_Location userLocation);
-    Task DropTablesAsync();
+    Task<(HttpResponseMessage, UserLocationDto)> InsertOrUpdateUserLocationAsync(User_Location userLocation);
+    Task<List<DropResourceResponseDto>> DropTablesAsync();
     Task<List<string>> GetUsersOnPage(string page);
     Task<List<User_Location>?> GetAllUserLocations();
     Task<List<string>> GetPagesForUser(string userLocationId);

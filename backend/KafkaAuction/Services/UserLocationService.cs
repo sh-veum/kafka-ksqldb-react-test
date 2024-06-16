@@ -1,6 +1,4 @@
-using System.Collections.Concurrent;
 using System.Reactive.Linq;
-using System.Text;
 using KafkaAuction.Dtos;
 using KafkaAuction.Enums;
 using KafkaAuction.Models;
@@ -10,10 +8,7 @@ using ksqlDB.RestApi.Client.KSql.Linq;
 using ksqlDB.RestApi.Client.KSql.Linq.PullQueries;
 using ksqlDB.RestApi.Client.KSql.Linq.Statements;
 using ksqlDB.RestApi.Client.KSql.Query.Context;
-using ksqlDB.RestApi.Client.KSql.RestApi.Extensions;
 using ksqlDB.RestApi.Client.KSql.RestApi.Responses.Tables;
-using ksqlDB.RestApi.Client.KSql.RestApi.Serialization;
-using ksqlDB.RestApi.Client.KSql.RestApi.Statements;
 
 public class UserLocationService : IUserLocationService
 {
@@ -54,17 +49,43 @@ public class UserLocationService : IUserLocationService
         return await _restApiProvider.GetTablesAsync(cancellationToken);
     }
 
-    public async Task<HttpResponseMessage> InsertOrUpdateUserLocationAsync(User_Location userLocation)
+    public async Task<(HttpResponseMessage, UserLocationDto)> InsertOrUpdateUserLocationAsync(User_Location userLocation)
     {
         var inserter = new EntityInserter<User_Location>(_restApiProvider, _logger);
-        return await inserter.InsertAsync(_userLocationStreamName, userLocation);
+        var response = await inserter.InsertAsync(_userLocationStreamName, userLocation);
+
+        var userLocationDto = new UserLocationDto
+        {
+            User_Location_Id = userLocation.User_Location_Id,
+            User_Id = userLocation.User_Id,
+            Pages = userLocation.Pages
+        };
+
+        return (response, userLocationDto);
     }
 
-    public async Task DropTablesAsync()
+    public async Task<List<DropResourceResponseDto>> DropTablesAsync()
     {
         var dropper = new KsqlResourceDropper(_restApiProvider, _logger);
-        await dropper.DropResourceAsync("QUERYABLE_" + _userLocationStreamName, ResourceType.Table);
-        await dropper.DropResourceAsync(_userLocationStreamName, ResourceType.Stream);
+        var resourcesToDrop = new List<(string Name, ResourceType Type)>
+        {
+            ("QUERYABLE_" + _userLocationStreamName, ResourceType.Table),
+            (_userLocationStreamName, ResourceType.Stream)
+        };
+
+        var responseList = new List<DropResourceResponseDto>();
+
+        foreach (var resource in resourcesToDrop)
+        {
+            var response = await dropper.DropResourceAsync(resource.Name, resource.Type);
+            responseList.Add(new DropResourceResponseDto
+            {
+                ResourceName = resource.Name,
+                IsSuccess = response.IsSuccessStatusCode
+            });
+        }
+
+        return responseList;
     }
 
     /// <summary>

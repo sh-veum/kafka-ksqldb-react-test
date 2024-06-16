@@ -2,6 +2,7 @@ using KafkaAuction.Dtos;
 using KafkaAuction.Models;
 using KafkaAuction.Services.Interfaces;
 using KafkaAuction.Utilities;
+using ksqlDB.RestApi.Client.KSql.RestApi.Responses.Tables;
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
@@ -18,6 +19,7 @@ public class ChatController : ControllerBase
     }
 
     [HttpPost("create_tables")]
+    [ProducesResponseType(typeof(TablesResponse[]), StatusCodes.Status200OK)]
     public async Task<IActionResult> CreateTables()
     {
         var results = await _chatService.CreateChatTableAsync();
@@ -25,7 +27,17 @@ public class ChatController : ControllerBase
         return Ok(results);
     }
 
+    [HttpDelete("drop_tables")]
+    [ProducesResponseType(typeof(DropResourceResponseDto[]), StatusCodes.Status200OK)]
+    public async Task<IActionResult> DropTables()
+    {
+        var results = await _chatService.DropTablesAsync();
+
+        return Ok(results);
+    }
+
     [HttpPost("insert_message")]
+    [ProducesResponseType(typeof(ChatMessageWithAuctionIdDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> InsertMessage([FromBody] ChatMessageWithAuctionIdDto chatMessageDto)
     {
         var message = new Chat_Message
@@ -36,27 +48,20 @@ public class ChatController : ControllerBase
             MessageText = chatMessageDto.MessageText,
         };
 
-        HttpResponseMessage result = await _chatService.InsertMessageAsync(message);
+        var (httpResponseMessage, chatMessage) = await _chatService.InsertMessageAsync(message);
 
-        if (!result.IsSuccessStatusCode)
+        if (!httpResponseMessage.IsSuccessStatusCode)
         {
-            return BadRequest(result.ReasonPhrase);
+            return BadRequest(httpResponseMessage.ReasonPhrase);
         }
         else
         {
-            return Ok();
+            return Ok(chatMessage);
         }
     }
 
-    [HttpDelete("drop_tables")]
-    public async Task<IActionResult> DropTables()
-    {
-        await _chatService.DropTablesAsync();
-
-        return Ok();
-    }
-
     [HttpGet("get_all_messages")]
+    [ProducesResponseType(typeof(ChatMessageWithAuctionIdDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllMessages([FromQuery] bool sortByDate = false)
     {
         var messages = await _chatService.GetAllMessages();
@@ -84,6 +89,7 @@ public class ChatController : ControllerBase
     }
 
     [HttpGet("get_messages_for_auction_push_query")]
+    [ProducesResponseType(typeof(ChatMessageDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetMessagesForAuctionPushQuery([FromQuery] string auction_Id)
     {
         var messages = await _chatService.GetMessagesForAuctionPushQuery(auction_Id);

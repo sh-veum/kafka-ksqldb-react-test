@@ -3,6 +3,7 @@ using System.Text;
 using KafkaAuction.Dtos;
 using KafkaAuction.Models;
 using KafkaAuction.Services.Interfaces;
+using ksqlDB.RestApi.Client.KSql.RestApi.Responses.Tables;
 using Microsoft.AspNetCore.Mvc;
 
 [ApiController]
@@ -20,6 +21,7 @@ public class LocationController : ControllerBase
 
 
     [HttpPost("create_location_table")]
+    [ProducesResponseType(typeof(TablesResponse[]), StatusCodes.Status200OK)]
     public async Task<IActionResult> CreateLocationTable()
     {
         var result = await _userLocationService.CreateUserLocationTableAsync();
@@ -27,7 +29,17 @@ public class LocationController : ControllerBase
         return Ok(result);
     }
 
+    [HttpDelete("drop_location_table")]
+    [ProducesResponseType(typeof(DropResourceResponseDto[]), StatusCodes.Status200OK)]
+    public async Task<IActionResult> DropLocationTable()
+    {
+        var result = await _userLocationService.DropTablesAsync();
+
+        return Ok(result);
+    }
+
     [HttpPost("insert_locations")]
+    [ProducesResponseType(typeof(UserLocationDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> InsertLocations([FromBody] UserLocationDto userLocationDto)
     {
         var userLocationId = GetSessionUserLocationId(userLocationDto.User_Id);
@@ -39,20 +51,21 @@ public class LocationController : ControllerBase
             Pages = userLocationDto.Pages
         };
 
-        HttpResponseMessage result = await _userLocationService.InsertOrUpdateUserLocationAsync(userLocation);
+        var (httpResponseMessage, userLocationResult) = await _userLocationService.InsertOrUpdateUserLocationAsync(userLocation);
 
-        if (!result.IsSuccessStatusCode)
+        if (!httpResponseMessage.IsSuccessStatusCode)
         {
-            return BadRequest(result.ReasonPhrase);
+            return BadRequest(httpResponseMessage.ReasonPhrase);
         }
         else
         {
-            return Ok(userLocation);
+            return Ok(userLocationResult);
         }
     }
 
 
     [HttpPost("add_location")]
+    [ProducesResponseType(typeof(UserLocationDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> AddLocation([FromBody] UserLocationUpdateDto userLocationDto)
     {
         string userLocationId;
@@ -80,19 +93,20 @@ public class LocationController : ControllerBase
             Pages = [.. userPages]
         };
 
-        var result = await _userLocationService.InsertOrUpdateUserLocationAsync(userLocation);
+        var (httpResponseMessage, userLocationResult) = await _userLocationService.InsertOrUpdateUserLocationAsync(userLocation);
 
-        if (!result.IsSuccessStatusCode)
+        if (!httpResponseMessage.IsSuccessStatusCode)
         {
-            return BadRequest(result.ReasonPhrase);
+            return BadRequest(httpResponseMessage.ReasonPhrase);
         }
         else
         {
-            return Ok(userLocation);
+            return Ok(userLocationResult);
         }
     }
 
     [HttpDelete("remove_location")]
+    [ProducesResponseType(typeof(UserLocationDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> RemoveLocation([FromBody] UserLocationUpdateDto userLocationDto)
     {
         string userLocationId;
@@ -130,24 +144,16 @@ public class LocationController : ControllerBase
             Pages = userPages?.ToArray() ?? ["none"]
         };
 
-        HttpResponseMessage result = await _userLocationService.InsertOrUpdateUserLocationAsync(userLocation);
+        var (httpResponseMessage, userLocationResult) = await _userLocationService.InsertOrUpdateUserLocationAsync(userLocation);
 
-        if (!result.IsSuccessStatusCode)
+        if (!httpResponseMessage.IsSuccessStatusCode)
         {
-            return BadRequest(result.ReasonPhrase);
+            return BadRequest(httpResponseMessage.ReasonPhrase);
         }
         else
         {
-            return Ok(userLocation);
+            return Ok(userLocationResult);
         }
-    }
-
-    [HttpDelete("drop_location_table")]
-    public async Task<IActionResult> DropLocationTable()
-    {
-        await _userLocationService.DropTablesAsync();
-
-        return Ok();
     }
 
     [HttpGet("get_all_locations")]

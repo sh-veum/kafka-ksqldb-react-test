@@ -48,6 +48,15 @@ public class AuctionController : ControllerBase
         return Ok(results);
     }
 
+    [HttpDelete("drop_tables")]
+    [ProducesResponseType(typeof(DropResourceResponseDto[]), StatusCodes.Status200OK)]
+    public async Task<IActionResult> DropTables()
+    {
+        var results = await _auctionService.DropTablesAsync();
+
+        return Ok(results);
+    }
+
     [HttpPost("insert_auction")]
     [ProducesResponseType(typeof(AuctionDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> InsertAuction([FromBody] AuctionCreatorDto auctionCreatorDto)
@@ -79,22 +88,6 @@ public class AuctionController : ControllerBase
         }
     }
 
-    [HttpDelete("delete_auction")]
-    [ProducesResponseType(typeof(Auction), StatusCodes.Status200OK)]
-    public async Task<IActionResult> DeleteAuction(string auction_id)
-    {
-        var (httpResponseMessage, auction) = await _auctionService.DeleteAuction(auction_id);
-
-        if (!httpResponseMessage.IsSuccessStatusCode)
-        {
-            return BadRequest(httpResponseMessage.ReasonPhrase);
-        }
-        else
-        {
-            return Ok(auction);
-        }
-    }
-
     [HttpDelete("end_auction")]
     [ProducesResponseType(typeof(AuctionDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> EndAuction(string auction_id)
@@ -111,7 +104,24 @@ public class AuctionController : ControllerBase
         }
     }
 
+    [HttpDelete("delete_auction")]
+    [ProducesResponseType(typeof(Auction), StatusCodes.Status200OK)]
+    public async Task<IActionResult> DeleteAuction(string auction_id)
+    {
+        var (httpResponseMessage, auction) = await _auctionService.DeleteAuction(auction_id);
+
+        if (!httpResponseMessage.IsSuccessStatusCode)
+        {
+            return BadRequest(httpResponseMessage.ReasonPhrase);
+        }
+        else
+        {
+            return Ok(auction);
+        }
+    }
+
     [HttpPost("insert_auction_bid")]
+    [ProducesResponseType(typeof(AuctionBidCreatorDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> InsertAuctionBid([FromBody] AuctionBidCreatorDto auctionBidDto)
     {
         var auctionBid = new Auction_Bid
@@ -135,15 +145,6 @@ public class AuctionController : ControllerBase
         {
             return Ok(bidDto);
         }
-    }
-
-
-    [HttpDelete("drop_tables")]
-    public async Task<IActionResult> DropTables()
-    {
-        await _auctionService.DropTablesAsync();
-
-        return Ok();
     }
 
     [HttpGet("get_all_auctions")]
@@ -193,6 +194,7 @@ public class AuctionController : ControllerBase
     }
 
     [HttpGet("get_bid_messages_for_auction")]
+    [ProducesResponseType(typeof(AuctionBidMessageDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetBidMessagesForAuction(string auction_Id)
     {
         var messages = await _auctionService.GetBidMessagesForAuction(auction_Id);

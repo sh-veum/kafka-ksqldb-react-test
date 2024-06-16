@@ -1,10 +1,7 @@
-using KafkaAuction.Dtos;
-using KafkaAuction.Models;
-using KafkaAuction.Services;
 using KafkaAuction.Services.Interfaces;
-using ksqlDB.RestApi.Client.KSql.Query.Context;
+using ksqlDB.RestApi.Client.KSql.RestApi.Responses.Streams;
+using ksqlDB.RestApi.Client.KSql.RestApi.Responses.Tables;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json.Linq;
 
 namespace KafkaAuction.Controllers;
 
@@ -22,6 +19,7 @@ public class OverviewController : ControllerBase
     }
 
     [HttpGet("check_tables")]
+    [ProducesResponseType(typeof(TablesResponse[]), StatusCodes.Status200OK)]
     public async Task<IActionResult> CheckTables()
     {
         var result = await _ksqlDbService.CheckTablesAsync();
@@ -35,6 +33,7 @@ public class OverviewController : ControllerBase
     }
 
     [HttpGet("check_streams")]
+    [ProducesResponseType(typeof(StreamsResponse[]), StatusCodes.Status200OK)]
     public async Task<IActionResult> CheckStreams()
     {
         var result = await _ksqlDbService.CheckStreamsAsync();
@@ -48,32 +47,34 @@ public class OverviewController : ControllerBase
     }
 
     [HttpDelete("drop_table")]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
     public async Task<IActionResult> DropTable([FromQuery] string tableName)
     {
         var result = await _ksqlDbService.DropSingleTablesAsync(tableName);
 
-        if (result == null)
+        if (!result.IsSuccessStatusCode)
         {
             return BadRequest();
         }
         else
         {
-            return Ok(JToken.Parse(result).ToString(Newtonsoft.Json.Formatting.Indented));
+            return Ok(result.Content.ReadAsStringAsync().Result);
         }
     }
 
     [HttpDelete("drop_stream")]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
     public async Task<IActionResult> DropStream([FromQuery] string streamName)
     {
         var result = await _ksqlDbService.DropSingleStreamAsync(streamName);
 
-        if (result == null)
+        if (!result.IsSuccessStatusCode)
         {
             return BadRequest();
         }
         else
         {
-            return Ok(JToken.Parse(result).ToString(Newtonsoft.Json.Formatting.Indented));
+            return Ok(result.Content.ReadAsStringAsync().Result);
         }
     }
 }

@@ -1,4 +1,3 @@
-
 using System.Net;
 using KafkaAuction.Constants;
 using KafkaAuction.Dtos;
@@ -208,14 +207,32 @@ public class AuctionService : IAuctionService
         return (insertResponse, auctionDto);
     }
 
-    public async Task DropTablesAsync()
+    public async Task<List<DropResourceResponseDto>> DropTablesAsync()
     {
         var dropper = new KsqlResourceDropper(_restApiProvider, _logger);
-        await dropper.DropResourceAsync("QUERYABLE_" + _auctionsTableName, ResourceType.Table);
-        await dropper.DropResourceAsync(_auctionsTableName, ResourceType.Table);
-        await dropper.DropResourceAsync(_auctionBidsStreamName, ResourceType.Stream);
-        await dropper.DropResourceAsync(_auctionsWithBidsStreamName, ResourceType.Stream);
+        var resourcesToDrop = new List<(string Name, ResourceType Type)>
+        {
+            ("QUERYABLE_" + _auctionsTableName, ResourceType.Table),
+            (_auctionsWithBidsStreamName, ResourceType.Stream),
+            (_auctionsTableName, ResourceType.Table),
+            (_auctionBidsStreamName, ResourceType.Stream)
+        };
+
+        var responseList = new List<DropResourceResponseDto>();
+
+        foreach (var resource in resourcesToDrop)
+        {
+            var response = await dropper.DropResourceAsync(resource.Name, resource.Type);
+            responseList.Add(new DropResourceResponseDto
+            {
+                ResourceName = resource.Name,
+                IsSuccess = response.IsSuccessStatusCode
+            });
+        }
+
+        return responseList;
     }
+
 
     public async Task<List<AuctionDto>> GetAllAuctions()
     {

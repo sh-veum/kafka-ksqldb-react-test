@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using System.Reactive.Linq;
-using System.Text;
 using KafkaAuction.Constants;
 using KafkaAuction.Dtos;
 using KafkaAuction.Enums;
@@ -55,17 +54,44 @@ public class ChatService : IChatService
         return await _restApiProvider.GetTablesAsync(cancellationToken);
     }
 
-    public async Task<HttpResponseMessage> InsertMessageAsync(Chat_Message message)
+    public async Task<(HttpResponseMessage httpResponseMessage, ChatMessageWithAuctionIdDto chatMessageDto)> InsertMessageAsync(Chat_Message message)
     {
         var inserter = new EntityInserter<Chat_Message>(_restApiProvider, _logger);
-        return await inserter.InsertAsync(_chatMessageTableName, message);
+        var response = await inserter.InsertAsync(_chatMessageTableName, message);
+
+        var chatMessageDto = new ChatMessageWithAuctionIdDto
+        {
+            Auction_Id = message.Auction_Id,
+            Username = message.Username,
+            MessageText = message.MessageText,
+            Timestamp = message.Timestamp
+        };
+
+        return (response, chatMessageDto);
     }
 
-    public async Task DropTablesAsync()
+    public async Task<List<DropResourceResponseDto>> DropTablesAsync()
     {
         var dropper = new KsqlResourceDropper(_restApiProvider, _logger);
-        await dropper.DropResourceAsync("QUERYABLE_" + _chatMessageTableName, ResourceType.Table);
-        await dropper.DropResourceAsync(_chatMessageTableName, ResourceType.Table);
+        var resourcesToDrop = new List<(string Name, ResourceType Type)>
+        {
+            ("QUERYABLE_" + _chatMessageTableName, ResourceType.Table),
+            (_chatMessageTableName, ResourceType.Table)
+        };
+
+        var responseList = new List<DropResourceResponseDto>();
+
+        foreach (var resource in resourcesToDrop)
+        {
+            var response = await dropper.DropResourceAsync(resource.Name, resource.Type);
+            responseList.Add(new DropResourceResponseDto
+            {
+                ResourceName = resource.Name,
+                IsSuccess = response.IsSuccessStatusCode
+            });
+        }
+
+        return responseList;
     }
 
     public async Task<List<ChatMessageWithAuctionIdDto>> GetAllMessages()
