@@ -13,4 +13,7 @@ public record Auction
     public int? Number_Of_Bids { get; set; } = 0;
     public string? Winner { get; set; }
     public string Created_At { get; set; } = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
+    public required string End_Date { get; set; }
+    public bool Is_Open { get; set; } = true;
+    public bool Is_Existing { get; set; } = true;
 }

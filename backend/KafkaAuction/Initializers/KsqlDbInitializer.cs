@@ -103,6 +103,7 @@ public static class KsqlDbInitializer
                 Starting_Price = 1,
                 Current_Price = 1,
                 Created_At = DateTime.UtcNow.AddSeconds(+i).ToString("yyyy-MM-dd HH:mm:ss"),
+                End_Date = DateTime.UtcNow.AddHours(+i + 10).ToString("yyyy-MM-dd HH:mm:ss"),
             };
             auctions.Add(auction);
             await auctionService.InsertAuctionAsync(auction);
