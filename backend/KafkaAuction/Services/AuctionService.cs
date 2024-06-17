@@ -326,6 +326,7 @@ public class AuctionService : IAuctionService
 
         if (auction == null)
         {
+            _logger.LogWarning($"Auction with id {auction_id} not found");
             return null;
         }
 

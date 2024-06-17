@@ -17,9 +17,9 @@
       >
         <v-textarea
           :label="`${chatMessage.Username} - ${formatTimestamp(
-            chatMessage.Timestamp
+            chatMessage.Created_Timestamp
           )}`"
-          :model-value="chatMessage.MessageText"
+          :model-value="chatMessage.Message_Text"
           rows="1"
           variant="filled"
           auto-grow

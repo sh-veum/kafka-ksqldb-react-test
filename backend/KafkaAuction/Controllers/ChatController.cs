@@ -37,15 +37,15 @@ public class ChatController : ControllerBase
     }
 
     [HttpPost("insert_message")]
-    [ProducesResponseType(typeof(ChatMessageWithAuctionIdDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> InsertMessage([FromBody] ChatMessageWithAuctionIdDto chatMessageDto)
+    [ProducesResponseType(typeof(ChatMessageDetailedDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> InsertMessage([FromBody] ChatMessageCreatorDto chatMessageDto)
     {
         var message = new Chat_Message
         {
             Message_Id = Guid.NewGuid().ToString(),
             Auction_Id = chatMessageDto.Auction_Id,
             Username = chatMessageDto.Username,
-            MessageText = chatMessageDto.MessageText,
+            Message_Text = chatMessageDto.Message_Text
         };
 
         var (httpResponseMessage, chatMessage) = await _chatService.InsertMessageAsync(message);
@@ -60,15 +60,31 @@ public class ChatController : ControllerBase
         }
     }
 
+    [HttpPatch("update_message")]
+    [ProducesResponseType(typeof(ChatMessageDetailedDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> UpdateMessage([FromBody] ChatMessageUpdateDto chatMessageUpdateDto)
+    {
+        var (httpResponseMessage, chatMessage) = await _chatService.UpdateMessageAsync(chatMessageUpdateDto);
+
+        if (!httpResponseMessage.IsSuccessStatusCode)
+        {
+            return BadRequest(httpResponseMessage.ReasonPhrase);
+        }
+        else
+        {
+            return Ok(chatMessage);
+        }
+    }
+
     [HttpGet("get_all_messages")]
-    [ProducesResponseType(typeof(ChatMessageWithAuctionIdDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ChatMessageDetailedDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllMessages([FromQuery] bool sortByDate = false)
     {
         var messages = await _chatService.GetAllMessages();
 
         if (sortByDate)
         {
-            messages = Sorter.SortByDate(messages, messages => messages.Timestamp!);
+            messages = Sorter.SortByDate(messages, messages => messages.Created_Timestamp!);
         }
 
         return Ok(messages);
@@ -82,7 +98,7 @@ public class ChatController : ControllerBase
 
         if (sortByDate)
         {
-            messages = Sorter.SortByDate(messages, messages => messages.Timestamp!);
+            messages = Sorter.SortByDate(messages, messages => messages.Created_Timestamp!);
         }
 
         return Ok(messages);

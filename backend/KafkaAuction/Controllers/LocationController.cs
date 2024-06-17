@@ -64,7 +64,7 @@ public class LocationController : ControllerBase
     }
 
 
-    [HttpPost("add_location")]
+    [HttpPatch("add_location")]
     [ProducesResponseType(typeof(UserLocationDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> AddLocation([FromBody] UserLocationUpdateDto userLocationDto)
     {
@@ -105,7 +105,7 @@ public class LocationController : ControllerBase
         }
     }
 
-    [HttpDelete("remove_location")]
+    [HttpPatch("remove_location")]
     [ProducesResponseType(typeof(UserLocationDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> RemoveLocation([FromBody] UserLocationUpdateDto userLocationDto)
     {

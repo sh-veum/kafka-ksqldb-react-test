@@ -21,20 +21,14 @@ public static class KsqlDbInitializer
         var tables = tablesResponse[0]?.Tables ?? [];
         var streams = streamsResponse[0]?.Streams ?? [];
 
-        if (tables != null)
-        {
-            logger.LogInformation("Existing Tables: " + string.Join(", ", tables.Select(t => t.Name)));
-        }
-
-        if (streams != null)
-        {
-            logger.LogInformation("Existing Streams: " + string.Join(", ", streams.Select(s => s.Name)));
-        }
+        logger.LogInformation("Existing Tables: " + string.Join(", ", tables.Select(t => t.Name)));
+        logger.LogInformation("Existing Streams: " + string.Join(", ", streams.Select(s => s.Name)));
 
         var createdAny = await EnsureTablesAndStreamsExist(auctionService, chatService, userLocationService, tables!, streams!, logger);
 
         if (createdAny)
         {
+            logger.LogInformation("Waiting 5 seconds to allow ksqlDB to process the new tables and streams.");
             Thread.Sleep(5000);
         }
 
@@ -140,8 +134,8 @@ public static class KsqlDbInitializer
                 Message_Id = Guid.NewGuid().ToString(),
                 Auction_Id = auctionId,
                 Username = $"User{i}",
-                MessageText = $"Message {i}",
-                Timestamp = DateTime.UtcNow.AddSeconds(+i).ToString("yyyy-MM-dd HH:mm:ss")
+                Message_Text = $"Message {i}",
+                Created_Timestamp = DateTime.UtcNow.AddSeconds(+i).ToString("yyyy-MM-dd HH:mm:ss"),
             };
             await chatService.InsertMessageAsync(chatMessage);
         }

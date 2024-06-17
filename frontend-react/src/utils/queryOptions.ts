@@ -34,3 +34,14 @@ export const auctionBidsQueryOptions = (auctionId: string) =>
       return res.data;
     },
   });
+
+export const chatMessagesQueryOptions = (auctionId: string) =>
+  queryOptions({
+    queryKey: ["chatMessages", auctionId],
+    queryFn: async () => {
+      const res = await axios.get(
+        `${baseUrl}/api/chat/get_messages_for_auction?auction_Id=${auctionId}&sortByDate=true`
+      );
+      return res.data;
+    },
+  });

@@ -88,7 +88,7 @@ public class AuctionController : ControllerBase
         }
     }
 
-    [HttpDelete("end_auction")]
+    [HttpPatch("end_auction")]
     [ProducesResponseType(typeof(AuctionDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> EndAuction(string auction_id)
     {

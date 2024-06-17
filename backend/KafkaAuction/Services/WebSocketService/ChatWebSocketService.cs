@@ -31,9 +31,11 @@ public class ChatWebSocketService : IChatWebSocketService
             .Where(p => p.Auction_Id == auctionId)
             .Select(l => new ChatMessageDto
             {
+                Message_Id = l.Message_Id,
                 Username = l.Username,
-                MessageText = l.MessageText,
-                Timestamp = l.Timestamp
+                Message_Text = l.Message_Text,
+                Created_Timestamp = l.Created_Timestamp,
+                Is_Edited = l.Updated_Timestamps.Length > 1
             })
             .Subscribe(ChatMessageDto =>
             {
