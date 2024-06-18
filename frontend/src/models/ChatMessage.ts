@@ -1,5 +1,6 @@
 export interface ChatMessage {
   Username: string;
-  MessageText: string;
-  Timestamp: string;
+  Message_Text: string;
+  Created_Timestamp: string;
+  Updated_Timestamps: string[];
 }

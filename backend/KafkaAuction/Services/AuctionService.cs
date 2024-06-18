@@ -1,4 +1,3 @@
-
 using System.Net;
 using KafkaAuction.Constants;
 using KafkaAuction.Dtos;
@@ -101,16 +100,32 @@ public class AuctionService : IAuctionService
         return await _restApiProvider.GetStreamsAsync(cancellationToken);
     }
 
-    public async Task<HttpResponseMessage> InsertBidAsync(Auction_Bid auctionBid)
+    public async Task<(HttpResponseMessage httpResponseMessage, AuctionBidDto? auctionBidDto)> InsertBidAsync(Auction_Bid auctionBid)
     {
-        var auction = await GetAuction(auctionBid.Auction_Id);
+        var auction = await GetAuctionById(auctionBid.Auction_Id);
 
         if (auction == null)
         {
-            return new HttpResponseMessage(HttpStatusCode.NotFound)
+            return (new HttpResponseMessage(HttpStatusCode.NotFound)
             {
                 Content = new StringContent("Auction to insert bid in not found")
-            };
+            }, null);
+        }
+
+        if (DateTime.Parse(auction.End_Date) < DateTime.UtcNow)
+        {
+            return (new HttpResponseMessage(HttpStatusCode.BadRequest)
+            {
+                Content = new StringContent("Auction has ended")
+            }, null);
+        }
+
+        if (!auction.Is_Open || !auction.Is_Existing)
+        {
+            return (new HttpResponseMessage(HttpStatusCode.BadRequest)
+            {
+                Content = new StringContent("Auction is closed")
+            }, null);
         }
 
         _logger.LogInformation("Current price: {CurrentPrice}", auction.Current_Price);
@@ -127,7 +142,7 @@ public class AuctionService : IAuctionService
             if (!insertAuctionResponse.IsSuccessStatusCode)
             {
                 _logger.LogError("Failed to insert AUCTION: {StatusCode} {ReasonPhrase}", insertAuctionResponse.StatusCode, insertAuctionResponse.ReasonPhrase);
-                return insertAuctionResponse;
+                return (insertAuctionResponse, null);
             }
 
             var inserter = new EntityInserter<Auction_Bid>(_restApiProvider, _logger);
@@ -136,44 +151,93 @@ public class AuctionService : IAuctionService
             if (!insertBidResponse.IsSuccessStatusCode)
             {
                 _logger.LogError("Failed to insert AUCTION_BID: {StatusCode} {ReasonPhrase}", insertBidResponse.StatusCode, insertBidResponse.ReasonPhrase);
-                return insertBidResponse;
+                return (insertBidResponse, null);
             }
             else
             {
-                return new HttpResponseMessage(HttpStatusCode.OK)
+                var auctionBidDto = new AuctionBidDto
+                {
+                    Auction_Id = auctionBid.Auction_Id,
+                    Username = auctionBid.Username,
+                    Bid_Amount = auctionBid.Bid_Amount,
+                    Timestamp = auctionBid.Timestamp
+                };
+
+                return (new HttpResponseMessage(HttpStatusCode.OK)
                 {
                     Content = new StringContent("Bid inserted successfully")
-                };
+                }, auctionBidDto);
             }
         }
         else
         {
             _logger.LogInformation("Bid is lower than current price");
-            return new HttpResponseMessage(HttpStatusCode.BadRequest)
+            return (new HttpResponseMessage(HttpStatusCode.BadRequest)
             {
                 Content = new StringContent($"Bid must be higher than: {auction.Current_Price}")
-            };
+            }, null);
         }
     }
 
-    public async Task<HttpResponseMessage> InsertAuctionAsync(Auction auction)
+    public async Task<(HttpResponseMessage httpResponseMessage, AuctionDto? auctionDto)> InsertAuctionAsync(Auction auction)
     {
         var inserter = new EntityInserter<Auction>(_restApiProvider, _logger);
-        return await inserter.InsertAsync(_auctionsTableName, auction);
+        var insertResponse = await inserter.InsertAsync(_auctionsTableName, auction);
+
+        if (!insertResponse.IsSuccessStatusCode)
+        {
+            _logger.LogError("Failed to insert AUCTION: {StatusCode} {ReasonPhrase}", insertResponse.StatusCode, insertResponse.ReasonPhrase);
+            return (insertResponse, null);
+        }
+
+        var auctionDto = new AuctionDto
+        {
+            Auction_Id = auction.Auction_Id,
+            Title = auction.Title,
+            Description = auction.Description,
+            Starting_Price = auction.Starting_Price,
+            Current_Price = auction.Current_Price,
+            Number_Of_Bids = auction.Number_Of_Bids,
+            Winner = auction.Winner,
+            Created_At = auction.Created_At,
+            End_Date = auction.End_Date,
+            Is_Open = auction.Is_Open
+        };
+
+        return (insertResponse, auctionDto);
     }
 
-    public async Task DropTablesAsync()
+    public async Task<List<DropResourceResponseDto>> DropTablesAsync()
     {
         var dropper = new KsqlResourceDropper(_restApiProvider, _logger);
-        await dropper.DropResourceAsync("QUERYABLE_" + _auctionsTableName, ResourceType.Table);
-        await dropper.DropResourceAsync(_auctionsTableName, ResourceType.Table);
-        await dropper.DropResourceAsync(_auctionBidsStreamName, ResourceType.Stream);
-        await dropper.DropResourceAsync(_auctionsWithBidsStreamName, ResourceType.Stream);
+        var resourcesToDrop = new List<(string Name, ResourceType Type)>
+        {
+            ("QUERYABLE_" + _auctionsTableName, ResourceType.Table),
+            (_auctionsWithBidsStreamName, ResourceType.Stream),
+            (_auctionsTableName, ResourceType.Table),
+            (_auctionBidsStreamName, ResourceType.Stream)
+        };
+
+        var responseList = new List<DropResourceResponseDto>();
+
+        foreach (var resource in resourcesToDrop)
+        {
+            var response = await dropper.DropResourceAsync(resource.Name, resource.Type);
+            responseList.Add(new DropResourceResponseDto
+            {
+                ResourceName = resource.Name,
+                IsSuccess = response.IsSuccessStatusCode
+            });
+        }
+
+        return responseList;
     }
+
 
     public async Task<List<AuctionDto>> GetAllAuctions()
     {
         var auctions = _context.CreatePullQuery<Auction>($"QUERYABLE_{_auctionsTableName}")
+            .Where(a => a.Is_Existing == true)
             .GetManyAsync();
 
         // _logger.LogInformation("Found {amount} auctions", await auctions.CountAsync());
@@ -191,7 +255,9 @@ public class AuctionService : IAuctionService
                 Starting_Price = auction.Starting_Price,
                 Current_Price = auction.Current_Price,
                 Winner = auction.Winner,
-                Created_At = auction.Created_At
+                Created_At = auction.Created_At,
+                End_Date = auction.End_Date,
+                Is_Open = auction.Is_Open
             });
         }
 
@@ -201,6 +267,7 @@ public class AuctionService : IAuctionService
     public async Task<List<AuctionDto>> GetAuctions(int limit)
     {
         var auctions = _context.CreatePullQuery<Auction>($"queryable_{_auctionsTableName}")
+            .Where(a => a.Is_Existing == true)
             .Take(limit);
 
         List<AuctionDto> auctionDtos = [];
@@ -216,17 +283,19 @@ public class AuctionService : IAuctionService
                 Current_Price = auction.Current_Price,
                 Number_Of_Bids = auction.Number_Of_Bids,
                 Winner = auction.Winner,
-                Created_At = auction.Created_At
+                Created_At = auction.Created_At,
+                End_Date = auction.End_Date,
+                Is_Open = auction.Is_Open
             });
         }
 
         return auctionDtos;
     }
 
-    public async Task<AuctionDto?> GetAuctionById(string auction_id)
+    public async Task<AuctionDto?> GetAuctionDtoById(string auction_id)
     {
         var auction = await _context.CreatePullQuery<Auction>($"queryable_{_auctionsTableName}")
-            .Where(a => a.Auction_Id == auction_id)
+            .Where(a => a.Auction_Id == auction_id && a.Is_Existing == true)
             .FirstOrDefaultAsync();
 
         if (auction == null)
@@ -243,34 +312,37 @@ public class AuctionService : IAuctionService
             Current_Price = auction.Current_Price,
             Number_Of_Bids = auction.Number_Of_Bids,
             Winner = auction.Winner,
-            Created_At = auction.Created_At
+            Created_At = auction.Created_At,
+            End_Date = auction.End_Date,
+            Is_Open = auction.Is_Open
         };
     }
 
-    public async Task<Auction?> GetAuction(string auction_id)
+    public async Task<Auction?> GetAuctionById(string auction_id)
     {
         var auction = await _context.CreatePullQuery<Auction>($"queryable_{_auctionsTableName}")
-            .Where(a => a.Auction_Id == auction_id)
+            .Where(a => a.Auction_Id == auction_id && a.Is_Existing == true)
             .FirstOrDefaultAsync();
 
         if (auction == null)
         {
+            _logger.LogWarning($"Auction with id {auction_id} not found");
             return null;
         }
 
         return auction;
     }
 
-    public async Task<List<AuctionBidDtoWithTimeStamp>> GetAllBids()
+    public async Task<List<AuctionBidDto>> GetAllBids()
     {
         var auctionBids = _context.CreatePullQuery<Auction_Bid>()
             .GetManyAsync();
 
-        List<AuctionBidDtoWithTimeStamp> auctionBidDtos = [];
+        List<AuctionBidDto> auctionBidDtos = [];
 
         await foreach (var auctionBid in auctionBids.ConfigureAwait(false))
         {
-            auctionBidDtos.Add(new AuctionBidDtoWithTimeStamp
+            auctionBidDtos.Add(new AuctionBidDto
             {
                 Auction_Id = auctionBid.Auction_Id,
                 Username = auctionBid.Username,
@@ -282,16 +354,16 @@ public class AuctionService : IAuctionService
         return auctionBidDtos;
     }
 
-    public async Task<List<AuctionBidDtoWithTimeStamp>> GetBidsForAuction(string auction_id)
+    public async Task<List<AuctionBidDto>> GetBidsForAuction(string auction_id)
     {
         var auctionBids = _context.CreatePullQuery<Auction_Bid>()
             .Where(a => a.Auction_Id == auction_id);
 
-        List<AuctionBidDtoWithTimeStamp> auctionBidDtos = [];
+        List<AuctionBidDto> auctionBidDtos = [];
 
         await foreach (var auctionBid in auctionBids.GetManyAsync().ConfigureAwait(false))
         {
-            auctionBidDtos.Add(new AuctionBidDtoWithTimeStamp
+            auctionBidDtos.Add(new AuctionBidDto
             {
                 Auction_Id = auctionBid.Auction_Id,
                 Username = auctionBid.Username,
@@ -321,5 +393,71 @@ public class AuctionService : IAuctionService
         }
 
         return auctionBidDtos;
+    }
+
+    public async Task<(HttpResponseMessage httpResponseMessage, Auction? auction)> DeleteAuction(string auction_id)
+    {
+        var auction = await GetAuctionById(auction_id);
+
+        if (auction == null)
+        {
+            return (new HttpResponseMessage(HttpStatusCode.NotFound)
+            {
+                Content = new StringContent("Auction to delete not found")
+            }, null);
+        }
+
+        auction.Is_Existing = false;
+
+        var auctionInserter = new EntityInserter<Auction>(_restApiProvider, _logger);
+        var response = await auctionInserter.InsertAsync(_auctionsTableName, auction);
+
+        return (response, auction);
+    }
+
+    public async Task<(HttpResponseMessage httpResponseMessage, AuctionDto? auctionDto)> EndAuctionAsync(string auction_id)
+    {
+        var auction = await GetAuctionById(auction_id);
+
+        if (auction == null)
+        {
+            return (new HttpResponseMessage(HttpStatusCode.NotFound)
+            {
+                Content = new StringContent("Auction to end not found")
+            }, null);
+        }
+
+        auction.Is_Open = false;
+
+        var auctionBids = await GetBidsForAuction(auction_id);
+
+        if (auctionBids.Count == 0)
+        {
+            auction.Winner = "No bids";
+        }
+        else
+        {
+            var winningBid = auctionBids.OrderByDescending(b => b.Bid_Amount).First();
+            auction.Winner = winningBid.Username;
+        }
+
+        var auctionInserter = new EntityInserter<Auction>(_restApiProvider, _logger);
+        var response = await auctionInserter.InsertAsync(_auctionsTableName, auction);
+
+        var auctionDto = new AuctionDto
+        {
+            Auction_Id = auction.Auction_Id,
+            Title = auction.Title,
+            Description = auction.Description,
+            Starting_Price = auction.Starting_Price,
+            Current_Price = auction.Current_Price,
+            Number_Of_Bids = auction.Number_Of_Bids,
+            Winner = auction.Winner,
+            Created_At = auction.Created_At,
+            End_Date = auction.End_Date,
+            Is_Open = auction.Is_Open
+        };
+
+        return (response, auctionDto);
     }
 }

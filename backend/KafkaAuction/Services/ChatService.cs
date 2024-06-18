@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
+using System.Net;
 using System.Reactive.Linq;
-using System.Text;
 using KafkaAuction.Constants;
 using KafkaAuction.Dtos;
 using KafkaAuction.Enums;
@@ -55,34 +55,107 @@ public class ChatService : IChatService
         return await _restApiProvider.GetTablesAsync(cancellationToken);
     }
 
-    public async Task<HttpResponseMessage> InsertMessageAsync(Chat_Message message)
+    public async Task<(HttpResponseMessage httpResponseMessage, ChatMessageDetailedDto chatMessageDto)> InsertMessageAsync(Chat_Message message)
     {
         var inserter = new EntityInserter<Chat_Message>(_restApiProvider, _logger);
-        return await inserter.InsertAsync(_chatMessageTableName, message);
+        var response = await inserter.InsertAsync(_chatMessageTableName, message);
+
+        var chatMessageDto = new ChatMessageDetailedDto
+        {
+            Message_Id = message.Message_Id,
+            Auction_Id = message.Auction_Id,
+            Username = message.Username,
+            Message_Text = message.Message_Text,
+            Previous_Messages = message.Previous_Messages ?? [],
+            Created_Timestamp = message.Created_Timestamp,
+            Updated_Timestamps = message.Updated_Timestamps ?? []
+        };
+
+        return (response, chatMessageDto);
     }
 
-    public async Task DropTablesAsync()
+    public async Task<Chat_Message?> GetMessageById(string message_id)
+    {
+        var chatMessage = await _context.CreatePullQuery<Chat_Message>($"queryable_{_chatMessageTableName}")
+            .Where(p => p.Message_Id == message_id)
+            .FirstOrDefaultAsync();
+
+        if (chatMessage == null)
+        {
+            _logger.LogWarning($"Message with id {message_id} not found");
+            return null;
+        }
+
+        return chatMessage;
+    }
+
+    public async Task<(HttpResponseMessage httpResponseMessage, ChatMessageDetailedDto? chatMessageDto)> UpdateMessageAsync(ChatMessageUpdateDto chatMessageUpdateDto)
+    {
+        var message = await GetMessageById(chatMessageUpdateDto.Message_Id);
+
+        if (message == null)
+        {
+            return (new HttpResponseMessage(HttpStatusCode.NotFound)
+            {
+                Content = new StringContent("Message not found")
+            }, null);
+        }
+
+        message.Previous_Messages ??= [];
+        message.Updated_Timestamps ??= [];
+
+        message.Previous_Messages = message.Previous_Messages?.Append(message.Message_Text).ToArray() ?? [message.Message_Text];
+        message.Updated_Timestamps = message.Updated_Timestamps?.Append(DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")).ToArray() ?? [DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")];
+
+        message.Message_Text = chatMessageUpdateDto.Message_Text;
+
+        var (httpResponseMessage, chatMessage) = await InsertMessageAsync(message);
+
+        return (httpResponseMessage, chatMessage);
+    }
+
+    public async Task<List<DropResourceResponseDto>> DropTablesAsync()
     {
         var dropper = new KsqlResourceDropper(_restApiProvider, _logger);
-        await dropper.DropResourceAsync("QUERYABLE_" + _chatMessageTableName, ResourceType.Table);
-        await dropper.DropResourceAsync(_chatMessageTableName, ResourceType.Table);
+        var resourcesToDrop = new List<(string Name, ResourceType Type)>
+        {
+            ("QUERYABLE_" + _chatMessageTableName, ResourceType.Table),
+            (_chatMessageTableName, ResourceType.Table)
+        };
+
+        var responseList = new List<DropResourceResponseDto>();
+
+        foreach (var resource in resourcesToDrop)
+        {
+            var response = await dropper.DropResourceAsync(resource.Name, resource.Type);
+            responseList.Add(new DropResourceResponseDto
+            {
+                ResourceName = resource.Name,
+                IsSuccess = response.IsSuccessStatusCode
+            });
+        }
+
+        return responseList;
     }
 
-    public async Task<List<ChatMessageWithAuctionIdDto>> GetAllMessages()
+    public async Task<List<ChatMessageDetailedDto>> GetAllMessages()
     {
         var chatMessages = _context.CreatePullQuery<Chat_Message>($"queryable_{_chatMessageTableName}")
             .GetManyAsync();
 
-        List<ChatMessageWithAuctionIdDto> chatMessageDtos = [];
+        List<ChatMessageDetailedDto> chatMessageDtos = [];
 
         await foreach (var chatMessage in chatMessages.ConfigureAwait(false))
         {
-            chatMessageDtos.Add(new ChatMessageWithAuctionIdDto
+            chatMessageDtos.Add(new ChatMessageDetailedDto
             {
+                Message_Id = chatMessage.Message_Id,
                 Auction_Id = chatMessage.Auction_Id,
                 Username = chatMessage.Username,
-                MessageText = chatMessage.MessageText,
-                Timestamp = chatMessage.Timestamp
+                Message_Text = chatMessage.Message_Text,
+                Previous_Messages = chatMessage.Previous_Messages ?? [],
+                Created_Timestamp = chatMessage.Created_Timestamp,
+                Updated_Timestamps = chatMessage.Updated_Timestamps ?? []
             });
         }
 
@@ -106,11 +179,15 @@ public class ChatService : IChatService
 
         await foreach (var chatMessage in chatMessages.ConfigureAwait(false))
         {
+            var hasBeenEdited = chatMessage.Updated_Timestamps?.Length > 1;
+
             chatMessageDtos.Add(new ChatMessageDto
             {
+                Message_Id = chatMessage.Message_Id,
                 Username = chatMessage.Username,
-                MessageText = chatMessage.MessageText,
-                Timestamp = chatMessage.Timestamp
+                Message_Text = chatMessage.Message_Text,
+                Created_Timestamp = chatMessage.Created_Timestamp,
+                Is_Edited = hasBeenEdited
             });
         }
 
@@ -142,13 +219,17 @@ public class ChatService : IChatService
                 {
                     foreach (var message in buffer)
                     {
+                        var hasBeenEdited = message.Updated_Timestamps?.Length > 1;
+
                         messages.Add(new ChatMessageDto
                         {
+                            Message_Id = message.Message_Id,
                             Username = message.Username,
-                            MessageText = message.MessageText,
-                            Timestamp = message.Timestamp
+                            Message_Text = message.Message_Text,
+                            Created_Timestamp = message.Created_Timestamp,
+                            Is_Edited = hasBeenEdited
                         });
-                        _logger.LogInformation($"Received message: {message.MessageText}");
+                        _logger.LogInformation($"Received message: {message.Message_Text}");
                     }
                     tcs.TrySetResult([.. messages]);
                 },

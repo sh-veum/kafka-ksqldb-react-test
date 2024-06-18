@@ -2,7 +2,6 @@ using KafkaAuction.Services.Interfaces;
 using KafkaAuction.Utilities;
 using ksqlDB.RestApi.Client.KSql.RestApi.Responses.Streams;
 using ksqlDB.RestApi.Client.KSql.RestApi.Responses.Tables;
-using ksqlDB.RestApi.Client.KSql.RestApi.Statements;
 
 namespace KafkaAuction.Services;
 
@@ -17,32 +16,26 @@ public class KsqlDbService : IKsqlDbService
         _restApiProvider = restApiProvider;
     }
 
-    public async Task<string?> DropSingleTablesAsync(string tableName)
+    public async Task<HttpResponseMessage> DropSingleTablesAsync(string tableName)
     {
         var httpResult = await _restApiProvider.DropTableAndTopic(tableName);
         if (!httpResult.IsSuccessStatusCode)
         {
             var content = await httpResult.Content.ReadAsStringAsync();
             _logger.LogError(content);
-            return null;
         }
-
-        var responseContent = await httpResult.Content.ReadAsStringAsync();
-        return responseContent;
+        return httpResult;
     }
 
-    public async Task<string?> DropSingleStreamAsync(string streamName)
+    public async Task<HttpResponseMessage> DropSingleStreamAsync(string streamName)
     {
         var httpResult = await _restApiProvider.DropStreamAndTopic(streamName);
         if (!httpResult.IsSuccessStatusCode)
         {
             var content = await httpResult.Content.ReadAsStringAsync();
             _logger.LogError(content);
-            return null;
         }
-
-        var responseContent = await httpResult.Content.ReadAsStringAsync();
-        return responseContent;
+        return httpResult;
     }
 
     public async Task<bool> CreateSingleTableAsync<T>(string tableName, CancellationToken cancellationToken = default)

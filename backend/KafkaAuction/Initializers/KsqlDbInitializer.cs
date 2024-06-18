@@ -9,10 +9,6 @@ namespace KafkaAuction.Initializers;
 
 public static class KsqlDbInitializer
 {
-    private const int numAuctions = 5;
-    private const int numBidsPerAuction = 6;
-    private const int numMessagesPerAuction = 8;
-
     public static async Task InitializeAsync(IAuctionService auctionService, IChatService chatService, IUserLocationService userLocationService, IKsqlDbService ksqlDbService, ILogger logger)
     {
         TablesResponse[] tablesResponse = await ksqlDbService.CheckTablesAsync();
@@ -21,27 +17,21 @@ public static class KsqlDbInitializer
         var tables = tablesResponse[0]?.Tables ?? [];
         var streams = streamsResponse[0]?.Streams ?? [];
 
-        if (tables != null)
-        {
-            logger.LogInformation("Existing Tables: " + string.Join(", ", tables.Select(t => t.Name)));
-        }
-
-        if (streams != null)
-        {
-            logger.LogInformation("Existing Streams: " + string.Join(", ", streams.Select(s => s.Name)));
-        }
+        logger.LogInformation("Existing Tables: " + string.Join(", ", tables.Select(t => t.Name)));
+        logger.LogInformation("Existing Streams: " + string.Join(", ", streams.Select(s => s.Name)));
 
         var createdAny = await EnsureTablesAndStreamsExist(auctionService, chatService, userLocationService, tables!, streams!, logger);
 
         if (createdAny)
         {
+            logger.LogInformation("Waiting 5 seconds to allow ksqlDB to process the new tables and streams.");
             Thread.Sleep(5000);
         }
 
         var auctions = await auctionService.GetAllAuctions();
         if (auctions.Count == 0)
         {
-            await InsertAuctionsAndBidsAndMessages(auctionService, chatService, numAuctions, numBidsPerAuction, numMessagesPerAuction);
+            await InsertAuctionsAndBidsAndMessages(auctionService, chatService);
         }
     }
 
@@ -87,60 +77,125 @@ public static class KsqlDbInitializer
         return createdAny;
     }
 
-    private static async Task InsertAuctionsAndBidsAndMessages(IAuctionService auctionService, IChatService chatService, int numAuctions, int numBidsPerAuction, int numMessagesPerAuction)
+    private static async Task InsertAuctionsAndBidsAndMessages(IAuctionService auctionService, IChatService chatService)
     {
-        var auctions = new List<Auction>();
-
-        // Generate auctions
-        for (int i = 1; i <= numAuctions; i++)
+        var auctions = new List<Auction>
         {
-            var auctionId = Guid.NewGuid().ToString();
-            var auction = new Auction
+            new Auction
             {
-                Auction_Id = auctionId,
-                Title = $"Auction {i}",
-                Description = $"Description for Auction {i}",
-                Starting_Price = 1,
-                Current_Price = 1,
-                Created_At = DateTime.UtcNow.AddSeconds(+i).ToString("yyyy-MM-dd HH:mm:ss"),
-            };
-            auctions.Add(auction);
-            await auctionService.InsertAuctionAsync(auction);
+                Auction_Id = Guid.NewGuid().ToString(),
+                Title = "Cintamani Stone",
+                Description = "A fabled gemstone believed to grant wishes, from Shambhala.",
+                Starting_Price = 1000,
+                Current_Price = 1000,
+                Created_At = DateTime.UtcNow.AddSeconds(1).ToString("yyyy-MM-dd HH:mm:ss"),
+                End_Date = DateTime.UtcNow.AddHours(10).ToString("yyyy-MM-dd HH:mm:ss"),
+            },
+            new Auction
+            {
+                Auction_Id = Guid.NewGuid().ToString(),
+                Title = "Avery's Cross",
+                Description = "A golden cross from the treasure of the infamous pirate Henry Avery.",
+                Starting_Price = 2000,
+                Current_Price = 2000,
+                Created_At = DateTime.UtcNow.AddSeconds(2).ToString("yyyy-MM-dd HH:mm:ss"),
+                End_Date = DateTime.UtcNow.AddHours(11).ToString("yyyy-MM-dd HH:mm:ss"),
+            },
+            new Auction
+            {
+                Auction_Id = Guid.NewGuid().ToString(),
+                Title = "Sir Francis Drake's Ring",
+                Description = "A ring belonging to the legendary explorer Sir Francis Drake.",
+                Starting_Price = 1500,
+                Current_Price = 1500,
+                Created_At = DateTime.UtcNow.AddSeconds(3).ToString("yyyy-MM-dd HH:mm:ss"),
+                End_Date = DateTime.UtcNow.AddHours(12).ToString("yyyy-MM-dd HH:mm:ss"),
+            },
+            new Auction
+            {
+                Auction_Id = Guid.NewGuid().ToString(),
+                Title = "Sheba's Crown",
+                Description = "A crown belonging to the Queen of Sheba, adorned with precious gems.",
+                Starting_Price = 3000,
+                Current_Price = 3000,
+                Created_At = DateTime.UtcNow.AddSeconds(4).ToString("yyyy-MM-dd HH:mm:ss"),
+                End_Date = DateTime.UtcNow.AddHours(13).ToString("yyyy-MM-dd HH:mm:ss"),
+            },
+            new Auction
+            {
+                Auction_Id = Guid.NewGuid().ToString(),
+                Title = "Fleming's Maps",
+                Description = "A collection of maps created by the explorer Robert Fleming.",
+                Starting_Price = 1800,
+                Current_Price = 1800,
+                Created_At = DateTime.UtcNow.AddSeconds(5).ToString("yyyy-MM-dd HH:mm:ss"),
+                End_Date = DateTime.UtcNow.AddHours(14).ToString("yyyy-MM-dd HH:mm:ss"),
+            }
+        };
 
-            // Generate bids for this auction
-            await InsertBidsForAuction(auctionService, auctionId, numBidsPerAuction);
-            // Generate messages for this auction
-            await InsertMessagesForAuction(chatService, auctionId, numMessagesPerAuction);
+        foreach (var auction in auctions)
+        {
+            await auctionService.InsertAuctionAsync(auction);
+            await InsertBidsForAuction(auctionService, auction.Auction_Id);
+            await InsertMessagesForAuction(chatService, auction.Auction_Id);
         }
     }
 
-    private static async Task InsertBidsForAuction(IAuctionService auctionService, string auctionId, int numBids)
+    private static async Task InsertBidsForAuction(IAuctionService auctionService, string auctionId)
     {
-        for (int i = 1; i <= numBids; i++)
+        var bidderNames = new[]
+        {
+            "Nathan Drake", "Victor Sullivan", "Elena Fisher", "Chloe Frazer",
+            "Samuel Drake", "Charlie Cutter", "Rafe Adler", "Nadine Ross",
+            "Eddy Raja", "Harry Flynn", "Zoran Lazarevic", "Marisa Chase"
+        };
+
+        var random = new Random();
+        for (int i = 1; i <= 6; i++)
         {
             var auctionBid = new Auction_Bid
             {
                 Bid_Id = Guid.NewGuid().ToString(),
                 Auction_Id = auctionId,
-                Username = $"User{i}",
-                Bid_Amount = i * 100,
+                Username = bidderNames[random.Next(bidderNames.Length)],
+                Bid_Amount = i * 5000,
                 Timestamp = DateTime.UtcNow.AddSeconds(+i).ToString("yyyy-MM-dd HH:mm:ss")
             };
             await auctionService.InsertBidAsync(auctionBid);
         }
     }
 
-    private static async Task InsertMessagesForAuction(IChatService chatService, string auctionId, int numMessages)
+    private static async Task InsertMessagesForAuction(IChatService chatService, string auctionId)
     {
-        for (int i = 1; i <= numMessages; i++)
+        var messageContents = new[]
+        {
+            "I've been looking for this artifact for years!",
+            "This piece would be perfect for my collection.",
+            "I can't let this one slip away.",
+            "I've seen things like this in my adventures.",
+            "This has to be worth more than the starting bid.",
+            "Do you think it's really authentic?",
+            "The history behind this is incredible!",
+            "I wonder what secrets it holds."
+        };
+
+        var usernames = new[]
+        {
+            "Nathan Drake", "Victor Sullivan", "Elena Fisher", "Chloe Frazer",
+            "Samuel Drake", "Charlie Cutter", "Rafe Adler", "Nadine Ross",
+            "Eddy Raja", "Harry Flynn", "Zoran Lazarevic", "Marisa Chase"
+        };
+
+        var random = new Random();
+        for (int i = 1; i <= 8; i++)
         {
             var chatMessage = new Chat_Message
             {
                 Message_Id = Guid.NewGuid().ToString(),
                 Auction_Id = auctionId,
-                Username = $"User{i}",
-                MessageText = $"Message {i}",
-                Timestamp = DateTime.UtcNow.AddSeconds(+i).ToString("yyyy-MM-dd HH:mm:ss")
+                Username = usernames[random.Next(usernames.Length)],
+                Message_Text = messageContents[random.Next(messageContents.Length)],
+                Created_Timestamp = DateTime.UtcNow.AddSeconds(+i).ToString("yyyy-MM-dd HH:mm:ss"),
             };
             await chatService.InsertMessageAsync(chatMessage);
         }

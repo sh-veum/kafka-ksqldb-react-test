@@ -19,6 +19,12 @@
               type="number"
               required
             ></v-text-field>
+            <v-text-field
+              v-model="duration"
+              label="Duration"
+              type="number"
+              required
+            ></v-text-field>
             <v-btn type="submit" :loading="isLoading">Insert Auction</v-btn>
           </v-form>
           <v-textarea
@@ -52,6 +58,7 @@ const auctionStore = useAuctionStore();
 const title = ref<string>("");
 const description = ref<string>("");
 const startingPrice = ref<number>(0);
+const duration = ref<number>(0);
 const result = ref<object | null>(null);
 const formattedResult = ref<string>("");
 const dialog = ref(false);
@@ -67,6 +74,7 @@ const insertAuction = async () => {
     title: title.value,
     description: description.value,
     starting_Price: startingPrice.value,
+    duration: duration.value,
   });
 
   result.value = data;

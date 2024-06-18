@@ -10,7 +10,7 @@ import {
 // Import the generated route tree
 import { routeTree } from "./routeTree.gen";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Spinner } from "@/components/spinner";
+import { Spinner } from "@/components/Spinner";
 
 export const queryClient = new QueryClient();
 

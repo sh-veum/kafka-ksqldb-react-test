@@ -7,7 +7,7 @@ import {
 import {
   ReactQueryDevtools,
   TanStackRouterDevtools,
-} from "../components/dev-tools";
+} from "../components/dev/DevTools";
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -16,10 +16,10 @@ import {
 } from "@/components/ui/navigation-menu";
 import { Suspense } from "react";
 import { QueryClient } from "@tanstack/react-query";
-import { Spinner } from "@/components/spinner";
+import { Spinner } from "@/components/Spinner";
 import { Separator } from "@/components/ui/separator";
-import { ThemeProvider } from "@/components/theme-provider";
-import { ToggleThemeMode } from "@/components/theme-toggle";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { ToggleThemeMode } from "@/components/theme/ThemeToggle";
 
 function RouterSpinner() {
   const isLoading = useRouterState({ select: (s) => s.status === "pending" });
@@ -35,20 +35,20 @@ export const Route = createRootRouteWithContext<{
 function RootComponent() {
   return (
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-      <div className={`min-h-screen flex flex-col`}>
-        <div className={`flex items-center gap-2`}>
-          <h1 className={`text-3xl p-2`}>Auction Site</h1>
+      <div className="min-h-screen flex flex-col">
+        <div className="flex items-center gap-2 flex-wrap">
+          <h1 className="text-3xl p-2">Auction Site</h1>
           <ToggleThemeMode />
           {/* Show a global spinner when the router is transitioning */}
-          <div className={`text-3xl`}>
+          <div className="text-3xl">
             <RouterSpinner />
           </div>
         </div>
         <Separator className="my-2" />
-        <div className={`flex-1 flex`}>
-          <div className={`divide-y w-56`}>
+        <div className="flex flex-col lg:flex-row flex-1">
+          <div className="w-full lg:w-[5vw] min-w-fit">
             <NavigationMenu>
-              <NavigationMenuList>
+              <NavigationMenuList className="flex flex-row lg:flex-col">
                 <NavigationMenuItem>
                   <Link to="/" className={navigationMenuTriggerStyle()}>
                     Home
@@ -62,8 +62,12 @@ function RootComponent() {
               </NavigationMenuList>
             </NavigationMenu>
           </div>
-          <div className="flex space-x-4 text-sm">
-            <Separator className="mx-2" orientation="vertical" />
+          <Separator className="lg:hidden my-2" orientation="horizontal" />
+          <div className="flex w-screen lg:w-[90vw]">
+            <Separator
+              className="hidden lg:block mx-2"
+              orientation="vertical"
+            />
             <Outlet />
           </div>
         </div>

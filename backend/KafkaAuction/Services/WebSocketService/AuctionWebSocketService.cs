@@ -84,6 +84,7 @@ public class AuctionWebSocketService : IAuctionWebSocketService
 
         var subscription = _context.CreatePushQuery<Auction>()
             .WithOffsetResetPolicy(AutoOffsetReset.Latest)
+            .Where(p => p.Is_Existing == true)
             .Select(l => new AuctionDto
             {
                 Auction_Id = l.Auction_Id,
@@ -93,7 +94,9 @@ public class AuctionWebSocketService : IAuctionWebSocketService
                 Starting_Price = l.Starting_Price,
                 Current_Price = l.Current_Price,
                 Winner = l.Winner,
-                Created_At = l.Created_At
+                Created_At = l.Created_At,
+                End_Date = l.End_Date,
+                Is_Open = l.Is_Open
             })
             .Subscribe(AuctionDto =>
             {

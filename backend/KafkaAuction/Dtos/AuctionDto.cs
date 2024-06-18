@@ -10,4 +10,6 @@ public class AuctionDto
     public int? Number_Of_Bids { get; set; } = 0;
     public string? Winner { get; set; }
     public required string Created_At { get; set; }
+    public required string End_Date { get; set; }
+    public bool Is_Open { get; set; }
 }

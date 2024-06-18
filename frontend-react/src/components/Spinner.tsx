@@ -1,4 +1,4 @@
-// https://github.com/TanStack/router/blob/main/examples/react/kitchen-sink-react-query-file-based/src/components/Spinner.tsx
+// From https://github.com/TanStack/router/blob/main/examples/react/kitchen-sink-react-query-file-based/src/components/Spinner.tsx
 
 export function Spinner({
   show,

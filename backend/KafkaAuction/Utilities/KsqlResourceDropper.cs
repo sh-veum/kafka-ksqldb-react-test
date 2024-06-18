@@ -14,7 +14,7 @@ public class KsqlResourceDropper
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task DropResourceAsync(string resourceName, ResourceType resourceType)
+    public async Task<HttpResponseMessage> DropResourceAsync(string resourceName, ResourceType resourceType)
     {
         HttpResponseMessage response;
         if (resourceType == ResourceType.Table)
@@ -34,5 +34,7 @@ public class KsqlResourceDropper
         {
             _logger.LogError("Failed to drop {ResourceType} {ResourceName}.", resourceType, resourceName);
         }
+
+        return response;
     }
 }

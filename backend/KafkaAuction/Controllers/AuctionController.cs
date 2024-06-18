@@ -2,6 +2,8 @@ using KafkaAuction.Dtos;
 using KafkaAuction.Models;
 using KafkaAuction.Services.Interfaces;
 using KafkaAuction.Utilities;
+using ksqlDB.RestApi.Client.KSql.RestApi.Responses.Streams;
+using ksqlDB.RestApi.Client.KSql.RestApi.Responses.Tables;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KafkaAuction.Controllers;
@@ -20,6 +22,7 @@ public class AuctionController : ControllerBase
     }
 
     [HttpPost("create_tables")]
+    [ProducesResponseType(typeof(TablesResponse[]), StatusCodes.Status200OK)]
     public async Task<IActionResult> CreateTables()
     {
         var results = await _auctionService.CreateAuctionTableAsync();
@@ -28,6 +31,7 @@ public class AuctionController : ControllerBase
     }
 
     [HttpPost("create_streams")]
+    [ProducesResponseType(typeof(StreamsResponse[]), StatusCodes.Status200OK)]
     public async Task<IActionResult> CreateStreams()
     {
         var results = await _auctionService.CreateAuctionBidStreamAsync();
@@ -36,6 +40,7 @@ public class AuctionController : ControllerBase
     }
 
     [HttpPost("crate_auction_with_bids_stream")]
+    [ProducesResponseType(typeof(StreamsResponse[]), StatusCodes.Status200OK)]
     public async Task<IActionResult> CreateAuctionWithBidsStream()
     {
         var results = await _auctionService.CreateAuctionsWithBidsStreamAsync();
@@ -43,23 +48,71 @@ public class AuctionController : ControllerBase
         return Ok(results);
     }
 
+    [HttpDelete("drop_tables")]
+    [ProducesResponseType(typeof(DropResourceResponseDto[]), StatusCodes.Status200OK)]
+    public async Task<IActionResult> DropTables()
+    {
+        var results = await _auctionService.DropTablesAsync();
+
+        return Ok(results);
+    }
+
     [HttpPost("insert_auction")]
+    [ProducesResponseType(typeof(AuctionDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> InsertAuction([FromBody] AuctionCreatorDto auctionCreatorDto)
     {
+        if (string.IsNullOrEmpty(auctionCreatorDto.Title) || string.IsNullOrEmpty(auctionCreatorDto.Description) || auctionCreatorDto.Starting_Price == 0)
+        {
+            return BadRequest("Fields cannot be empty or zero.");
+        }
+
         var auction = new Auction
         {
             Auction_Id = Guid.NewGuid().ToString(),
             Title = auctionCreatorDto.Title,
             Description = auctionCreatorDto.Description,
             Starting_Price = auctionCreatorDto.Starting_Price,
-            Current_Price = auctionCreatorDto.Starting_Price
+            Current_Price = auctionCreatorDto.Starting_Price,
+            End_Date = DateTime.UtcNow.AddHours(auctionCreatorDto.Duration).ToString("yyyy-MM-dd HH:mm:ss")
         };
 
-        HttpResponseMessage result = await _auctionService.InsertAuctionAsync(auction);
+        var (httpResponseMessage, auctionDto) = await _auctionService.InsertAuctionAsync(auction);
 
-        if (!result.IsSuccessStatusCode)
+        if (!httpResponseMessage.IsSuccessStatusCode)
         {
-            return BadRequest(result.ReasonPhrase);
+            return BadRequest(httpResponseMessage.ReasonPhrase);
+        }
+        else
+        {
+            return Ok(auctionDto);
+        }
+    }
+
+    [HttpPatch("end_auction")]
+    [ProducesResponseType(typeof(AuctionDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> EndAuction(string auction_id)
+    {
+        var (httpResponseMessage, auctionDto) = await _auctionService.EndAuctionAsync(auction_id);
+
+        if (!httpResponseMessage.IsSuccessStatusCode)
+        {
+            return BadRequest(httpResponseMessage.ReasonPhrase);
+        }
+        else
+        {
+            return Ok(auctionDto);
+        }
+    }
+
+    [HttpDelete("delete_auction")]
+    [ProducesResponseType(typeof(Auction), StatusCodes.Status200OK)]
+    public async Task<IActionResult> DeleteAuction(string auction_id)
+    {
+        var (httpResponseMessage, auction) = await _auctionService.DeleteAuction(auction_id);
+
+        if (!httpResponseMessage.IsSuccessStatusCode)
+        {
+            return BadRequest(httpResponseMessage.ReasonPhrase);
         }
         else
         {
@@ -68,7 +121,8 @@ public class AuctionController : ControllerBase
     }
 
     [HttpPost("insert_auction_bid")]
-    public async Task<IActionResult> InsertAuctionBid([FromBody] AuctionBidDto auctionBidDto)
+    [ProducesResponseType(typeof(AuctionBidCreatorDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> InsertAuctionBid([FromBody] AuctionBidCreatorDto auctionBidDto)
     {
         var auctionBid = new Auction_Bid
         {
@@ -79,26 +133,18 @@ public class AuctionController : ControllerBase
             Timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")
         };
 
-        HttpResponseMessage result = await _auctionService.InsertBidAsync(auctionBid);
+        var (httpResponseMessage, bidDto) = await _auctionService.InsertBidAsync(auctionBid);
 
-        if (!result.IsSuccessStatusCode)
+        if (!httpResponseMessage.IsSuccessStatusCode)
         {
-            string errorMessage = await result.Content.ReadAsStringAsync();
+            string errorMessage = await httpResponseMessage.Content.ReadAsStringAsync();
+            // TODO: Figure out why retrieving the error message from BadRequest response is not working
             return Ok(errorMessage);
         }
         else
         {
-            return Ok(auctionBid);
+            return Ok(bidDto);
         }
-    }
-
-
-    [HttpDelete("drop_tables")]
-    public async Task<IActionResult> DropTables()
-    {
-        await _auctionService.DropTablesAsync();
-
-        return Ok();
     }
 
     [HttpGet("get_all_auctions")]
@@ -133,13 +179,13 @@ public class AuctionController : ControllerBase
     [ProducesResponseType(typeof(AuctionDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAuctionById(string auction_id)
     {
-        var auction = await _auctionService.GetAuctionById(auction_id);
+        var auction = await _auctionService.GetAuctionDtoById(auction_id);
 
         return Ok(auction);
     }
 
     [HttpGet("get_all_bids")]
-    [ProducesResponseType(typeof(AuctionBidDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(AuctionBidCreatorDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllBids()
     {
         var auctionBids = await _auctionService.GetAllBids();
@@ -148,6 +194,7 @@ public class AuctionController : ControllerBase
     }
 
     [HttpGet("get_bid_messages_for_auction")]
+    [ProducesResponseType(typeof(AuctionBidMessageDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetBidMessagesForAuction(string auction_Id)
     {
         var messages = await _auctionService.GetBidMessagesForAuction(auction_Id);
