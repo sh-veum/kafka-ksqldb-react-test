@@ -3,6 +3,7 @@ import { WebSocketSubscription } from "@/Enums/webSocketSubscription";
 import { Bid } from "@/models/Bid";
 import { useEffect, useRef } from "react";
 import { baseWebsocketUrl } from "@/lib/baseUrls";
+import { convertUTCToLocalTime } from "../timeUtils";
 
 /**
  * Custom hook to manage the WebSocket connection for auction bids.
@@ -29,8 +30,13 @@ const useBidsWebSocket = (auctionId: string, isEnabled: boolean) => {
       const data = JSON.parse(event.data);
       console.log("Bids WebSocket message received:", data);
 
+      const bid: Bid = {
+        ...data,
+        Timestamp: convertUTCToLocalTime(data.Timestamp),
+      };
+
       queryClient.setQueryData(["auctionBids", auctionId], (oldData: Bid[]) => {
-        return [...(oldData || []), data];
+        return [...(oldData || []), bid];
       });
     };
 

@@ -10,15 +10,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
-interface ChatTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
+interface ChatTableProps<ChatMessage, TValue> {
+  columns: ColumnDef<ChatMessage, TValue>[];
+  data: ChatMessage[];
 }
 
-export function ChatTable<TData, TValue>({
+export function ChatTable<ChatMessage, TValue>({
   columns,
   data,
-}: ChatTableProps<TData, TValue>) {
+}: ChatTableProps<ChatMessage, TValue>) {
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 5,
@@ -35,7 +35,7 @@ export function ChatTable<TData, TValue>({
     },
     getSortedRowModel: getSortedRowModel(),
     initialState: {
-      sorting: [{ id: "Username", desc: true }],
+      sorting: [{ id: "Message", desc: true }],
     },
   });
 
@@ -78,6 +78,7 @@ export function ChatTable<TData, TValue>({
           </TableBody>
         </Table>
         <div className="flex items-center justify-end space-x-2 my-4 mx-2">
+          <p>Total messages: {data.length}</p>
           <Button
             variant="outline"
             size="sm"

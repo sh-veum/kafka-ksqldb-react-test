@@ -5,7 +5,6 @@ import { useMutation } from "@tanstack/react-query";
 import { ChatMessageCreator } from "@/models/ChatMessageCreator";
 import axios from "axios";
 import { baseUrl } from "@/lib/baseUrls";
-import { Spinner } from "@/components/Spinner";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { AlertCircle } from "lucide-react";
 
@@ -34,10 +33,6 @@ export function ChatInput({ auctionId }: ChatInputProps) {
     },
   });
 
-  if (mutation.isPending) {
-    return <Spinner />;
-  }
-
   return (
     <>
       <form>
@@ -60,7 +55,6 @@ export function ChatInput({ auctionId }: ChatInputProps) {
                   <Input
                     id="Username"
                     placeholder="Username"
-                    defaultValue={"Anon"}
                     type="text"
                     value={field.state.value}
                     onChange={(e) => field.handleChange(e.target.value)}
@@ -123,22 +117,28 @@ export function ChatInput({ auctionId }: ChatInputProps) {
           <form.Subscribe
             selector={(state) => [state.canSubmit, state.isValidating]}
             children={([canSubmit, isValidating]) => (
-              <Button
-                type="submit"
-                disabled={!canSubmit || isValidating}
-                onClick={form.handleSubmit}
-              >
-                {mutation.isPending ? "Sending..." : "Send"}
-              </Button>
+              <div>
+                {mutation.isPending ? (
+                  <Button disabled={true} className="font-bold text-foreground">
+                    Sending...
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    disabled={!canSubmit || isValidating}
+                    onClick={form.handleSubmit}
+                    className="font-bold text-foreground"
+                  >
+                    Send
+                  </Button>
+                )}
+              </div>
             )}
           />
         </div>
         {mutation.isError && (
           <div className="text-red-500">{mutation.error.message}</div>
         )}
-        {/* {mutation.isSuccess && (
-          <div className="text-green-500">Message sent successfully!</div>
-        )} */}
       </form>
     </>
   );

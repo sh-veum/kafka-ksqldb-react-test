@@ -4,6 +4,7 @@ import { Auction } from "@/models/Auction";
 import { addOrUpdateData } from "@/utils/addOrUpdateData";
 import { useEffect, useRef } from "react";
 import { baseWebsocketUrl } from "@/lib/baseUrls";
+import { convertUTCToLocalTime } from "../timeUtils";
 
 /**
  * Custom hook to manage the WebSocket connection for auctions.
@@ -29,8 +30,14 @@ const useAuctionsWebSocket = (isEnabled: boolean) => {
       const data = JSON.parse(event.data);
       console.log("Auctions WebSocket message received:", data);
 
+      const auction: Auction = {
+        ...data,
+        Created_At: convertUTCToLocalTime(data.Created_At),
+        End_Date: convertUTCToLocalTime(data.End_Date),
+      };
+
       queryClient.setQueryData(["allAuctions"], (oldData: Auction[]) => {
-        return addOrUpdateData(oldData, data, (key) => key.Auction_Id);
+        return addOrUpdateData(oldData, auction, (key) => key.Auction_Id);
       });
     };
 
