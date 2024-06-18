@@ -1,6 +1,8 @@
+// bidColumns.tsx
 import { Bid } from "@/models/Bid";
 import { ColumnDef } from "@tanstack/react-table";
 import { format, isToday, parseISO } from "date-fns";
+import { formatCurrency } from "@/utils/currencyFormatter";
 
 export const bidColumns: ColumnDef<Bid>[] = [
   {
@@ -12,12 +14,7 @@ export const bidColumns: ColumnDef<Bid>[] = [
     header: () => <div className="text-right">Amount</div>,
     cell: ({ row }) => {
       const amount = parseFloat(row.getValue("Bid_Amount"));
-      const formatted = new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 2,
-      }).format(amount);
+      const formatted = formatCurrency(amount);
 
       return <div className="text-right font-medium">{formatted}</div>;
     },

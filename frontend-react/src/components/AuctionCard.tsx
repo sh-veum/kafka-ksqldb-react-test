@@ -1,3 +1,4 @@
+// AuctionCard.tsx
 import { Auction } from "@/models/Auction";
 import {
   Card,
@@ -13,6 +14,7 @@ import {
   parseISO,
   isBefore,
 } from "date-fns";
+import { formatCurrency } from "@/utils/currencyFormatter";
 
 export default function AuctionCard(auctionProps: Auction) {
   const endDate = parseISO(auctionProps.End_Date);
@@ -44,9 +46,11 @@ export default function AuctionCard(auctionProps: Auction) {
               {auctionProps.Description}
             </p>
             {auctionProps.Number_Of_Bids === 0 ? (
-              <p>Starting Price: {auctionProps.Current_Price} NOK</p>
+              <p>
+                Starting Price: {formatCurrency(auctionProps.Current_Price)}
+              </p>
             ) : (
-              <p>Current Price: {auctionProps.Current_Price} NOK</p>
+              <p>Current Price: {formatCurrency(auctionProps.Current_Price)}</p>
             )}
             <p className="ml-4">
               <i>{auctionProps.Number_Of_Bids} bids</i>
