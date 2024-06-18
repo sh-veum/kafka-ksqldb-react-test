@@ -22,7 +22,7 @@ const useAuctionsWebSocket = (isEnabled: boolean) => {
     websocketRef.current = websocket;
 
     websocket.onopen = () => {
-      console.log("connected to websocket");
+      console.log("connected to auction websocket");
     };
 
     websocket.onmessage = (event) => {

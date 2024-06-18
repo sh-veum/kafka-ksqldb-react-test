@@ -1,5 +1,6 @@
 import { BidsTable } from "@/components/bids/BidsTable";
 import { bidColumns } from "@/components/bids/bidColumns";
+import { ChatInput } from "@/components/chat/ChatInput";
 import { ChatTable } from "@/components/chat/ChatTable";
 import { chatColumns } from "@/components/chat/chatColumns";
 import {
@@ -47,6 +48,7 @@ function SpecificAuctionComponent() {
 
   useEffect(() => {
     if (auction && bids && chatMessages && !isDataLoaded) {
+      console.log("Data loaded");
       setIsDataLoaded(true);
     }
   }, [auction, bids, chatMessages, isDataLoaded]);
@@ -58,9 +60,18 @@ function SpecificAuctionComponent() {
     <div className="max-w-full">
       <h1 className="text-2xl font-bold">{auction.Title}</h1>
       <p className="italic break-words">{auction.Description}</p>
-      <div className="flex flex-1">
-        <BidsTable columns={bidColumns} data={bids} />
-        <ChatTable columns={chatColumns} data={chatMessages} />
+      <div className="flex flex-1 space-x-4 m-2">
+        <div className="max-w-prose">
+          <p className="text-xl font-bold">Bids</p>
+          <BidsTable columns={bidColumns} data={bids} />
+        </div>
+        <div className="max-w-prose w-dvw">
+          <p className="text-xl font-bold">Chat</p>
+          <ChatInput auctionId={params.auctionId} />
+          <div className="mt-2">
+            <ChatTable columns={chatColumns} data={chatMessages} />
+          </div>
+        </div>
       </div>
     </div>
   );

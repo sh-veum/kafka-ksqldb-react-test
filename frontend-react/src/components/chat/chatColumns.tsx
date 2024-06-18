@@ -24,7 +24,14 @@ export const chatColumns: ColumnDef<ChatMessage>[] = [
         </div>
       );
     },
-    sortingFn: "datetime",
+    sortingFn: (rowA, rowB) => {
+      const dateA = new Date(rowA.original.Created_Timestamp).getTime();
+      const dateB = new Date(rowB.original.Created_Timestamp).getTime();
+      return dateA - dateB;
+    },
+    minSize: 50,
+    size: 50,
+    maxSize: 200,
   },
   {
     accessorKey: "Message_Text",
@@ -39,5 +46,9 @@ export const chatColumns: ColumnDef<ChatMessage>[] = [
         </div>
       );
     },
+    footer: (info) => info.column.id,
+    minSize: 200,
+    size: 200,
+    maxSize: 300,
   },
 ];

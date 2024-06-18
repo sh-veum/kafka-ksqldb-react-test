@@ -23,7 +23,7 @@ const useChatWebSocket = (chatRoomId: string, isEnabled: boolean) => {
     websocketRef.current = websocket;
 
     websocket.onopen = () => {
-      console.log("connected to websocket");
+      console.log("connected to chat websocket");
     };
 
     websocket.onmessage = (event) => {

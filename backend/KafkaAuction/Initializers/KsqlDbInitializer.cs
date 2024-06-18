@@ -14,13 +14,13 @@ public static class KsqlDbInitializer
         TablesResponse[] tablesResponse = await ksqlDbService.CheckTablesAsync();
         StreamsResponse[] streamsResponse = await ksqlDbService.CheckStreamsAsync();
 
-        var tables = tablesResponse[0]?.Tables ?? [];
-        var streams = streamsResponse[0]?.Streams ?? [];
+        var tables = tablesResponse[0]?.Tables ?? Array.Empty<Table>();
+        var streams = streamsResponse[0]?.Streams ?? Array.Empty<Stream>();
 
         logger.LogInformation("Existing Tables: " + string.Join(", ", tables.Select(t => t.Name)));
         logger.LogInformation("Existing Streams: " + string.Join(", ", streams.Select(s => s.Name)));
 
-        var createdAny = await EnsureTablesAndStreamsExist(auctionService, chatService, userLocationService, tables!, streams!, logger);
+        var createdAny = await EnsureTablesAndStreamsExist(auctionService, chatService, userLocationService, tables, streams, logger);
 
         if (createdAny)
         {
@@ -81,8 +81,7 @@ public static class KsqlDbInitializer
     {
         var auctions = new List<Auction>
         {
-            new Auction
-            {
+            new() {
                 Auction_Id = Guid.NewGuid().ToString(),
                 Title = "Cintamani Stone",
                 Description = "A fabled gemstone believed to grant wishes, from Shambhala.",
@@ -91,8 +90,7 @@ public static class KsqlDbInitializer
                 Created_At = DateTime.UtcNow.AddSeconds(1).ToString("yyyy-MM-dd HH:mm:ss"),
                 End_Date = DateTime.UtcNow.AddHours(10).ToString("yyyy-MM-dd HH:mm:ss"),
             },
-            new Auction
-            {
+            new() {
                 Auction_Id = Guid.NewGuid().ToString(),
                 Title = "Avery's Cross",
                 Description = "A golden cross from the treasure of the infamous pirate Henry Avery.",
@@ -101,8 +99,7 @@ public static class KsqlDbInitializer
                 Created_At = DateTime.UtcNow.AddSeconds(2).ToString("yyyy-MM-dd HH:mm:ss"),
                 End_Date = DateTime.UtcNow.AddHours(11).ToString("yyyy-MM-dd HH:mm:ss"),
             },
-            new Auction
-            {
+            new() {
                 Auction_Id = Guid.NewGuid().ToString(),
                 Title = "Sir Francis Drake's Ring",
                 Description = "A ring belonging to the legendary explorer Sir Francis Drake.",
@@ -111,8 +108,7 @@ public static class KsqlDbInitializer
                 Created_At = DateTime.UtcNow.AddSeconds(3).ToString("yyyy-MM-dd HH:mm:ss"),
                 End_Date = DateTime.UtcNow.AddHours(12).ToString("yyyy-MM-dd HH:mm:ss"),
             },
-            new Auction
-            {
+            new() {
                 Auction_Id = Guid.NewGuid().ToString(),
                 Title = "Sheba's Crown",
                 Description = "A crown belonging to the Queen of Sheba, adorned with precious gems.",
@@ -121,11 +117,10 @@ public static class KsqlDbInitializer
                 Created_At = DateTime.UtcNow.AddSeconds(4).ToString("yyyy-MM-dd HH:mm:ss"),
                 End_Date = DateTime.UtcNow.AddHours(13).ToString("yyyy-MM-dd HH:mm:ss"),
             },
-            new Auction
-            {
+            new() {
                 Auction_Id = Guid.NewGuid().ToString(),
-                Title = "Fleming's Maps",
-                Description = "A collection of maps created by the explorer Robert Fleming.",
+                Title = "Thievius Raccoonus",
+                Description = "A book detailing the Cooper Clan's thieving techniques and history",
                 Starting_Price = 1800,
                 Current_Price = 1800,
                 Created_At = DateTime.UtcNow.AddSeconds(5).ToString("yyyy-MM-dd HH:mm:ss"),
@@ -143,13 +138,7 @@ public static class KsqlDbInitializer
 
     private static async Task InsertBidsForAuction(IAuctionService auctionService, string auctionId)
     {
-        var bidderNames = new[]
-        {
-            "Nathan Drake", "Victor Sullivan", "Elena Fisher", "Chloe Frazer",
-            "Samuel Drake", "Charlie Cutter", "Rafe Adler", "Nadine Ross",
-            "Eddy Raja", "Harry Flynn", "Zoran Lazarevic", "Marisa Chase"
-        };
-
+        var bidderNames = BidderNames.GetBidderNames();
         var random = new Random();
         for (int i = 1; i <= 6; i++)
         {
@@ -159,7 +148,7 @@ public static class KsqlDbInitializer
                 Auction_Id = auctionId,
                 Username = bidderNames[random.Next(bidderNames.Length)],
                 Bid_Amount = i * 5000,
-                Timestamp = DateTime.UtcNow.AddSeconds(+i).ToString("yyyy-MM-dd HH:mm:ss")
+                Timestamp = DateTime.UtcNow.AddSeconds(i).ToString("yyyy-MM-dd HH:mm:ss")
             };
             await auctionService.InsertBidAsync(auctionBid);
         }
@@ -167,37 +156,64 @@ public static class KsqlDbInitializer
 
     private static async Task InsertMessagesForAuction(IChatService chatService, string auctionId)
     {
-        var messageContents = new[]
-        {
-            "I've been looking for this artifact for years!",
-            "This piece would be perfect for my collection.",
-            "I can't let this one slip away.",
-            "I've seen things like this in my adventures.",
-            "This has to be worth more than the starting bid.",
-            "Do you think it's really authentic?",
-            "The history behind this is incredible!",
-            "I wonder what secrets it holds."
-        };
-
-        var usernames = new[]
-        {
-            "Nathan Drake", "Victor Sullivan", "Elena Fisher", "Chloe Frazer",
-            "Samuel Drake", "Charlie Cutter", "Rafe Adler", "Nadine Ross",
-            "Eddy Raja", "Harry Flynn", "Zoran Lazarevic", "Marisa Chase"
-        };
-
+        var characterSentences = CharacterSentences.GetCharacterSentences();
         var random = new Random();
         for (int i = 1; i <= 8; i++)
         {
+            var username = characterSentences.Keys.ElementAt(random.Next(characterSentences.Count));
+            var messageContents = characterSentences[username];
             var chatMessage = new Chat_Message
             {
                 Message_Id = Guid.NewGuid().ToString(),
                 Auction_Id = auctionId,
-                Username = usernames[random.Next(usernames.Length)],
+                Username = username,
                 Message_Text = messageContents[random.Next(messageContents.Length)],
-                Created_Timestamp = DateTime.UtcNow.AddSeconds(+i).ToString("yyyy-MM-dd HH:mm:ss"),
+                Created_Timestamp = DateTime.UtcNow.AddSeconds(i).ToString("yyyy-MM-dd HH:mm:ss"),
             };
             await chatService.InsertMessageAsync(chatMessage);
         }
     }
 }
+
+public static class BidderNames
+{
+    public static string[] GetBidderNames()
+    {
+        return
+        [
+            "Nathan Drake", "Victor Sullivan", "Elena Fisher", "Chloe Frazer",
+            "Samuel Drake", "Charlie Cutter", "Rafe Adler", "Nadine Ross",
+            "Eddy Raja", "Harry Flynn", "Zoran Lazarevic", "Marisa Chase",
+            "Sly Cooper", "Bentley", "Murray", "Carmelita Fox"
+        ];
+    }
+}
+
+public static class CharacterSentences
+{
+    private static readonly Dictionary<string, string[]> characterSentences = new()
+    {
+        { "Nathan Drake", new[] { "I've been looking for this artifact for years!", "I've seen things like this in my adventures.", "The history behind this is incredible!" } },
+        { "Victor Sullivan", new[] { "This piece would be perfect for my collection.", "Do you think it's really authentic?", "This is exactly what I've been after." } },
+        { "Elena Fisher", new[] { "I can't let this one slip away.", "This has to be worth more than the starting bid.", "I need to capture this on film!" } },
+        { "Chloe Frazer", new[] { "I've seen things like this in my adventures.", "I wonder what secrets it holds.", "This would be quite a steal." } },
+        { "Samuel Drake", new[] { "I've been looking for this artifact for years!", "I can't wait to see who wins this auction.", "This is just the beginning of a great adventure." } },
+        { "Charlie Cutter", new[] { "Do you think it's really authentic?", "I've heard stories about this artifact.", "Let's get our hands on this beauty." } },
+        { "Rafe Adler", new[] { "I can't let this one slip away.", "I think we should bid on this one, it could be valuable.", "I will own this artifact, no matter the cost." } },
+        { "Nadine Ross", new[] { "This has to be worth more than the starting bid.", "I wonder what secrets it holds.", "We must secure this, no matter the competition." } },
+        { "Eddy Raja", new[] { "I've been looking for this artifact for years!", "This will fetch a high price on the market.", "Let's make sure we win this auction." } },
+        { "Harry Flynn", new[] { "I can't wait to see who wins this auction.", "This will be a perfect addition to my collection.", "I'm in for this artifact." } },
+        { "Zoran Lazarevic", new[] { "I wonder what secrets it holds.", "This has to be worth more than the starting bid.", "This artifact will be mine." } },
+        { "Marisa Chase", new[] { "I've heard stories about this artifact.", "This is a rare find.", "I think we should bid on this one, it could be valuable." } },
+        { "Sly Cooper", new[] { "I've been looking for this artifact for years!", "This will be a great addition to our heists.", "I've got a plan to secure this artifact, trust me." } },
+        { "Bentley", new[] { "I've analyzed the artifact, it's definitely worth the bid.", "Be careful, there might be other thieves trying to snatch this artifact.", "We'll need to outsmart everyone to win this." } },
+        { "Murray", new[] { "Alright, let's make sure we crush this auction!", "We gotta outsmart those other bidders and win this thing!", "This artifact is gonna lead us to even bigger treasures, I can feel it!" } },
+        { "Carmelita Fox", new[] { "I think we should bid on this one, it could be valuable.", "We need to stay focused and bid strategically.", "This is a once in a lifetime find, let's get it." } },
+    };
+
+    public static Dictionary<string, string[]> GetCharacterSentences()
+    {
+        return characterSentences;
+    }
+}
+

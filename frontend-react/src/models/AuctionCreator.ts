@@ -1,6 +1,6 @@
 export interface AuctionCreator {
-  title: string;
-  description: string;
-  starting_Price: number;
-  duration: number;
+  Title: string;
+  Description: string;
+  Starting_Price: number;
+  Duration: number;
 }
