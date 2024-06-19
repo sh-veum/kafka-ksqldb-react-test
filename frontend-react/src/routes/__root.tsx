@@ -36,12 +36,26 @@ function RootComponent() {
   return (
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
       <div className="min-h-screen flex flex-col">
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
           <h1 className="text-3xl p-2">Auction Site</h1>
           <ToggleThemeMode />
           {/* Show a global spinner when the router is transitioning */}
           <div className="text-3xl">
             <RouterSpinner />
+          </div>
+          <div className="ml-auto">
+            <NavigationMenu>
+              <NavigationMenuList>
+                <NavigationMenuItem>
+                  <Link
+                    to="/auth/login"
+                    className={navigationMenuTriggerStyle()}
+                  >
+                    Login
+                  </Link>
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
           </div>
         </div>
         <Separator className="my-2" />
@@ -73,7 +87,7 @@ function RootComponent() {
         </div>
       </div>
       <Suspense>
-        <ReactQueryDevtools buttonPosition="top-right" />
+        <ReactQueryDevtools buttonPosition="bottom-left" />
         <TanStackRouterDevtools position="bottom-right" />
       </Suspense>
     </ThemeProvider>
