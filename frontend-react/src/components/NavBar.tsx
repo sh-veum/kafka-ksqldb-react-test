@@ -10,7 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getUserInfoQueryOptions } from "@/utils/queryOptions";
 
 export const NavBar = () => {
-  const { data: authInfo } = useQuery(getUserInfoQueryOptions());
+  const { data: userInfo } = useQuery(getUserInfoQueryOptions());
 
   const handleLogout = () => {
     auth.logout();
@@ -19,13 +19,13 @@ export const NavBar = () => {
   return (
     <NavigationMenu>
       <NavigationMenuList>
-        {authInfo?.username ? (
+        {userInfo?.username ? (
           <NavigationMenuItem>
-            <p>Welcome, {authInfo.username}!</p>
+            <p>Welcome, {userInfo.username}!</p>
           </NavigationMenuItem>
         ) : null}
         <NavigationMenuItem>
-          {authInfo?.status === "loggedOut" ? (
+          {userInfo?.status === "loggedOut" ? (
             <Link to="/auth/login" className={navigationMenuTriggerStyle()}>
               Login
             </Link>
