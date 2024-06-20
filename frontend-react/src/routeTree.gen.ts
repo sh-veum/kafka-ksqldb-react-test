@@ -14,7 +14,8 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as IndexImport } from './routes/index'
-import { Route as AuctionIndexImport } from './routes/auction/index'
+import { Route as AuthRegisterImport } from './routes/auth/register'
+import { Route as AuthLoginImport } from './routes/auth/login'
 import { Route as AuctionAuctionIdImport } from './routes/auction/$auctionId'
 
 // Create Virtual Routes
@@ -33,8 +34,13 @@ const IndexRoute = IndexImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const AuctionIndexRoute = AuctionIndexImport.update({
-  path: '/auction/',
+const AuthRegisterRoute = AuthRegisterImport.update({
+  path: '/auth/register',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const AuthLoginRoute = AuthLoginImport.update({
+  path: '/auth/login',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -68,11 +74,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuctionAuctionIdImport
       parentRoute: typeof rootRoute
     }
-    '/auction/': {
-      id: '/auction/'
-      path: '/auction'
-      fullPath: '/auction'
-      preLoaderRoute: typeof AuctionIndexImport
+    '/auth/login': {
+      id: '/auth/login'
+      path: '/auth/login'
+      fullPath: '/auth/login'
+      preLoaderRoute: typeof AuthLoginImport
+      parentRoute: typeof rootRoute
+    }
+    '/auth/register': {
+      id: '/auth/register'
+      path: '/auth/register'
+      fullPath: '/auth/register'
+      preLoaderRoute: typeof AuthRegisterImport
       parentRoute: typeof rootRoute
     }
   }
@@ -84,7 +97,8 @@ export const routeTree = rootRoute.addChildren({
   IndexRoute,
   AboutLazyRoute,
   AuctionAuctionIdRoute,
-  AuctionIndexRoute,
+  AuthLoginRoute,
+  AuthRegisterRoute,
 })
 
 /* prettier-ignore-end */
@@ -98,7 +112,8 @@ export const routeTree = rootRoute.addChildren({
         "/",
         "/about",
         "/auction/$auctionId",
-        "/auction/"
+        "/auth/login",
+        "/auth/register"
       ]
     },
     "/": {
@@ -110,8 +125,11 @@ export const routeTree = rootRoute.addChildren({
     "/auction/$auctionId": {
       "filePath": "auction/$auctionId.tsx"
     },
-    "/auction/": {
-      "filePath": "auction/index.tsx"
+    "/auth/login": {
+      "filePath": "auth/login.tsx"
+    },
+    "/auth/register": {
+      "filePath": "auth/register.tsx"
     }
   }
 }

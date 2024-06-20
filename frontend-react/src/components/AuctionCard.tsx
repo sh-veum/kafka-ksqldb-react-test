@@ -30,7 +30,7 @@ export default function AuctionCard(auctionProps: Auction) {
       <Link to={`/auction/${auctionProps.Auction_Id}`}>
         <Card className="p-1 transition-colors hover:bg-accent hover:text-accent-foreground max-w-64">
           <CardHeader className="mb-[-16px]">
-            <CardTitle>{auctionProps.Title}</CardTitle>
+            <CardTitle className="text-xl">{auctionProps.Title}</CardTitle>
             <CardDescription className="whitespace-normal">
               {displayWinner ? (
                 <>Winner: {auctionProps.Winner}</>

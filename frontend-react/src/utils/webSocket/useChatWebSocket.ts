@@ -4,6 +4,7 @@ import { ChatMessage } from "@/models/ChatMessage";
 import { useEffect, useRef } from "react";
 import { baseWebsocketUrl } from "@/lib/baseUrls";
 import { addOrUpdateData } from "../addOrUpdateData";
+import { convertUTCToLocalTime } from "../timeUtils";
 
 /**
  * Custom hook to manage the WebSocket connection for chat messages.
@@ -23,17 +24,22 @@ const useChatWebSocket = (chatRoomId: string, isEnabled: boolean) => {
     websocketRef.current = websocket;
 
     websocket.onopen = () => {
-      console.log("connected to websocket");
+      console.log("connected to chat websocket");
     };
 
     websocket.onmessage = (event) => {
       const data = JSON.parse(event.data);
       console.log("Chat WebSocket message received:", data);
 
+      const chatMessage: ChatMessage = {
+        ...data,
+        Created_Timestamp: convertUTCToLocalTime(data.Created_Timestamp),
+      };
+
       queryClient.setQueryData(
         ["chatMessages", chatRoomId],
         (oldData: ChatMessage[]) => {
-          return addOrUpdateData(oldData, data, (key) => key.Message_Id);
+          return addOrUpdateData(oldData, chatMessage, (key) => key.Message_Id);
         }
       );
     };

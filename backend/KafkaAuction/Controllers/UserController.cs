@@ -1,3 +1,4 @@
+using KafkaAuction.Dtos;
 using KafkaAuction.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -30,13 +31,11 @@ public class UserController : ControllerBase
                 return NotFound("User not found.");
             }
 
-            var role = await _userManager.GetRolesAsync(user);
-
             var userDto = new UserInfoDto
             {
                 Email = user.Email,
                 UserName = user.UserName,
-                Role = role.FirstOrDefault()
+                Role = (await _userManager.GetRolesAsync(user)).FirstOrDefault()
             };
 
             return Ok(userDto);
@@ -44,6 +43,75 @@ public class UserController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error occurred while fetching user info.");
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpPatch("change-username")]
+    [ProducesResponseType(typeof(UserInfoDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ChangeUsername([FromBody] UserUpdateUserNameDto userUpdateUserNameDto)
+    {
+        try
+        {
+            var user = await _userManager.GetUserAsync(HttpContext.User);
+            if (user == null)
+            {
+                return NotFound("User not found.");
+            }
+
+            user.UserName = userUpdateUserNameDto.UserName;
+
+            var result = await _userManager.UpdateAsync(user);
+            if (result.Succeeded)
+            {
+                var userDto = new UserInfoDto
+                {
+                    Email = user.Email,
+                    UserName = user.UserName,
+                    Role = (await _userManager.GetRolesAsync(user)).FirstOrDefault()
+                };
+
+                return Ok(userDto);
+            }
+
+            return BadRequest(result.Errors);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while changing username.");
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpPost("register")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(IdentityResult), StatusCodes.Status200OK)]
+    public async Task<IActionResult> Register([FromBody] UserCreatorDto userCreatorDto)
+    {
+        try
+        {
+            var user = await _userManager.FindByEmailAsync(userCreatorDto.Email);
+            if (user != null)
+            {
+                return BadRequest("User with this email already exists.");
+            }
+
+            var result = await _userManager.CreateAsync(new UserModel
+            {
+                UserName = userCreatorDto.UserName,
+                Email = userCreatorDto.Email
+            }, userCreatorDto.Password);
+
+            if (result.Succeeded)
+            {
+                return Ok(result);
+            }
+
+            return BadRequest(result.Errors);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while logging in.");
             return BadRequest(ex.Message);
         }
     }

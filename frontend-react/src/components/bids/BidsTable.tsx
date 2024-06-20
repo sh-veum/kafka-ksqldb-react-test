@@ -16,15 +16,15 @@ import {
 } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 
-interface BidsTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
+interface BidsTableProps<Bid, TValue> {
+  columns: ColumnDef<Bid, TValue>[];
+  data: Bid[];
 }
 
-export function BidsTable<TData, TValue>({
+export function BidsTable<Bid, TValue>({
   columns,
   data,
-}: BidsTableProps<TData, TValue>) {
+}: BidsTableProps<Bid, TValue>) {
   const table = useReactTable({
     data,
     columns,

@@ -8,7 +8,7 @@ export class ChatService {
 
   async insertChatMessage(message: {
     username: string;
-    messageText: string;
+    message_Text: string;
     auction_Id: string;
   }) {
     return HttpService.performPostRequest(

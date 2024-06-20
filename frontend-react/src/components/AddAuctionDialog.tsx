@@ -29,18 +29,18 @@ export const AddAuctionDialog = () => {
 
   const form = useForm<AuctionCreator>({
     defaultValues: {
-      title: "",
-      description: "",
-      starting_Price: 0,
-      duration: 1,
+      Title: "",
+      Description: "",
+      Starting_Price: 0,
+      Duration: 1,
     },
     onSubmit: (value) => {
       console.log(value.value);
       mutation.mutate({
-        title: value.value.title,
-        description: value.value.description,
-        starting_Price: value.value.starting_Price,
-        duration: value.value.duration,
+        Title: value.value.Title,
+        Description: value.value.Description,
+        Starting_Price: value.value.Starting_Price,
+        Duration: value.value.Duration,
       });
     },
   });
@@ -59,7 +59,7 @@ export const AddAuctionDialog = () => {
         </DialogHeader>
         <form>
           <form.Field
-            name="title"
+            name="Title"
             validators={{
               onChange: ({ value }) => {
                 if (value.length < 3) {
@@ -75,7 +75,7 @@ export const AddAuctionDialog = () => {
                 <Label htmlFor={field.name}>Title</Label>
                 <div className="relative">
                   <Input
-                    id="title"
+                    id="Title"
                     type="text"
                     value={field.state.value}
                     onChange={(e) => field.handleChange(e.target.value)}
@@ -96,7 +96,7 @@ export const AddAuctionDialog = () => {
             )}
           />
           <form.Field
-            name="description"
+            name="Description"
             validators={{
               onChange: ({ value }) => {
                 if (value.length === 0) {
@@ -112,7 +112,7 @@ export const AddAuctionDialog = () => {
                 <Label htmlFor={field.name}>Description</Label>
                 <div className="relative">
                   <Textarea
-                    id="description"
+                    id="Description"
                     value={field.state.value}
                     onChange={(e) => field.handleChange(e.target.value)}
                   />
@@ -126,7 +126,7 @@ export const AddAuctionDialog = () => {
             )}
           />
           <form.Field
-            name="starting_Price"
+            name="Starting_Price"
             validators={{
               onChange: ({ value }) => {
                 if (value < 0) {
@@ -142,7 +142,7 @@ export const AddAuctionDialog = () => {
                 <Label htmlFor={field.name}>Starting Price</Label>
                 <div className="relative">
                   <Input
-                    id="starting_Price"
+                    id="Starting_Price"
                     type="number"
                     value={field.state.value}
                     onChange={(e) =>
@@ -159,7 +159,7 @@ export const AddAuctionDialog = () => {
             )}
           />
           <form.Field
-            name="duration"
+            name="Duration"
             validators={{
               onChange: ({ value }) => {
                 if (value < 0) {
@@ -175,7 +175,7 @@ export const AddAuctionDialog = () => {
                 <Label htmlFor={field.name}>Duration (hours)</Label>
                 <div className="relative">
                   <Input
-                    id="duration"
+                    id="Duration"
                     type="number"
                     defaultValue={1}
                     value={field.state.value}
@@ -226,7 +226,7 @@ export const AddAuctionDialog = () => {
               </Button>
             )}
           />
-          {mutation.isSuccess ? <div>Auction added!</div> : null}
+          {/* {mutation.isSuccess ? <div>Auction added!</div> : null} */}
         </DialogFooter>
       </DialogContent>
     </Dialog>
