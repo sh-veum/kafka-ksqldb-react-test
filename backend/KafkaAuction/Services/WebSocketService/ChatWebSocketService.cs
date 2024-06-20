@@ -6,6 +6,7 @@ using KafkaAuction.Services.Interfaces.WebSocketService;
 using ksqlDB.RestApi.Client.KSql.Linq;
 using ksqlDB.RestApi.Client.KSql.Linq.PullQueries;
 using ksqlDB.RestApi.Client.KSql.Query.Context;
+using ksqlDB.RestApi.Client.KSql.Query.Operators;
 using ksqlDB.RestApi.Client.KSql.Query.Options;
 using Newtonsoft.Json;
 
@@ -35,7 +36,7 @@ public class ChatWebSocketService : IChatWebSocketService
                 Username = l.Username,
                 Message_Text = l.Message_Text,
                 Created_Timestamp = l.Created_Timestamp,
-                Is_Edited = l.Updated_Timestamps.Length > 1
+                Is_Edited = l.Updated_Timestamps.Length > 1,
             })
             .Subscribe(ChatMessageDto =>
             {

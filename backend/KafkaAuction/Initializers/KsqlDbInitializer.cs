@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using KafkaAuction.Constants;
 using KafkaAuction.Models;
 using KafkaAuction.Services.Interfaces;
@@ -7,15 +8,22 @@ using Stream = ksqlDB.RestApi.Client.KSql.RestApi.Responses.Streams.Stream;
 
 namespace KafkaAuction.Initializers;
 
+public class AuctionConfig
+{
+    public int AuctionCount { get; set; } = 20;
+    public int BidsPerAuction { get; set; } = 30;
+    public int MessagesPerAuction { get; set; } = 50;
+}
+
 public static class KsqlDbInitializer
 {
-    public static async Task InitializeAsync(IAuctionService auctionService, IChatService chatService, IUserLocationService userLocationService, IKsqlDbService ksqlDbService, ILogger logger)
+    public static async Task InitializeAsync(IAuctionService auctionService, IChatService chatService, IUserLocationService userLocationService, IKsqlDbService ksqlDbService, ILogger logger, AuctionConfig config)
     {
         TablesResponse[] tablesResponse = await ksqlDbService.CheckTablesAsync();
         StreamsResponse[] streamsResponse = await ksqlDbService.CheckStreamsAsync();
 
-        var tables = tablesResponse[0]?.Tables ?? Array.Empty<Table>();
-        var streams = streamsResponse[0]?.Streams ?? Array.Empty<Stream>();
+        var tables = tablesResponse[0]?.Tables ?? [];
+        var streams = streamsResponse[0]?.Streams ?? [];
 
         logger.LogInformation("Existing Tables: " + string.Join(", ", tables.Select(t => t.Name)));
         logger.LogInformation("Existing Streams: " + string.Join(", ", streams.Select(s => s.Name)));
@@ -31,7 +39,10 @@ public static class KsqlDbInitializer
         var auctions = await auctionService.GetAllAuctions();
         if (auctions.Count == 0)
         {
-            await InsertAuctionsAndBidsAndMessages(auctionService, chatService);
+            var stopwatch = Stopwatch.StartNew();
+            await InsertAuctionsAndBidsAndMessages(auctionService, chatService, config);
+            stopwatch.Stop();
+            logger.LogInformation("Initialized the database in {0} seconds.", stopwatch.Elapsed.TotalSeconds);
         }
     }
 
@@ -77,70 +88,75 @@ public static class KsqlDbInitializer
         return createdAny;
     }
 
-    private static async Task InsertAuctionsAndBidsAndMessages(IAuctionService auctionService, IChatService chatService)
+    private static async Task InsertAuctionsAndBidsAndMessages(IAuctionService auctionService, IChatService chatService, AuctionConfig config)
     {
-        var auctions = new List<Auction>
-        {
-            new() {
-                Auction_Id = Guid.NewGuid().ToString(),
-                Title = "Cintamani Stone",
-                Description = "A fabled gemstone believed to grant wishes, from Shambhala.",
-                Starting_Price = 1000,
-                Current_Price = 1000,
-                Created_At = DateTime.UtcNow.AddSeconds(1).ToString("yyyy-MM-dd HH:mm:ss"),
-                End_Date = DateTime.UtcNow.AddHours(10).ToString("yyyy-MM-dd HH:mm:ss"),
-            },
-            new() {
-                Auction_Id = Guid.NewGuid().ToString(),
-                Title = "Avery's Cross",
-                Description = "A golden cross from the treasure of the infamous pirate Henry Avery.",
-                Starting_Price = 2000,
-                Current_Price = 2000,
-                Created_At = DateTime.UtcNow.AddSeconds(2).ToString("yyyy-MM-dd HH:mm:ss"),
-                End_Date = DateTime.UtcNow.AddHours(11).ToString("yyyy-MM-dd HH:mm:ss"),
-            },
-            new() {
-                Auction_Id = Guid.NewGuid().ToString(),
-                Title = "Sir Francis Drake's Ring",
-                Description = "A ring belonging to the legendary explorer Sir Francis Drake.",
-                Starting_Price = 1500,
-                Current_Price = 1500,
-                Created_At = DateTime.UtcNow.AddSeconds(3).ToString("yyyy-MM-dd HH:mm:ss"),
-                End_Date = DateTime.UtcNow.AddHours(12).ToString("yyyy-MM-dd HH:mm:ss"),
-            },
-            new() {
-                Auction_Id = Guid.NewGuid().ToString(),
-                Title = "Sheba's Crown",
-                Description = "A crown belonging to the Queen of Sheba, adorned with precious gems.",
-                Starting_Price = 3000,
-                Current_Price = 3000,
-                Created_At = DateTime.UtcNow.AddSeconds(4).ToString("yyyy-MM-dd HH:mm:ss"),
-                End_Date = DateTime.UtcNow.AddHours(13).ToString("yyyy-MM-dd HH:mm:ss"),
-            },
-            new() {
-                Auction_Id = Guid.NewGuid().ToString(),
-                Title = "Thievius Raccoonus",
-                Description = "A book detailing the Cooper Clan's thieving techniques and history",
-                Starting_Price = 1800,
-                Current_Price = 1800,
-                Created_At = DateTime.UtcNow.AddSeconds(5).ToString("yyyy-MM-dd HH:mm:ss"),
-                End_Date = DateTime.UtcNow.AddHours(14).ToString("yyyy-MM-dd HH:mm:ss"),
-            }
-        };
+        var predefinedAuctions = new List<Auction>
+            {
+                new() {
+                    Auction_Id = Guid.NewGuid().ToString(),
+                    Title = "Cintamani Stone",
+                    Description = "A fabled gemstone believed to grant wishes, from Shambhala.",
+                    Starting_Price = 1000,
+                    Current_Price = 1000,
+                    Created_At = DateTime.UtcNow.AddSeconds(1).ToString("yyyy-MM-dd HH:mm:ss"),
+                    End_Date = DateTime.UtcNow.AddHours(10).ToString("yyyy-MM-dd HH:mm:ss"),
+                },
+                new() {
+                    Auction_Id = Guid.NewGuid().ToString(),
+                    Title = "Avery's Cross",
+                    Description = "A golden cross from the treasure of the infamous pirate Henry Avery.",
+                    Starting_Price = 2000,
+                    Current_Price = 2000,
+                    Created_At = DateTime.UtcNow.AddSeconds(2).ToString("yyyy-MM-dd HH:mm:ss"),
+                    End_Date = DateTime.UtcNow.AddHours(11).ToString("yyyy-MM-dd HH:mm:ss"),
+                },
+                new() {
+                    Auction_Id = Guid.NewGuid().ToString(),
+                    Title = "Sir Francis Drake's Ring",
+                    Description = "A ring belonging to the legendary explorer Sir Francis Drake.",
+                    Starting_Price = 1500,
+                    Current_Price = 1500,
+                    Created_At = DateTime.UtcNow.AddSeconds(3).ToString("yyyy-MM-dd HH:mm:ss"),
+                    End_Date = DateTime.UtcNow.AddHours(12).ToString("yyyy-MM-dd HH:mm:ss"),
+                },
+                new() {
+                    Auction_Id = Guid.NewGuid().ToString(),
+                    Title = "Sheba's Crown",
+                    Description = "A crown belonging to the Queen of Sheba, adorned with precious gems.",
+                    Starting_Price = 3000,
+                    Current_Price = 3000,
+                    Created_At = DateTime.UtcNow.AddSeconds(4).ToString("yyyy-MM-dd HH:mm:ss"),
+                    End_Date = DateTime.UtcNow.AddHours(13).ToString("yyyy-MM-dd HH:mm:ss"),
+                },
+                new() {
+                    Auction_Id = Guid.NewGuid().ToString(),
+                    Title = "Thievius Raccoonus",
+                    Description = "A book detailing the Cooper Clan's thieving techniques and history",
+                    Starting_Price = 1800,
+                    Current_Price = 1800,
+                    Created_At = DateTime.UtcNow.AddSeconds(5).ToString("yyyy-MM-dd HH:mm:ss"),
+                    End_Date = DateTime.UtcNow.AddHours(14).ToString("yyyy-MM-dd HH:mm:ss"),
+                }
+            };
 
-        foreach (var auction in auctions)
+        for (int i = 0; i < config.AuctionCount; i++)
         {
+            var auction = predefinedAuctions[i % predefinedAuctions.Count];
+            auction.Auction_Id = Guid.NewGuid().ToString();
+            auction.Created_At = DateTime.UtcNow.AddSeconds(i + 1).ToString("yyyy-MM-dd HH:mm:ss");
+            auction.End_Date = DateTime.UtcNow.AddHours(10 + i).ToString("yyyy-MM-dd HH:mm:ss");
+
             await auctionService.InsertAuctionAsync(auction);
-            await InsertBidsForAuction(auctionService, auction.Auction_Id);
-            await InsertMessagesForAuction(chatService, auction.Auction_Id);
+            await InsertBidsForAuction(auctionService, auction.Auction_Id, config.BidsPerAuction);
+            await InsertMessagesForAuction(chatService, auction.Auction_Id, config.MessagesPerAuction);
         }
     }
 
-    private static async Task InsertBidsForAuction(IAuctionService auctionService, string auctionId)
+    private static async Task InsertBidsForAuction(IAuctionService auctionService, string auctionId, int bidCount)
     {
         var bidderNames = BidderNames.GetBidderNames();
         var random = new Random();
-        for (int i = 1; i <= 6; i++)
+        for (int i = 1; i <= bidCount; i++)
         {
             var auctionBid = new Auction_Bid
             {
@@ -154,11 +170,11 @@ public static class KsqlDbInitializer
         }
     }
 
-    private static async Task InsertMessagesForAuction(IChatService chatService, string auctionId)
+    private static async Task InsertMessagesForAuction(IChatService chatService, string auctionId, int messageCount)
     {
         var characterSentences = CharacterSentences.GetCharacterSentences();
         var random = new Random();
-        for (int i = 1; i <= 8; i++)
+        for (int i = 1; i <= messageCount; i++)
         {
             var username = characterSentences.Keys.ElementAt(random.Next(characterSentences.Count));
             var messageContents = characterSentences[username];
@@ -179,13 +195,13 @@ public static class BidderNames
 {
     public static string[] GetBidderNames()
     {
-        return
-        [
-            "Nathan Drake", "Victor Sullivan", "Elena Fisher", "Chloe Frazer",
-            "Samuel Drake", "Charlie Cutter", "Rafe Adler", "Nadine Ross",
-            "Eddy Raja", "Harry Flynn", "Zoran Lazarevic", "Marisa Chase",
-            "Sly Cooper", "Bentley", "Murray", "Carmelita Fox"
-        ];
+        return new[]
+        {
+                "Nathan Drake", "Victor Sullivan", "Elena Fisher", "Chloe Frazer",
+                "Samuel Drake", "Charlie Cutter", "Rafe Adler", "Nadine Ross",
+                "Eddy Raja", "Harry Flynn", "Zoran Lazarevic", "Marisa Chase",
+                "Sly Cooper", "Bentley", "Murray", "Carmelita Fox"
+            };
     }
 }
 

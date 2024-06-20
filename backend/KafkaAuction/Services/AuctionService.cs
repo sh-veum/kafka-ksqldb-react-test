@@ -264,15 +264,21 @@ public class AuctionService : IAuctionService
         return auctionDtos;
     }
 
+    /// <summary>
+    /// Since the pull query is not sorted, this is mostly useless.
+    /// </summary>
+    /// <param name="limit">Amount of auctions to pull</param>
+    /// <returns>A list of AuctionDtos</returns>
     public async Task<List<AuctionDto>> GetAuctions(int limit)
     {
         var auctions = _context.CreatePullQuery<Auction>($"queryable_{_auctionsTableName}")
             .Where(a => a.Is_Existing == true)
-            .Take(limit);
+            .Take(limit)
+            .GetManyAsync();
 
         List<AuctionDto> auctionDtos = [];
 
-        await foreach (var auction in auctions.GetManyAsync().ConfigureAwait(false))
+        await foreach (var auction in auctions.ConfigureAwait(false))
         {
             auctionDtos.Add(new AuctionDto
             {
