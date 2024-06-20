@@ -130,9 +130,10 @@ export const AddAuctionDialog = () => {
                   <Input
                     id="Starting_Price"
                     type="number"
+                    step="0.25"
                     value={field.state.value}
                     onChange={(e) =>
-                      field.handleChange(parseInt(e.target.value))
+                      field.handleChange(parseFloat(e.target.value))
                     }
                   />
                 </div>

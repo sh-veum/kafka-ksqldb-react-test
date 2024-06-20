@@ -21,7 +21,7 @@ export function ChatTable<ChatMessage, TValue>({
 }: ChatTableProps<ChatMessage, TValue>) {
   const [pagination, setPagination] = useState({
     pageIndex: 0,
-    pageSize: 5,
+    pageSize: 7,
   });
 
   const table = useReactTable({
@@ -41,7 +41,7 @@ export function ChatTable<ChatMessage, TValue>({
 
   return (
     <>
-      <div className="rounded-md border">
+      <div className="rounded-md border py-[7px]">
         <Table>
           <TableBody>
             {table.getRowModel().rows?.length ? (

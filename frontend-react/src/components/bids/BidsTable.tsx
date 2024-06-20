@@ -15,6 +15,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
 
 interface BidsTableProps<Bid, TValue> {
   columns: ColumnDef<Bid, TValue>[];
@@ -25,12 +26,21 @@ export function BidsTable<Bid, TValue>({
   columns,
   data,
 }: BidsTableProps<Bid, TValue>) {
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 9,
+  });
+
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    onPaginationChange: setPagination,
+    state: {
+      pagination,
+    },
     initialState: {
       sorting: [{ id: "Timestamp", desc: true }],
     },
@@ -44,7 +54,10 @@ export function BidsTable<Bid, TValue>({
             <TableRow key={headerGroup.id}>
               {headerGroup.headers.map((header) => {
                 return (
-                  <TableHead key={header.id}>
+                  <TableHead
+                    key={header.id}
+                    className="font-bold text-base text-accent-foreground"
+                  >
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -80,7 +93,7 @@ export function BidsTable<Bid, TValue>({
           )}
         </TableBody>
       </Table>
-      <div className="flex items-center justify-end space-x-2 py-4">
+      <div className="flex items-center justify-end space-x-2 py-4 px-2">
         <Button
           variant="outline"
           size="sm"
