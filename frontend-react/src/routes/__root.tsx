@@ -20,6 +20,9 @@ import { Spinner } from "@/components/Spinner";
 import { Separator } from "@/components/ui/separator";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { ToggleThemeMode } from "@/components/theme/ThemeToggle";
+import { Toaster } from "@/components/ui/sonner";
+import { Auth } from "@/lib/auth";
+import { NavBar } from "@/components/NavBar";
 
 function RouterSpinner() {
   const isLoading = useRouterState({ select: (s) => s.status === "pending" });
@@ -27,6 +30,7 @@ function RouterSpinner() {
 }
 
 export const Route = createRootRouteWithContext<{
+  auth: Auth;
   queryClient: QueryClient;
 }>()({
   component: RootComponent,
@@ -44,18 +48,7 @@ function RootComponent() {
             <RouterSpinner />
           </div>
           <div className="ml-auto">
-            <NavigationMenu>
-              <NavigationMenuList>
-                <NavigationMenuItem>
-                  <Link
-                    to="/auth/login"
-                    className={navigationMenuTriggerStyle()}
-                  >
-                    Login
-                  </Link>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
+            <NavBar />
           </div>
         </div>
         <Separator className="my-2" />
@@ -83,6 +76,7 @@ function RootComponent() {
               orientation="vertical"
             />
             <Outlet />
+            <Toaster richColors closeButton={true} />
           </div>
         </div>
       </div>

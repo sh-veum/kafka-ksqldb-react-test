@@ -5,6 +5,7 @@ import { ChatMessage } from "@/models/ChatMessage";
 import { queryOptions } from "@tanstack/react-query";
 import axios from "axios";
 import { convertUTCToLocalTime } from "./timeUtils";
+import { UserInfo } from "@/models/UserInfo";
 
 export const auctionQueryOptions = (auctionId: string) =>
   queryOptions({
@@ -72,5 +73,25 @@ export const chatMessagesQueryOptions = (auctionId: string) =>
 
       console.log("chatMessages", chatMessages);
       return chatMessages;
+    },
+  });
+
+export const getUserInfoQueryOptions = () =>
+  queryOptions<UserInfo>({
+    queryKey: ["auth", "loginInfo"],
+    queryFn: async () => {
+      const username = localStorage.getItem("username");
+      const accessToken = localStorage.getItem("accessToken");
+      const refreshToken = localStorage.getItem("refreshToken");
+      if (accessToken && refreshToken && username) {
+        return {
+          status: "loggedIn",
+          username: username,
+        };
+      }
+      return {
+        status: "loggedOut",
+        username: "",
+      };
     },
   });

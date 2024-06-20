@@ -1,23 +1,16 @@
 import { Input } from "@/components/ui/input";
 import { useForm } from "@tanstack/react-form";
 import { Button } from "@/components/ui/button";
-import { useMutation } from "@tanstack/react-query";
-import { ChatMessageCreator } from "@/models/ChatMessageCreator";
-import axios from "axios";
-import { baseUrl } from "@/lib/baseUrls";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { AlertCircle } from "lucide-react";
+import { useInsertChatMessageMutation } from "@/utils/mutations/chatMutations";
 
 interface ChatInputProps {
   auctionId: string;
 }
 
 export function ChatInput({ auctionId }: ChatInputProps) {
-  const mutation = useMutation({
-    mutationFn: (chatMessage: ChatMessageCreator) => {
-      return axios.post(`${baseUrl}/api/chat/insert_message`, chatMessage);
-    },
-  });
+  const { mutate, isPending } = useInsertChatMessageMutation();
 
   const form = useForm({
     defaultValues: {
@@ -25,11 +18,7 @@ export function ChatInput({ auctionId }: ChatInputProps) {
       Message_Text: "",
     },
     onSubmit: (values) => {
-      mutation.mutate({
-        Auction_Id: auctionId,
-        Username: values.value.Username,
-        Message_Text: values.value.Message_Text,
-      });
+      mutate({ ...values.value, Auction_Id: auctionId });
     },
   });
 
@@ -118,7 +107,7 @@ export function ChatInput({ auctionId }: ChatInputProps) {
             selector={(state) => [state.canSubmit, state.isValidating]}
             children={([canSubmit, isValidating]) => (
               <div>
-                {mutation.isPending ? (
+                {isPending ? (
                   <Button disabled={true} className="font-bold text-foreground">
                     Sending...
                   </Button>
@@ -136,9 +125,6 @@ export function ChatInput({ auctionId }: ChatInputProps) {
             )}
           />
         </div>
-        {mutation.isError && (
-          <div className="text-red-500">{mutation.error.message}</div>
-        )}
       </form>
     </>
   );

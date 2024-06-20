@@ -11,8 +11,10 @@ import {
 import { routeTree } from "./routeTree.gen";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Spinner } from "@/components/Spinner";
+import { auth, setQueryClient } from "./lib/auth";
 
 export const queryClient = new QueryClient();
+setQueryClient(queryClient);
 
 // Create a new router instance
 const router = createRouter({
@@ -23,7 +25,7 @@ const router = createRouter({
     </div>
   ),
   context: {
-    // auth: undefined!,
+    auth: undefined!,
     queryClient,
   },
   defaultPreload: "intent",
@@ -45,7 +47,11 @@ if (!rootElement.innerHTML) {
   root.render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} defaultPreload="intent" />
+        <RouterProvider
+          router={router}
+          defaultPreload="intent"
+          context={{ auth }}
+        />
       </QueryClientProvider>
     </StrictMode>
   );
