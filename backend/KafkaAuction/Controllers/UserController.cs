@@ -82,4 +82,37 @@ public class UserController : ControllerBase
             return BadRequest(ex.Message);
         }
     }
+
+    [HttpPost("register")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(IdentityResult), StatusCodes.Status200OK)]
+    public async Task<IActionResult> Register([FromBody] UserCreatorDto userCreatorDto)
+    {
+        try
+        {
+            var user = await _userManager.FindByEmailAsync(userCreatorDto.Email);
+            if (user != null)
+            {
+                return BadRequest("User with this email already exists.");
+            }
+
+            var result = await _userManager.CreateAsync(new UserModel
+            {
+                UserName = userCreatorDto.UserName,
+                Email = userCreatorDto.Email
+            }, userCreatorDto.Password);
+
+            if (result.Succeeded)
+            {
+                return Ok(result);
+            }
+
+            return BadRequest(result.Errors);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while logging in.");
+            return BadRequest(ex.Message);
+        }
+    }
 }
