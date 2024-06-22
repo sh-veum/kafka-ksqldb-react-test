@@ -81,17 +81,20 @@ export const getUserInfoQueryOptions = () =>
     queryKey: ["auth", "loginInfo"],
     queryFn: async () => {
       const username = localStorage.getItem("username");
+      const role = localStorage.getItem("role");
       const accessToken = localStorage.getItem("accessToken");
       const refreshToken = localStorage.getItem("refreshToken");
-      if (accessToken && refreshToken && username) {
+      if (accessToken && refreshToken && username && role) {
         return {
           status: "loggedIn",
           username: username,
+          role: role,
         };
       }
       return {
         status: "loggedOut",
         username: "",
+        role: "",
       };
     },
   });

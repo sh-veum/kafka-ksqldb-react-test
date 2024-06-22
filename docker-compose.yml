@@ -38,11 +38,11 @@ services:
       KAFKA_LOG_RETENTION_BYTES: -1 # This sets the retention size to indefinite
     # volumes:
     #   - ./backend/.containers/kafka:/var/lib/kafka/data
-    deploy:
-      restart_policy:
-        condition: on-failure
-        delay: 5s
-        window: 120s
+    # deploy:
+    #   restart_policy:
+    #     condition: on-failure
+    #     delay: 5s
+    #     window: 120s
 
   schema-registry:
     image: confluentinc/cp-schema-registry:7.4.0
@@ -151,12 +151,12 @@ services:
       - dev
     volumes:
       - dataprotection-keys:/root/.aspnet/DataProtection-Keys
-    deploy:
-      restart_policy:
-        condition: on-failure
-        delay: 10s
-        max_attempts: 5
-        window: 120s
+    # deploy:
+    #   restart_policy:
+    #     condition: on-failure
+    #     delay: 10s
+    #     max_attempts: 5
+    #     window: 120s
 
   auctionDB:
     image: postgres:latest

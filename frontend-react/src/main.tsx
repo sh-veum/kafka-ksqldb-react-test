@@ -12,6 +12,7 @@ import { routeTree } from "./routeTree.gen";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Spinner } from "@/components/Spinner";
 import { auth, setQueryClient } from "./lib/auth";
+import axios from "axios";
 
 export const queryClient = new QueryClient();
 setQueryClient(queryClient);
@@ -39,6 +40,22 @@ declare module "@tanstack/react-router" {
     router: typeof router;
   }
 }
+
+// Axios interceptor to add the bearer token to every request
+axios.interceptors.request.use(
+  (config) => {
+    const authToken = localStorage.getItem("accessToken");
+    if (authToken) {
+      config.headers.Authorization = `Bearer ${authToken}`;
+    }
+    // console.log("Token:", authToken);
+    console.log("Making request to:", config.url);
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 // Render the app
 const rootElement = document.getElementById("root")!;

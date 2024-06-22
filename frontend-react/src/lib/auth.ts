@@ -1,11 +1,18 @@
 import { QueryClient } from "@tanstack/react-query";
+import axios from "axios";
 
 // Auth type definition
 export type Auth = {
-  login: (username: string, accessToken: string, refreshToken: string) => void;
+  login: (
+    accessToken: string,
+    refreshToken: string,
+    username?: string,
+    role?: string
+  ) => void;
   logout: () => void;
   status: "loggedOut" | "loggedIn";
   username?: string;
+  role?: string;
 };
 
 let queryClient: QueryClient;
@@ -17,19 +24,33 @@ export const setQueryClient = (client: QueryClient) => {
 export const auth: Auth = {
   status: "loggedOut",
   username: undefined,
-  login: (username: string, accessToken: string, refreshToken: string) => {
+  role: undefined,
+  login: (
+    accessToken: string,
+    refreshToken: string,
+    username?: string,
+    role?: string
+  ) => {
     queryClient.setQueryData(
       ["auth", "loginInfo"],
       (old: Auth | undefined) => ({
         ...old,
         status: "loggedIn",
         username: username,
+        role: role,
       })
     );
-    localStorage.setItem("username", username);
+    if (username) {
+      localStorage.setItem("username", username);
+    }
+
+    if (role) {
+      localStorage.setItem("role", role);
+    }
+
     localStorage.setItem("accessToken", accessToken);
     localStorage.setItem("refreshToken", refreshToken);
-    // console.log("logged in", username, accessToken, refreshToken);
+    console.log("logged in", username, role);
   },
   logout: () => {
     console.log("logging out");
@@ -39,16 +60,13 @@ export const auth: Auth = {
         ...old,
         status: "loggedOut",
         username: undefined,
+        role: undefined,
       })
     );
     localStorage.removeItem("username");
+    localStorage.removeItem("role");
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
-    // console.log(
-    //   "logged out",
-    //   localStorage.getItem("username"),
-    //   localStorage.getItem("accessToken"),
-    //   localStorage.getItem("refreshToken")
-    // );
+    delete axios.defaults.headers.common["Authorization"];
   },
 };

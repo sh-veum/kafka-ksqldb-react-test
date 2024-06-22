@@ -15,14 +15,20 @@ export const useLoginMutation = () => {
 
       console.log("login response", response);
 
-      auth.login(
-        loginInfo.Email,
-        response.data.accessToken,
-        response.data.refreshToken
-      );
+      if (response.status !== 200) {
+        throw new Error("Login failed");
+      }
 
-      console.log("access token ", localStorage.getItem("accessToken"));
-      console.log("refresh token ", localStorage.getItem("refreshToken"));
+      auth.login(response.data.accessToken, response.data.refreshToken);
+
+      const userInfo = await axios.get(`${baseUrl}/api/user/userinfo`);
+
+      auth.login(
+        response.data.accessToken,
+        response.data.refreshToken,
+        userInfo.data.UserName,
+        userInfo.data.Role
+      );
 
       return response.data;
     },
