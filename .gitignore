@@ -9,7 +9,7 @@
 .env
 
 # PEM
-.pem
+*.pem
 
 # User-specific files
 *.rsuser
