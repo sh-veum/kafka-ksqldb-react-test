@@ -12,20 +12,14 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useForm } from "@tanstack/react-form";
 import { AuctionCreator } from "@/models/AuctionCreator";
-import { useMutation } from "@tanstack/react-query";
-import axios from "axios";
-import { baseUrl } from "@/lib/baseUrls";
 import { Spinner } from "./Spinner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { useInsertAuctionMutation } from "@/utils/mutations/auctionMutations";
 
 export const AddAuctionDialog = () => {
-  const mutation = useMutation({
-    mutationFn: (auction: AuctionCreator) => {
-      return axios.post(`${baseUrl}/api/auction/insert_auction`, auction);
-    },
-  });
+  const { mutate } = useInsertAuctionMutation();
 
   const form = useForm<AuctionCreator>({
     defaultValues: {
@@ -34,18 +28,10 @@ export const AddAuctionDialog = () => {
       Starting_Price: 0,
       Duration: 1,
     },
-    onSubmit: (value) => {
-      console.log(value.value);
-      mutation.mutate({
-        Title: value.value.Title,
-        Description: value.value.Description,
-        Starting_Price: value.value.Starting_Price,
-        Duration: value.value.Duration,
-      });
+    onSubmit: (values) => {
+      mutate(values.value);
     },
   });
-
-  if (mutation.isPending) return <p>Pending..</p>;
 
   return (
     <Dialog>
@@ -144,9 +130,10 @@ export const AddAuctionDialog = () => {
                   <Input
                     id="Starting_Price"
                     type="number"
+                    step="0.25"
                     value={field.state.value}
                     onChange={(e) =>
-                      field.handleChange(parseInt(e.target.value))
+                      field.handleChange(parseFloat(e.target.value))
                     }
                   />
                 </div>
@@ -177,7 +164,6 @@ export const AddAuctionDialog = () => {
                   <Input
                     id="Duration"
                     type="number"
-                    defaultValue={1}
                     value={field.state.value}
                     onChange={(e) =>
                       field.handleChange(parseInt(e.target.value))
@@ -219,14 +205,15 @@ export const AddAuctionDialog = () => {
             selector={(state) => [state.canSubmit, state.isValidating]}
             children={([canSubmit, isValidating]) => (
               <Button
-                onClick={form.handleSubmit}
+                onClick={() => {
+                  form.handleSubmit();
+                }}
                 disabled={!canSubmit || isValidating}
               >
                 Create Auction
               </Button>
             )}
           />
-          {/* {mutation.isSuccess ? <div>Auction added!</div> : null} */}
         </DialogFooter>
       </DialogContent>
     </Dialog>

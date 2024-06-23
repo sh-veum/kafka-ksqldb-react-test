@@ -164,8 +164,8 @@ public class ChatService : IChatService
 
     /// <summary>
     /// Gets messages for an auction using a pull query<br />
-    /// Pro: Fast-ish<br />
-    /// Con: Response is not sorted
+    /// <b>Pro</b>: Fast-ish<br />
+    /// <b>Con</b>: Response is not sorted
     /// </summary>
     /// <param name="auction_id">Id of auction to get messages from</param>
     /// <returns>A list of chat messages</returns>
@@ -196,8 +196,8 @@ public class ChatService : IChatService
 
     /// <summary>
     /// Get messages for an auction using a push query<br />
-    /// Pro: Response is already sorted<br />
-    /// Con: Slow as hell compared to pull queries
+    /// <b>Pro</b>: Response is already sorted<br />
+    /// <b>Con</b>: Slow as hell compared to pull queries
     /// </summary>
     /// <param name="auction_id">Id of auction to get messages from</param>
     /// <returns>A list of chat messages</returns>

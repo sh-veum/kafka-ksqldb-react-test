@@ -134,6 +134,7 @@ public class AuctionService : IAuctionService
         if (auctionBid.Bid_Amount > auction.Current_Price)
         {
             auction.Current_Price = auctionBid.Bid_Amount;
+            auction.Leader = auctionBid.Username;
             auction.Number_Of_Bids += 1;
 
             var auctionInserter = new EntityInserter<Auction>(_restApiProvider, _logger);
@@ -197,6 +198,7 @@ public class AuctionService : IAuctionService
             Description = auction.Description,
             Starting_Price = auction.Starting_Price,
             Current_Price = auction.Current_Price,
+            Leader = auction.Leader,
             Number_Of_Bids = auction.Number_Of_Bids,
             Winner = auction.Winner,
             Created_At = auction.Created_At,
@@ -254,6 +256,7 @@ public class AuctionService : IAuctionService
                 Number_Of_Bids = auction.Number_Of_Bids,
                 Starting_Price = auction.Starting_Price,
                 Current_Price = auction.Current_Price,
+                Leader = auction.Leader,
                 Winner = auction.Winner,
                 Created_At = auction.Created_At,
                 End_Date = auction.End_Date,
@@ -264,15 +267,21 @@ public class AuctionService : IAuctionService
         return auctionDtos;
     }
 
+    /// <summary>
+    /// Since the pull query is not sorted, this is mostly useless.
+    /// </summary>
+    /// <param name="limit">Amount of auctions to pull</param>
+    /// <returns>A list of AuctionDtos</returns>
     public async Task<List<AuctionDto>> GetAuctions(int limit)
     {
         var auctions = _context.CreatePullQuery<Auction>($"queryable_{_auctionsTableName}")
             .Where(a => a.Is_Existing == true)
-            .Take(limit);
+            .Take(limit)
+            .GetManyAsync();
 
         List<AuctionDto> auctionDtos = [];
 
-        await foreach (var auction in auctions.GetManyAsync().ConfigureAwait(false))
+        await foreach (var auction in auctions.ConfigureAwait(false))
         {
             auctionDtos.Add(new AuctionDto
             {
@@ -282,6 +291,7 @@ public class AuctionService : IAuctionService
                 Starting_Price = auction.Starting_Price,
                 Current_Price = auction.Current_Price,
                 Number_Of_Bids = auction.Number_Of_Bids,
+                Leader = auction.Leader,
                 Winner = auction.Winner,
                 Created_At = auction.Created_At,
                 End_Date = auction.End_Date,
@@ -310,6 +320,7 @@ public class AuctionService : IAuctionService
             Description = auction.Description,
             Starting_Price = auction.Starting_Price,
             Current_Price = auction.Current_Price,
+            Leader = auction.Leader,
             Number_Of_Bids = auction.Number_Of_Bids,
             Winner = auction.Winner,
             Created_At = auction.Created_At,
@@ -451,6 +462,7 @@ public class AuctionService : IAuctionService
             Description = auction.Description,
             Starting_Price = auction.Starting_Price,
             Current_Price = auction.Current_Price,
+            Leader = auction.Leader,
             Number_Of_Bids = auction.Number_Of_Bids,
             Winner = auction.Winner,
             Created_At = auction.Created_At,

@@ -1,6 +1,5 @@
 import {
   createRootRouteWithContext,
-  Link,
   Outlet,
   useRouterState,
 } from "@tanstack/react-router";
@@ -8,18 +7,17 @@ import {
   ReactQueryDevtools,
   TanStackRouterDevtools,
 } from "../components/dev/DevTools";
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuList,
-  navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu";
+
 import { Suspense } from "react";
 import { QueryClient } from "@tanstack/react-query";
 import { Spinner } from "@/components/Spinner";
 import { Separator } from "@/components/ui/separator";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { ToggleThemeMode } from "@/components/theme/ThemeToggle";
+import { Toaster } from "@/components/ui/sonner";
+import { Auth } from "@/lib/auth";
+import { NavBar } from "@/components/NavBar";
+import { SideBar } from "@/components/SideBar";
 
 function RouterSpinner() {
   const isLoading = useRouterState({ select: (s) => s.status === "pending" });
@@ -27,6 +25,7 @@ function RouterSpinner() {
 }
 
 export const Route = createRootRouteWithContext<{
+  auth: Auth;
   queryClient: QueryClient;
 }>()({
   component: RootComponent,
@@ -44,37 +43,13 @@ function RootComponent() {
             <RouterSpinner />
           </div>
           <div className="ml-auto">
-            <NavigationMenu>
-              <NavigationMenuList>
-                <NavigationMenuItem>
-                  <Link
-                    to="/auth/login"
-                    className={navigationMenuTriggerStyle()}
-                  >
-                    Login
-                  </Link>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
+            <NavBar />
           </div>
         </div>
         <Separator className="my-2" />
         <div className="flex flex-col lg:flex-row flex-1">
           <div className="w-full lg:w-[5vw] min-w-fit">
-            <NavigationMenu>
-              <NavigationMenuList className="flex flex-row lg:flex-col">
-                <NavigationMenuItem>
-                  <Link to="/" className={navigationMenuTriggerStyle()}>
-                    Home
-                  </Link>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <Link to="/about" className={navigationMenuTriggerStyle()}>
-                    About
-                  </Link>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
+            <SideBar />
           </div>
           <Separator className="lg:hidden my-2" orientation="horizontal" />
           <div className="flex w-screen lg:w-[90vw]">
@@ -83,6 +58,7 @@ function RootComponent() {
               orientation="vertical"
             />
             <Outlet />
+            <Toaster richColors closeButton={true} />
           </div>
         </div>
       </div>

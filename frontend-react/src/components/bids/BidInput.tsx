@@ -3,7 +3,6 @@ import { useForm } from "@tanstack/react-form";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { AlertCircle } from "lucide-react";
-import { useInsertChatMessageMutation } from "@/utils/mutations/chatMutations";
 import { useQuery } from "@tanstack/react-query";
 import { getUserInfoQueryOptions } from "@/utils/queryOptions";
 import {
@@ -12,24 +11,25 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useInsertBidMutation } from "@/utils/mutations/auctionMutations";
 
-interface ChatInputProps {
+interface BidInputProps {
   auctionId: string;
 }
 
-export function ChatInput({ auctionId }: ChatInputProps) {
-  const { mutate, isPending } = useInsertChatMessageMutation();
+export function BidInput({ auctionId }: BidInputProps) {
+  const { mutate, isPending } = useInsertBidMutation();
   const { data: userInfo } = useQuery(getUserInfoQueryOptions());
 
   const form = useForm({
     defaultValues: {
-      Message_Text: "",
+      Bid_Amount: 0,
     },
     onSubmit: (values) => {
       mutate({
-        ...values.value,
         Auction_Id: auctionId,
         Username: userInfo?.username || "anon",
+        Bid_Amount: values.value.Bid_Amount,
       });
     },
   });
@@ -42,14 +42,20 @@ export function ChatInput({ auctionId }: ChatInputProps) {
         <div className="flex flex-1 space-x-2">
           <div className="w-full">
             <form.Field
-              name="Message_Text"
+              name="Bid_Amount"
               validators={{
                 onChange: ({ value }) => {
-                  if (value.length < 1) {
-                    return "Message can't be empty";
+                  if (value <= 0) {
+                    return "Bid amount must be greater than zero";
                   }
-                  if (value.length > 200) {
-                    return "Message too long";
+                  if (isNaN(value)) {
+                    return "Bid amount must be a number";
+                  }
+                  if (!/^\d+(\.\d{1,2})?$/.test(value.toString())) {
+                    return "Bid amount cannot have more than two decimal places";
+                  }
+                  if (value > 9999999999999998n) {
+                    return "Exceeded maximum bid amount";
                   }
                 },
               }}
@@ -59,11 +65,14 @@ export function ChatInput({ auctionId }: ChatInputProps) {
                     <TooltipTrigger asChild>
                       <div>
                         <Input
-                          id="Message"
-                          placeholder="Message"
-                          type="text"
+                          id="Bid_Amount"
+                          placeholder="Enter your bid"
+                          type="number"
+                          step="0.25"
                           value={field.state.value}
-                          onChange={(e) => field.handleChange(e.target.value)}
+                          onChange={(e) =>
+                            field.handleChange(parseFloat(e.target.value))
+                          }
                           required
                           disabled={isLoggedOut}
                         />
@@ -71,7 +80,7 @@ export function ChatInput({ auctionId }: ChatInputProps) {
                     </TooltipTrigger>
                     {isLoggedOut && (
                       <TooltipContent>
-                        <p>only signed-in user can chat</p>
+                        <p>Only signed-in users can place bids</p>
                       </TooltipContent>
                     )}
                   </Tooltip>
@@ -117,14 +126,14 @@ export function ChatInput({ auctionId }: ChatInputProps) {
                           onClick={form.handleSubmit}
                           className="font-bold text-foreground"
                         >
-                          Send
+                          Bid
                         </Button>
                       )}
                     </div>
                   </TooltipTrigger>
                   {isLoggedOut && (
                     <TooltipContent>
-                      <p>only signed-in user can chat</p>
+                      <p>Only signed-in users can place bids</p>
                     </TooltipContent>
                   )}
                 </Tooltip>

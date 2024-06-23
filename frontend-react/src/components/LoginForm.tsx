@@ -1,7 +1,4 @@
-import { baseUrl } from "@/lib/baseUrls";
 import { useForm } from "@tanstack/react-form";
-import { useMutation } from "@tanstack/react-query";
-import axios from "axios";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { Spinner } from "./Spinner";
@@ -9,32 +6,39 @@ import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Button } from "./ui/button";
 import { LoginInfo } from "@/models/LoginInfo";
+import { useLoginMutation } from "@/utils/mutations/authMutations";
+import { useRouter } from "@tanstack/react-router";
+import { useEffect } from "react";
 
 export const LoginForm = () => {
-  const mutation = useMutation({
-    mutationFn: async (loginInfo: LoginInfo) => {
-      const response = await axios.post(`${baseUrl}/login`, loginInfo);
-      console.log(response);
-    },
-  });
+  const { mutate, isSuccess } = useLoginMutation();
+  const router = useRouter();
 
   const form = useForm<LoginInfo>({
     defaultValues: {
       Email: "",
       Password: "",
     },
-    onSubmit: (value) => {
-      console.log(value.value);
-      mutation.mutate({
-        Email: value.value.Email,
-        Password: value.value.Password,
-      });
+    onSubmit: (values) => {
+      mutate(values.value);
+      router.invalidate();
     },
   });
 
+  useEffect(() => {
+    if (isSuccess) {
+      router.history.push("/");
+    }
+  }, [isSuccess, router.history]);
+
   return (
     <>
-      <form>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+      >
         <form.Field
           name="Email"
           validators={{

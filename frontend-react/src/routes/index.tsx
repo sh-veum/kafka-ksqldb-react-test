@@ -46,7 +46,7 @@ function Index() {
   });
 
   return (
-    <div className="flex flex-col space-y-4">
+    <div className="flex flex-col space-y-2">
       <div className="flex space-x-4">
         <AddAuctionDialog />
         <Select
@@ -65,7 +65,7 @@ function Index() {
           </SelectContent>
         </Select>
       </div>
-      <ScrollArea className="max-h-[590px] min-w-max rounded-md border p-4 flex-1 overflow-auto">
+      <ScrollArea className="max-h-[790px] min-w-max rounded-md border p-4 flex-1 overflow-auto">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {sortedAuctions.map((auction: Auction) => (
             <AuctionCard key={auction.Auction_Id} {...auction} />

@@ -229,7 +229,9 @@ using (var scope = app.Services.CreateScope())
         var userLocationService = services.GetRequiredService<IUserLocationService>();
         var ksqlDbService = services.GetRequiredService<IKsqlDbService>();
 
-        await KsqlDbInitializer.InitializeAsync(auctionService, chatService, userLocationService, ksqlDbService, logger);
+        AuctionConfig auctionConfig = new();
+
+        await KsqlDbInitializer.InitializeAsync(auctionService, chatService, userLocationService, ksqlDbService, logger, auctionConfig);
     }
     catch (Exception ex)
     {

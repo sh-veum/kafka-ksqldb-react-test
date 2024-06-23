@@ -11,8 +11,11 @@ import {
 import { routeTree } from "./routeTree.gen";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Spinner } from "@/components/Spinner";
+import { auth, setQueryClient } from "./lib/auth";
+import axios from "axios";
 
 export const queryClient = new QueryClient();
+setQueryClient(queryClient);
 
 // Create a new router instance
 const router = createRouter({
@@ -23,7 +26,7 @@ const router = createRouter({
     </div>
   ),
   context: {
-    // auth: undefined!,
+    auth: undefined!,
     queryClient,
   },
   defaultPreload: "intent",
@@ -38,6 +41,22 @@ declare module "@tanstack/react-router" {
   }
 }
 
+// Axios interceptor to add the bearer token to every request
+axios.interceptors.request.use(
+  (config) => {
+    const authToken = localStorage.getItem("accessToken");
+    if (authToken) {
+      config.headers.Authorization = `Bearer ${authToken}`;
+    }
+    // console.log("Token:", authToken);
+    console.log("Making request to:", config.url);
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 // Render the app
 const rootElement = document.getElementById("root")!;
 if (!rootElement.innerHTML) {
@@ -45,7 +64,11 @@ if (!rootElement.innerHTML) {
   root.render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} defaultPreload="intent" />
+        <RouterProvider
+          router={router}
+          defaultPreload="intent"
+          context={{ auth }}
+        />
       </QueryClientProvider>
     </StrictMode>
   );
