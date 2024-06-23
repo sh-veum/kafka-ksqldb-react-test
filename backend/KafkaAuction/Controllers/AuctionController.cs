@@ -193,6 +193,15 @@ public class AuctionController : ControllerBase
         return Ok(auctionBids);
     }
 
+    [HttpGet("get_all_auctions_with_bids")]
+    [ProducesResponseType(typeof(AuctionWithBidDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAllAuctionsAndBids()
+    {
+        var auctionsWithBids = await _auctionService.GetAllAuctionWithBids();
+
+        return Ok(auctionsWithBids);
+    }
+
     [HttpGet("get_bid_messages_for_auction")]
     [ProducesResponseType(typeof(AuctionBidMessageDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetBidMessagesForAuction(string auction_Id)

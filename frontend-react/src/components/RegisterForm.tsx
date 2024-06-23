@@ -1,7 +1,4 @@
-import { baseUrl } from "@/lib/baseUrls";
 import { useForm } from "@tanstack/react-form";
-import { useMutation } from "@tanstack/react-query";
-import axios from "axios";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
 import { Spinner } from "./Spinner";
@@ -9,21 +6,17 @@ import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { AlertCircle } from "lucide-react";
 import { Button } from "./ui/button";
 import { RegisterInfo } from "@/models/RegisterInfo";
+import { useRouter } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { useRegisterMutation } from "@/utils/mutations/authMutations";
 
 interface ExtendedRegisterInfo extends RegisterInfo {
   ConfirmPassword: string;
 }
 
 export const RegisterForm = () => {
-  const mutation = useMutation({
-    mutationFn: async (registerInfo: RegisterInfo) => {
-      const response = await axios.post(
-        `${baseUrl}/api/user/register`,
-        registerInfo
-      );
-      console.log(response);
-    },
-  });
+  const { mutate, isSuccess } = useRegisterMutation();
+  const router = useRouter();
 
   const form = useForm<ExtendedRegisterInfo>({
     defaultValues: {
@@ -34,7 +27,7 @@ export const RegisterForm = () => {
     },
     onSubmit: (value) => {
       console.log(value.value);
-      mutation.mutate({
+      mutate({
         UserName: value.value.UserName,
         Email: value.value.Email,
         Password: value.value.Password,
@@ -42,9 +35,20 @@ export const RegisterForm = () => {
     },
   });
 
+  useEffect(() => {
+    if (isSuccess) {
+      router.history.push("/auth/login");
+    }
+  }, [isSuccess, router.history]);
+
   return (
     <>
-      <form>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+      >
         <form.Field
           name="UserName"
           validators={{

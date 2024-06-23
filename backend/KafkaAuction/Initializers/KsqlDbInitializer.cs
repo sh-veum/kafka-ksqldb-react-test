@@ -10,9 +10,9 @@ namespace KafkaAuction.Initializers;
 
 public class AuctionConfig
 {
-    public int AuctionCount { get; set; } = 20;
-    public int BidsPerAuction { get; set; } = 30;
-    public int MessagesPerAuction { get; set; } = 50;
+    public int AuctionCount { get; set; } = 5;
+    public int BidsPerAuction { get; set; } = 6;
+    public int MessagesPerAuction { get; set; } = 10;
 }
 
 public static class KsqlDbInitializer

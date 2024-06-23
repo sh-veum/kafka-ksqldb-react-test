@@ -6,6 +6,7 @@ import { queryOptions } from "@tanstack/react-query";
 import axios from "axios";
 import { convertUTCToLocalTime } from "./timeUtils";
 import { UserInfo } from "@/models/UserInfo";
+import { AuctionWithBid } from "@/models/AuctionWithBid";
 
 export const auctionQueryOptions = (auctionId: string) =>
   queryOptions({
@@ -96,5 +97,22 @@ export const getUserInfoQueryOptions = () =>
         username: "",
         role: "",
       };
+    },
+  });
+
+export const getAllBidsQueryOptions = () =>
+  queryOptions<AuctionWithBid[]>({
+    queryKey: ["allAuctionsWithBids"],
+    queryFn: async () => {
+      const res = await axios.get(
+        `${baseUrl}/api/auction/get_all_auctions_with_bids`
+      );
+      const auctionWithBids = res.data as AuctionWithBid[];
+      auctionWithBids.forEach((message) => {
+        message.Timestamp = convertUTCToLocalTime(message.Timestamp);
+      });
+
+      console.log("Auction With Bid", auctionWithBids);
+      return auctionWithBids;
     },
   });

@@ -74,8 +74,9 @@ public class AuctionService : IAuctionService
         string createStreamSql = $@"
             CREATE OR REPLACE STREAM {_auctionsWithBidsStreamName} AS
                 SELECT
-                    a.Auction_Id,
+                    b.Auction_Id AS Auction_With_Bids_Id,
                     a.Title,
+                    b.Bid_Id,
                     b.Username,
                     b.Bid_Amount,
                     b.Timestamp
@@ -363,6 +364,29 @@ public class AuctionService : IAuctionService
         }
 
         return auctionBidDtos;
+    }
+
+    public async Task<List<AuctionWithBidDto>> GetAllAuctionWithBids()
+    {
+        var auctionWithBids = _context.CreatePullQuery<Auction_With_Bids>("AUCTIONS_WITH_BIDS")
+            .GetManyAsync();
+
+        List<AuctionWithBidDto> auctionWithBidDtos = [];
+
+        await foreach (var auctionWithBid in auctionWithBids.ConfigureAwait(false))
+        {
+            auctionWithBidDtos.Add(new AuctionWithBidDto
+            {
+                Auction_Id = auctionWithBid.Auction_With_Bids_Id,
+                Bid_Id = auctionWithBid.Bid_Id,
+                Title = auctionWithBid.Title,
+                Username = auctionWithBid.Username,
+                Bid_Amount = auctionWithBid.Bid_Amount,
+                Timestamp = auctionWithBid.Timestamp,
+            });
+        }
+
+        return auctionWithBidDtos;
     }
 
     public async Task<List<AuctionBidDto>> GetBidsForAuction(string auction_id)

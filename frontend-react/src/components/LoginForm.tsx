@@ -44,17 +44,17 @@ export const LoginForm = () => {
           validators={{
             onChange: ({ value }) => {
               if (!value) {
-                return "Email is required";
+                return "Username is required";
               }
             },
           }}
           children={(field) => (
             <div>
-              <Label htmlFor={field.name}>Email</Label>
+              <Label htmlFor={field.name}>Username</Label>
               <div className="relative">
                 <Input
                   id="Email"
-                  type="email"
+                  type="text"
                   value={field.state.value}
                   onChange={(e) => field.handleChange(e.target.value)}
                 />
