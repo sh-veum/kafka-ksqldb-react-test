@@ -3,7 +3,7 @@ import AuctionCard from "@/components/AuctionCard";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Auction } from "@/models/Auction";
 import { allAuctionQueryOptions } from "@/utils/queryOptions";
-import useAuctionsWebSocket from "@/utils/webSocket/useAuctionsWebSocket";
+import useAuctionsWebSocket from "@/utils/web-socket/useAuctionsWebSocket";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";

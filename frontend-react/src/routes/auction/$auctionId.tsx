@@ -10,8 +10,8 @@ import {
   auctionQueryOptions,
   chatMessagesQueryOptions,
 } from "@/utils/queryOptions";
-import useBidsWebSocket from "@/utils/webSocket/useBidsWebSocket";
-import useChatWebSocket from "@/utils/webSocket/useChatWebSocket";
+import useBidsWebSocket from "@/utils/web-socket/useBidsWebSocket";
+import useChatWebSocket from "@/utils/web-socket/useChatWebSocket";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
