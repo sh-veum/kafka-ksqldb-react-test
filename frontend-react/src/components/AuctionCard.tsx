@@ -33,7 +33,7 @@ export default function AuctionCard(auctionProps: Auction) {
             <CardTitle className="text-xl">{auctionProps.Title}</CardTitle>
             <CardDescription className="whitespace-normal">
               {displayWinner ? (
-                <>Winner: {auctionProps.Winner}</>
+                <>Winner: {auctionProps.Leader}</>
               ) : (
                 <>
                   Time Left: {hoursLeft} hours and {minutesLeft} minutes

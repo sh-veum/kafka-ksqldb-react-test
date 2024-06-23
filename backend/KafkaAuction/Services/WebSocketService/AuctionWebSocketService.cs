@@ -93,6 +93,7 @@ public class AuctionWebSocketService : IAuctionWebSocketService
                 Number_Of_Bids = l.Number_Of_Bids,
                 Starting_Price = l.Starting_Price,
                 Current_Price = l.Current_Price,
+                Leader = l.Leader,
                 Winner = l.Winner,
                 Created_At = l.Created_At,
                 End_Date = l.End_Date,

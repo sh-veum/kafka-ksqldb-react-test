@@ -144,7 +144,7 @@ public static class KsqlDbInitializer
             var auction = predefinedAuctions[i % predefinedAuctions.Count];
             auction.Auction_Id = Guid.NewGuid().ToString();
             auction.Created_At = DateTime.UtcNow.AddSeconds(i + 1).ToString("yyyy-MM-dd HH:mm:ss");
-            auction.End_Date = DateTime.UtcNow.AddHours(10 + i).ToString("yyyy-MM-dd HH:mm:ss");
+            auction.End_Date = DateTime.UtcNow.AddHours(1 + (i * 2)).ToString("yyyy-MM-dd HH:mm:ss");
 
             await auctionService.InsertAuctionAsync(auction);
             await InsertBidsForAuction(auctionService, auction.Auction_Id, config.BidsPerAuction);

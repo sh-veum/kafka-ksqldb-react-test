@@ -3,7 +3,7 @@ using ksqlDB.RestApi.Client.KSql.RestApi.Statements.Annotations;
 
 namespace KafkaAuction.Models;
 
-public class Chat_Message : Record
+public record Chat_Message
 {
     [Key]
     public required string Message_Id { get; set; }
