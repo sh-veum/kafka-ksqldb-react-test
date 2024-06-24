@@ -24,6 +24,13 @@ import {
 import useAllAuctionWithBidsWebSocket from "@/utils/web-socket/useOverviewWebSocket";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { formatCurrency } from "@/utils/currencyFormatter";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export const Route = createFileRoute("/admin")({
   beforeLoad: async ({ location }) => {
@@ -56,8 +63,12 @@ interface TooltipProps {
 function AdminPage() {
   const auctionWithBidsQuery = useSuspenseQuery(getAllBidsQueryOptions());
   const auctionWithBids = auctionWithBidsQuery.data;
+  const reversedAuctionsWithBids = auctionWithBids?.slice().reverse();
+
   const [isDataLoaded, setIsDataLoaded] = useState(false);
-  const [selectedTitle, setSelectedTitle] = useState<string>("");
+  const [selectedTitle, setSelectedTitle] = useState<string>(
+    auctionWithBids[0].Title
+  );
 
   useEffect(() => {
     if (auctionWithBids && !isDataLoaded) {
@@ -87,29 +98,23 @@ function AdminPage() {
     if (active && payload && payload.length) {
       const { Bid_Amount, Username, Timestamp } = payload[0].payload;
       return (
-        <div className="custom-tooltip">
-          <p>{`Username: ${Username}`}</p>
-          <p>{`Bid Amount: $${Bid_Amount}`}</p>
-          <p>{`Timestamp: ${Timestamp}`}</p>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>{Username}</CardTitle>
+            <CardDescription>{Timestamp}</CardDescription>
+          </CardHeader>
+          <CardContent>Bid Amount: ${Bid_Amount}</CardContent>
+        </Card>
       );
     }
     return null;
   };
 
-  // Sort auctions by timestamp in descending order
-  const sortedAuctions = auctionWithBids
-    ? [...auctionWithBids].sort(
-        (a, b) =>
-          new Date(b.Timestamp).getTime() - new Date(a.Timestamp).getTime()
-      )
-    : [];
-
   return (
     <div>
       <p className="text-2xl">Admin Page</p>
       <div className="my-2">
-        <Select onValueChange={setSelectedTitle}>
+        <Select onValueChange={setSelectedTitle} defaultValue={selectedTitle}>
           <SelectTrigger className="w-[280px]">
             <SelectValue placeholder="Select an auction title" />
           </SelectTrigger>
@@ -148,8 +153,8 @@ function AdminPage() {
           <p className="text-xl mb-2">All Bids Live Feed</p>
           <ScrollArea className="max-h-[650px] min-w-max rounded-md border p-4 flex-1 overflow-auto">
             <ul>
-              {sortedAuctions &&
-                sortedAuctions.map((auction, index) => (
+              {reversedAuctionsWithBids &&
+                reversedAuctionsWithBids.map((auction, index) => (
                   <li
                     key={auction.Bid_Id}
                     className={index % 2 === 0 ? "bg-secondary p-1" : "p-1"}

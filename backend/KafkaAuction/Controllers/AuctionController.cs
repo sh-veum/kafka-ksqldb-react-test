@@ -195,9 +195,14 @@ public class AuctionController : ControllerBase
 
     [HttpGet("get_all_auctions_with_bids")]
     [ProducesResponseType(typeof(AuctionWithBidDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAllAuctionsAndBids()
+    public async Task<IActionResult> GetAllAuctionsAndBids([FromQuery] bool sortByDate = false)
     {
         var auctionsWithBids = await _auctionService.GetAllAuctionWithBids();
+
+        if (sortByDate)
+        {
+            auctionsWithBids = Sorter.SortByDate(auctionsWithBids, auctionWithBid => auctionWithBid.Timestamp);
+        }
 
         return Ok(auctionsWithBids);
     }

@@ -9,7 +9,7 @@ import { UserInfo } from "@/models/UserInfo";
 import { AuctionWithBid } from "@/models/AuctionWithBid";
 
 export const auctionQueryOptions = (auctionId: string) =>
-  queryOptions({
+  queryOptions<Auction>({
     queryKey: ["auction", auctionId],
     queryFn: async () => {
       const res = await axios.get(
@@ -25,14 +25,14 @@ export const auctionQueryOptions = (auctionId: string) =>
   });
 
 export const allAuctionQueryOptions = () =>
-  queryOptions({
+  queryOptions<Auction[]>({
     queryKey: ["allAuctions"],
     queryFn: async () => {
       const res = await axios.get(
         `${baseUrl}/api/auction/get_all_auctions?sortByDate=true`
       );
-      const auctions = res.data as Auction[];
-      auctions.forEach((auction) => {
+      const auctions = res.data;
+      auctions.forEach((auction: Auction) => {
         auction.Created_At = convertUTCToLocalTime(auction.Created_At);
         auction.End_Date = convertUTCToLocalTime(auction.End_Date);
       });
@@ -42,14 +42,14 @@ export const allAuctionQueryOptions = () =>
   });
 
 export const auctionBidsQueryOptions = (auctionId: string) =>
-  queryOptions({
+  queryOptions<Bid[]>({
     queryKey: ["auctionBids", auctionId],
     queryFn: async () => {
       const res = await axios.get(
         `${baseUrl}/api/auction/get_bid_messages_for_auction?auction_Id=${auctionId}`
       );
-      const bids = res.data as Bid[];
-      bids.forEach((bid) => {
+      const bids = res.data;
+      bids.forEach((bid: Bid) => {
         bid.Timestamp = convertUTCToLocalTime(bid.Timestamp);
       });
 
@@ -59,14 +59,14 @@ export const auctionBidsQueryOptions = (auctionId: string) =>
   });
 
 export const chatMessagesQueryOptions = (auctionId: string) =>
-  queryOptions({
+  queryOptions<ChatMessage[]>({
     queryKey: ["chatMessages", auctionId],
     queryFn: async () => {
       const res = await axios.get(
         `${baseUrl}/api/chat/get_messages_for_auction?auction_Id=${auctionId}&sortByDate=true`
       );
-      const chatMessages = res.data as ChatMessage[];
-      chatMessages.forEach((message) => {
+      const chatMessages = res.data;
+      chatMessages.forEach((message: ChatMessage) => {
         message.Created_Timestamp = convertUTCToLocalTime(
           message.Created_Timestamp
         );
@@ -105,10 +105,10 @@ export const getAllBidsQueryOptions = () =>
     queryKey: ["allAuctionsWithBids"],
     queryFn: async () => {
       const res = await axios.get(
-        `${baseUrl}/api/auction/get_all_auctions_with_bids`
+        `${baseUrl}/api/auction/get_all_auctions_with_bids?sortByDate=true`
       );
-      const auctionWithBids = res.data as AuctionWithBid[];
-      auctionWithBids.forEach((message) => {
+      const auctionWithBids = res.data;
+      auctionWithBids.forEach((message: AuctionWithBid) => {
         message.Timestamp = convertUTCToLocalTime(message.Timestamp);
       });
 
