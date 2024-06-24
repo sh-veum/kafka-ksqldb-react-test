@@ -79,7 +79,7 @@ function SpecificAuctionComponent() {
         <div className="max-w-prose w-2/3">
           <p className="text-xl font-bold">Bids</p>
           <div className="mt-2">
-            <BidInput auctionId={params.auctionId} />
+            <BidInput auctionId={auction.Auction_Id} />
             <div className="mt-2">
               <BidsTable columns={bidColumns} data={bids} />
             </div>
@@ -88,7 +88,10 @@ function SpecificAuctionComponent() {
         <div className="max-w-prose w-1/3">
           <p className="text-xl font-bold">Chat</p>
           <div className="mt-2">
-            <ChatInput auctionId={params.auctionId} />
+            <ChatInput
+              auctionId={auction.Auction_Id}
+              hasEnded={!auction.Is_Open}
+            />
             <div className="mt-2">
               <ChatTable columns={chatColumns} data={chatMessages} />
             </div>

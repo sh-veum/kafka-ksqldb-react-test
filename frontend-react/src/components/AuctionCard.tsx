@@ -8,12 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Link } from "@tanstack/react-router";
-import {
-  differenceInHours,
-  differenceInMinutes,
-  parseISO,
-  isBefore,
-} from "date-fns";
+import { differenceInHours, differenceInMinutes, parseISO } from "date-fns";
 import { formatCurrency } from "@/utils/currencyFormatter";
 
 export default function AuctionCard(auctionProps: Auction) {
@@ -21,19 +16,18 @@ export default function AuctionCard(auctionProps: Auction) {
   const now = new Date();
   const hoursLeft = differenceInHours(endDate, now);
   const minutesLeft = differenceInMinutes(endDate, now) % 60;
-  const auctionEnded = isBefore(endDate, now);
 
-  const displayWinner = auctionEnded || !auctionProps.Is_Open;
+  const displayWinner = !auctionProps.Is_Open;
 
   return (
     <>
       <Link to={`/auction/${auctionProps.Auction_Id}`}>
-        <Card className="p-1 transition-colors hover:bg-accent hover:text-accent-foreground max-w-64">
+        <Card className="p-1 transition-colors hover:bg-accent hover:text-accent-foreground max-w-64 h-full">
           <CardHeader className="mb-[-16px]">
             <CardTitle className="text-xl">{auctionProps.Title}</CardTitle>
             <CardDescription className="whitespace-normal">
               {displayWinner ? (
-                <>Winner: {auctionProps.Leader}</>
+                <>Winner: {auctionProps.Winner}</>
               ) : (
                 <>
                   Time Left: {hoursLeft} hours and {minutesLeft} minutes

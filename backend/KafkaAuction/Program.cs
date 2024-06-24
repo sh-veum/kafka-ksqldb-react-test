@@ -136,6 +136,12 @@ builder.Services.AddSingleton<IChatWebSocketService, ChatWebSocketService>();
 builder.Services.AddSingleton<IWebSocketHandler, WebSocketHandler>();
 
 builder.Services.AddHostedService<WebSocketLoggerService>();
+builder.Services.AddHostedService(
+    sp => new AuctionStatusChecker(
+        sp.GetRequiredService<ILogger<AuctionStatusChecker>>(),
+        sp.GetRequiredService<IAuctionService>(),
+        restApiProvider)
+);
 
 // CORS policy with the frontend
 builder.Services.AddCors(options =>
