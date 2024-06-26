@@ -15,9 +15,10 @@ import { useInsertBidMutation } from "@/utils/mutations/auctionMutations";
 
 interface BidInputProps {
   auctionId: string;
+  isOpen: boolean;
 }
 
-export function BidInput({ auctionId }: BidInputProps) {
+export function BidInput({ auctionId, isOpen }: BidInputProps) {
   const { mutate, isPending } = useInsertBidMutation();
   const { data: userInfo } = useQuery(getUserInfoQueryOptions());
 
@@ -35,6 +36,12 @@ export function BidInput({ auctionId }: BidInputProps) {
   });
 
   const isLoggedOut = userInfo?.status === "loggedOut";
+  const canBid = isOpen && !isLoggedOut;
+  const tooltipMessage = isLoggedOut
+    ? "Only signed-in users can place bids"
+    : !isOpen
+      ? "Auction has ended"
+      : "";
 
   return (
     <TooltipProvider>
@@ -74,13 +81,13 @@ export function BidInput({ auctionId }: BidInputProps) {
                             field.handleChange(parseFloat(e.target.value))
                           }
                           required
-                          disabled={isLoggedOut}
+                          disabled={!canBid}
                         />
                       </div>
                     </TooltipTrigger>
-                    {isLoggedOut && (
+                    {tooltipMessage && (
                       <TooltipContent>
-                        <p>Only signed-in users can place bids</p>
+                        <p>{tooltipMessage}</p>
                       </TooltipContent>
                     )}
                   </Tooltip>
@@ -107,7 +114,7 @@ export function BidInput({ auctionId }: BidInputProps) {
           />
           <form.Subscribe
             selector={(state) => [state.canSubmit, state.isValidating]}
-            children={([canSubmit, isValidating]) => (
+            children={() => (
               <div>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -122,7 +129,7 @@ export function BidInput({ auctionId }: BidInputProps) {
                       ) : (
                         <Button
                           type="submit"
-                          disabled={!canSubmit || isValidating || isLoggedOut}
+                          disabled={!canBid}
                           onClick={form.handleSubmit}
                           className="font-bold text-foreground"
                         >
@@ -131,9 +138,9 @@ export function BidInput({ auctionId }: BidInputProps) {
                       )}
                     </div>
                   </TooltipTrigger>
-                  {isLoggedOut && (
+                  {tooltipMessage && (
                     <TooltipContent>
-                      <p>Only signed-in users can place bids</p>
+                      <p>{tooltipMessage}</p>
                     </TooltipContent>
                   )}
                 </Tooltip>
