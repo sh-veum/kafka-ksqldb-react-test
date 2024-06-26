@@ -1,45 +1,14 @@
 import "./index.css";
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
-import {
-  ErrorComponent,
-  RouterProvider,
-  createRouter,
-} from "@tanstack/react-router";
-
-// Import the generated route tree
-import { routeTree } from "./routeTree.gen";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Spinner } from "@/components/Spinner";
-import { auth, setQueryClient } from "./lib/auth";
+import { RouterProvider } from "@tanstack/react-router";
+import { auth } from "./lib/auth";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "./router";
+import { createRouter } from "./router";
 import axios from "axios";
 
-export const queryClient = new QueryClient();
-setQueryClient(queryClient);
-
-// Create a new router instance
-const router = createRouter({
-  routeTree,
-  defaultPendingComponent: () => (
-    <div className={`p-2 text-2xl`}>
-      <Spinner />
-    </div>
-  ),
-  context: {
-    auth: undefined!,
-    queryClient,
-  },
-  defaultPreload: "intent",
-  defaultPreloadStaleTime: 0,
-  defaultErrorComponent: ({ error }) => <ErrorComponent error={error} />,
-});
-
-// Register the router instance for type safety
-declare module "@tanstack/react-router" {
-  interface Register {
-    router: typeof router;
-  }
-}
+const router = createRouter();
 
 // Axios interceptor to add the bearer token to every request
 axios.interceptors.request.use(
