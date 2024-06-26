@@ -10,6 +10,7 @@ import {
   auctionQueryOptions,
   chatMessagesQueryOptions,
 } from "@/utils/queryOptions";
+import { calculateTimeLeft } from "@/utils/timeUtils";
 import useBidsWebSocket from "@/utils/web-socket/useBidsWebSocket";
 import useChatWebSocket from "@/utils/web-socket/useChatWebSocket";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -48,6 +49,10 @@ function SpecificAuctionComponent() {
 
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [showDescription, setShowDescription] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(() =>
+    calculateTimeLeft(auction.End_Date)
+  );
+  const displayWinner = !auction.Is_Open;
 
   useEffect(() => {
     if (auction && bids && chatMessages && !isDataLoaded) {
@@ -63,23 +68,39 @@ function SpecificAuctionComponent() {
     setShowDescription(!showDescription);
   };
 
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setTimeLeft(calculateTimeLeft(auction.End_Date));
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [auction]);
+
   return (
-    <div className="max-w-full">
+    <div>
       <h1 className="text-2xl font-bold">{auction.Title}</h1>
       <p className="text-gray-500 text-sm my-2">
         Starting bid: ${auction.Starting_Price}
       </p>
+      {displayWinner ? (
+        <p className="text-gray-500 text-sm my-2">Winner: {auction.Winner}</p>
+      ) : (
+        <p className="text-gray-500 text-sm my-2">
+          Time Left: {timeLeft.hours} hours {timeLeft.minutes} minutes and{" "}
+          {timeLeft.seconds} seconds
+        </p>
+      )}
       <Button variant="outline" size="sm" onClick={handleShowDescription}>
         {showDescription ? "Hide description" : "Show description"}
       </Button>
       {showDescription && (
         <p className="italic break-words">{auction.Description}</p>
       )}
-      <div className="flex flex-1 space-x-4 mt-2 w-dvw">
+      <div className="flex flex-1 space-x-4 mt-2 w-[90dvw]">
         <div className="max-w-prose w-2/3">
           <p className="text-xl font-bold">Bids</p>
           <div className="mt-2">
-            <BidInput auctionId={auction.Auction_Id} />
+            <BidInput auctionId={auction.Auction_Id} isOpen={auction.Is_Open} />
             <div className="mt-2">
               <BidsTable columns={bidColumns} data={bids} />
             </div>
@@ -88,10 +109,7 @@ function SpecificAuctionComponent() {
         <div className="max-w-prose w-1/3">
           <p className="text-xl font-bold">Chat</p>
           <div className="mt-2">
-            <ChatInput
-              auctionId={auction.Auction_Id}
-              hasEnded={!auction.Is_Open}
-            />
+            <ChatInput auctionId={auction.Auction_Id} />
             <div className="mt-2">
               <ChatTable columns={chatColumns} data={chatMessages} />
             </div>

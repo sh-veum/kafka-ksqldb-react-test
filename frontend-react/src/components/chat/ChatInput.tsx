@@ -15,10 +15,9 @@ import {
 
 interface ChatInputProps {
   auctionId: string;
-  hasEnded: boolean;
 }
 
-export function ChatInput({ auctionId, hasEnded }: ChatInputProps) {
+export function ChatInput({ auctionId }: ChatInputProps) {
   const { mutate, isPending } = useInsertChatMessageMutation();
   const { data: userInfo } = useQuery(getUserInfoQueryOptions());
 

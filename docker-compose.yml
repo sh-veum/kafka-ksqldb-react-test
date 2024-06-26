@@ -172,31 +172,31 @@ services:
     networks:
       - dev
 
-  # reactfrontend:
-  #   image: docker.io/library/frontendreact
-  #   container_name: frontendreact
-  #   build:
-  #     context: ./frontend-react/
-  #     dockerfile: Dockerfile
-  #     args:
-  #       - VITE_API_URL=http://localhost:8081
-  #       - VITE_API_WEBSOCKET_URL=ws://localhost:8081/ws
-  #   ports:
-  #     - "8083:80"
-  #   depends_on:
-  #     - nginx
-  #   networks:
-  #     - dev
+  reactfrontend:
+    image: docker.io/library/frontendreact
+    container_name: frontendreact
+    build:
+      context: ./frontend-react/
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=http://localhost:8081
+        - VITE_API_WEBSOCKET_URL=ws://localhost:8081/ws
+    ports:
+      - "8083:80"
+    depends_on:
+      - nginx
+    networks:
+      - dev
 
-  # nginx:
-  #   image: nginx:alpine
-  #   container_name: nginx-app
-  #   volumes:
-  #     - ./frontend-react/nginx/default.conf:/etc/nginx/conf.d/default.conf
-  #   ports:
-  #     - 80:80
-  #   networks:
-  #     - dev
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-app
+    volumes:
+      - ./frontend-react/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - 80:80
+    networks:
+      - dev
 
 volumes:
   dataprotection-keys:
