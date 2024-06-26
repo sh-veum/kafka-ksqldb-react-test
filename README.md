@@ -1,6 +1,6 @@
 Just goofing around with kafka and ksqldb.
 
-Uses ksqldb and websocket to send live updates to the frontend.
+Uses KsqlDB and WebSockets to send live updates to the frontend.
 
 Requires Docker Desktop to run.
 
