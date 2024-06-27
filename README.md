@@ -18,7 +18,7 @@ To run all the containers and delay starting the auctionBackend:
 python docker-compose.py --build --delay auctionBackend 20
 ```
 
-## URLS:
+## Important URLS:
 
 Frontend: `localhost:8083`
 
