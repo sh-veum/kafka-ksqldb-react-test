@@ -10,14 +10,22 @@ namespace KafkaAuction.Initializers;
 
 public class AuctionConfig
 {
-    public int AuctionCount { get; set; } = 5;
-    public int BidsPerAuction { get; set; } = 6;
-    public int MessagesPerAuction { get; set; } = 10;
+    public int AuctionCount { get; set; } = 20;
+    public int BidsPerAuction { get; set; } = 30;
+    public int MessagesPerAuction { get; set; } = 50;
 }
 
 public static class KsqlDbInitializer
 {
-    public static async Task InitializeAsync(IAuctionService auctionService, IChatService chatService, IUserLocationService userLocationService, IKsqlDbService ksqlDbService, ILogger logger, AuctionConfig config)
+    public static async Task InitializeAsync(
+        IAuctionService auctionService,
+        IAuctionBidService auctionBidService,
+        IAuctionWithBidsService auctionWithBidsService,
+        IChatService chatService,
+        IUserLocationService userLocationService,
+        IKsqlDbService ksqlDbService,
+        ILogger logger,
+        AuctionConfig config)
     {
         TablesResponse[] tablesResponse = await ksqlDbService.CheckTablesAsync();
         StreamsResponse[] streamsResponse = await ksqlDbService.CheckStreamsAsync();
@@ -28,7 +36,7 @@ public static class KsqlDbInitializer
         logger.LogInformation("Existing Tables: " + string.Join(", ", tables.Select(t => t.Name)));
         logger.LogInformation("Existing Streams: " + string.Join(", ", streams.Select(s => s.Name)));
 
-        var createdAny = await EnsureTablesAndStreamsExist(auctionService, chatService, userLocationService, tables, streams, logger);
+        var createdAny = await EnsureTablesAndStreamsExist(auctionService, auctionBidService, auctionWithBidsService, chatService, userLocationService, tables, streams, logger);
 
         if (createdAny)
         {
@@ -40,13 +48,21 @@ public static class KsqlDbInitializer
         if (auctions.Count == 0)
         {
             var stopwatch = Stopwatch.StartNew();
-            await InsertAuctionsAndBidsAndMessages(auctionService, chatService, config);
+            await InsertAuctionsAndBidsAndMessages(auctionService, auctionBidService, chatService, config);
             stopwatch.Stop();
             logger.LogInformation("Initialized the database in {0} seconds.", stopwatch.Elapsed.TotalSeconds);
         }
     }
 
-    private static async Task<bool> EnsureTablesAndStreamsExist(IAuctionService auctionService, IChatService chatService, IUserLocationService userLocationService, Table[] tables, Stream[] streams, ILogger logger)
+    private static async Task<bool> EnsureTablesAndStreamsExist(
+        IAuctionService auctionService,
+        IAuctionBidService auctionBidService,
+        IAuctionWithBidsService auctionWithBidsService,
+        IChatService chatService,
+        IUserLocationService userLocationService,
+        Table[] tables,
+        Stream[] streams,
+        ILogger logger)
     {
         var createdAny = false;
 
@@ -74,21 +90,21 @@ public static class KsqlDbInitializer
         if (!streams.Any(s => s.Name == StreamNameConstants.AuctionBids))
         {
             logger.LogInformation("{StreamName} missing, creating new stream.", StreamNameConstants.AuctionBids);
-            await auctionService.CreateAuctionBidStreamAsync();
+            await auctionBidService.CreateAuctionBidStreamAsync();
             createdAny = true;
         }
 
         if (!streams.Any(s => s.Name == StreamNameConstants.AuctionWithBids))
         {
             logger.LogInformation("{StreamName} missing, creating new stream.", StreamNameConstants.AuctionWithBids);
-            await auctionService.CreateAuctionsWithBidsStreamAsync();
+            await auctionWithBidsService.CreateAuctionsWithBidsStreamAsync();
             createdAny = true;
         }
 
         return createdAny;
     }
 
-    private static async Task InsertAuctionsAndBidsAndMessages(IAuctionService auctionService, IChatService chatService, AuctionConfig config)
+    private static async Task InsertAuctionsAndBidsAndMessages(IAuctionService auctionService, IAuctionBidService auctionBidService, IChatService chatService, AuctionConfig config)
     {
         var predefinedAuctions = new List<Auction>
             {
@@ -147,12 +163,12 @@ public static class KsqlDbInitializer
             auction.End_Date = DateTime.UtcNow.AddHours(1 + (i * 2)).ToString("yyyy-MM-dd HH:mm:ss");
 
             await auctionService.InsertAuctionAsync(auction);
-            await InsertBidsForAuction(auctionService, auction.Auction_Id, config.BidsPerAuction);
+            await InsertBidsForAuction(auctionBidService, auction.Auction_Id, config.BidsPerAuction);
             await InsertMessagesForAuction(chatService, auction.Auction_Id, config.MessagesPerAuction);
         }
     }
 
-    private static async Task InsertBidsForAuction(IAuctionService auctionService, string auctionId, int bidCount)
+    private static async Task InsertBidsForAuction(IAuctionBidService auctionBidService, string auctionId, int bidCount)
     {
         var bidderNames = BidderNames.GetBidderNames();
         var random = new Random();
@@ -166,7 +182,7 @@ public static class KsqlDbInitializer
                 Bid_Amount = i * 5000,
                 Timestamp = DateTime.UtcNow.AddSeconds(i).ToString("yyyy-MM-dd HH:mm:ss")
             };
-            await auctionService.InsertBidAsync(auctionBid);
+            await auctionBidService.InsertBidAsync(auctionBid);
         }
     }
 

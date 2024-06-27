@@ -59,10 +59,4 @@ public class KsqlDbService : IKsqlDbService
     {
         return await _restApiProvider.GetStreamsAsync();
     }
-
-    // public async Task<StreamsResponse[]> CreateQueryableTable(string tableName)
-    // {
-    //     // CREATE TABLE QUERYABLE_AUCTIONS AS SELECT * FROM AUCTIONS
-    //     return await _restApiProvider.CreateOrReplaceTableAsync(tableName);
-    // }
 }

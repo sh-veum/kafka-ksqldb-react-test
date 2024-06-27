@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 public class SimulationController : ControllerBase
 {
     private readonly IAuctionService _auctionService;
+    private readonly IAuctionBidService _auctionBidService;
+    private readonly IAuctionWithBidsService _auctionWithBidsService;
     private readonly IChatService _chatService;
     private readonly IUserLocationService _userLocationService;
     private readonly IKsqlDbService _ksqlDbService;
@@ -15,12 +17,16 @@ public class SimulationController : ControllerBase
 
     public SimulationController(
         IAuctionService auctionService,
+        IAuctionBidService auctionBidService,
+        IAuctionWithBidsService auctionWithBidsService,
         IChatService chatService,
         IUserLocationService userLocationService,
         IKsqlDbService ksqlDbService,
         ILogger<SimulationController> logger)
     {
         _auctionService = auctionService;
+        _auctionBidService = auctionBidService;
+        _auctionWithBidsService = auctionWithBidsService;
         _chatService = chatService;
         _userLocationService = userLocationService;
         _ksqlDbService = ksqlDbService;
@@ -41,7 +47,7 @@ public class SimulationController : ControllerBase
         if (auctions.Count == 0)
         {
             _logger.LogInformation("No existing auctions found. Initializing new auctions.");
-            await KsqlDbInitializer.InitializeAsync(_auctionService, _chatService, _userLocationService, _ksqlDbService, _logger, config);
+            await KsqlDbInitializer.InitializeAsync(_auctionService, _auctionBidService, _auctionWithBidsService, _chatService, _userLocationService, _ksqlDbService, _logger, config);
         }
         else
         {
@@ -71,7 +77,7 @@ public class SimulationController : ControllerBase
                 Bid_Amount = bidAmount,
                 Timestamp = DateTime.UtcNow.AddSeconds(i).ToString("yyyy-MM-dd HH:mm:ss")
             };
-            await _auctionService.InsertBidAsync(auctionBid);
+            await _auctionBidService.InsertBidAsync(auctionBid);
             currentPrice = bidAmount; // Update current price for the next bid
             await Task.Delay(delay);
         }

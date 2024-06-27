@@ -1,7 +1,6 @@
 using System.Reflection;
 using System.Text;
 using KafkaAuction.Services.Interfaces;
-using ksqlDB.RestApi.Client.KSql.RestApi.Serialization;
 using ksqlDB.RestApi.Client.KSql.RestApi.Statements;
 using ksqlDB.RestApi.Client.KSql.RestApi.Statements.Annotations;
 

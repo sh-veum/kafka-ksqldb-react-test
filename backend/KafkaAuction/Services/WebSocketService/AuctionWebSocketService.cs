@@ -126,13 +126,12 @@ public class AuctionWebSocketService : IAuctionWebSocketService
 
     public async Task SubscribeToAllRecentBidsAsync(WebSocket webSocket)
     {
-        _logger.LogInformation("Subscribing to WebSocket for all recent bids from this point onwards");
+        _logger.LogInformation("Subscribing to WebSocket for all recent bids");
 
         var subscription = _context.CreatePushQuery<Auction_With_Bids>("AUCTIONS_WITH_BIDS")
             .WithOffsetResetPolicy(AutoOffsetReset.Latest)
             .Select(l => new AuctionWithBidDto
             {
-                Bid_Id = l.Bid_Id,
                 Title = l.Title,
                 Username = l.Username,
                 Bid_Amount = l.Bid_Amount,
@@ -149,9 +148,9 @@ public class AuctionWebSocketService : IAuctionWebSocketService
 
                 webSocket.SendAsync(segment, WebSocketMessageType.Text, true, CancellationToken.None);
             },
-            error => _logger.LogError(error, "Error in SubscribeToAllRecentBidsLatestAsync WebSocket subscription"));
+            error => _logger.LogError(error, "Error in SubscribeToAllRecentBidsAsync WebSocket subscription"));
 
-        _logger.LogInformation("SubscribeToAllRecentBidsLatestAsync WebSocket subscription completed");
+        _logger.LogInformation("SubscribeToAllRecentBidsAsync WebSocket subscription completed");
 
         // Keep the WebSocket open until closed by the client
         var buffer = new byte[1024 * 4];

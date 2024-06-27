@@ -8,19 +8,12 @@ namespace KafkaAuction.Services.Interfaces;
 public interface IAuctionService
 {
     Task<TablesResponse[]> CreateAuctionTableAsync(CancellationToken cancellationToken = default);
-    Task<StreamsResponse[]> CreateAuctionBidStreamAsync(CancellationToken cancellationToken = default);
     Task<(HttpResponseMessage httpResponseMessage, AuctionDto? auctionDto)> InsertAuctionAsync(Auction auction);
-    Task<(HttpResponseMessage httpResponseMessage, AuctionBidDto? auctionBidDto)> InsertBidAsync(Auction_Bid auctionBid);
-    Task<List<DropResourceResponseDto>> DropTablesAsync();
+    Task<List<DropResourceResponseDto>> DropAuctionTablesAsync();
     Task<List<AuctionDto>> GetAllAuctions();
-    Task<List<AuctionDto>> GetAuctions(int limit);
-    Task<AuctionDto?> GetAuctionDtoById(string auction_id);
-    Task<Auction?> GetAuctionById(string auction_id);
-    Task<List<AuctionBidDto>> GetAllBids();
-    Task<List<AuctionWithBidDto>> GetAllAuctionWithBids();
-    Task<StreamsResponse[]> CreateAuctionsWithBidsStreamAsync(CancellationToken cancellationToken = default);
-    Task<List<AuctionBidDto>> GetBidsForAuction(string auction_id);
-    Task<List<AuctionBidMessageDto>> GetBidMessagesForAuction(string auction_id);
+    Task<List<AuctionDto>> GetAuctionsAsync(int limit);
+    Task<AuctionDto?> GetAuctionDtoByIdAsync(string auction_id);
+    Task<Auction?> GetAuctionByIdAsync(string auction_id);
     Task<(HttpResponseMessage httpResponseMessage, Auction? auction)> DeleteAuction(string auction_id);
     Task<(HttpResponseMessage httpResponseMessage, AuctionDto? auctionDto)> EndAuctionAsync(string auction_id);
 

@@ -14,11 +14,15 @@ public class AuctionController : ControllerBase
 {
     private readonly ILogger<AuctionController> _logger;
     private readonly IAuctionService _auctionService;
+    private readonly IAuctionBidService _auctionBidService;
+    private readonly IAuctionWithBidsService _auctionWithBidsService;
 
-    public AuctionController(ILogger<AuctionController> logger, IAuctionService auctionService)
+    public AuctionController(ILogger<AuctionController> logger, IAuctionService auctionService, IAuctionBidService auctionBidService, IAuctionWithBidsService auctionWithBidsService)
     {
         _logger = logger;
         _auctionService = auctionService;
+        _auctionBidService = auctionBidService;
+        _auctionWithBidsService = auctionWithBidsService;
     }
 
     [HttpPost("create_tables")]
@@ -34,7 +38,7 @@ public class AuctionController : ControllerBase
     [ProducesResponseType(typeof(StreamsResponse[]), StatusCodes.Status200OK)]
     public async Task<IActionResult> CreateStreams()
     {
-        var results = await _auctionService.CreateAuctionBidStreamAsync();
+        var results = await _auctionBidService.CreateAuctionBidStreamAsync();
 
         return Ok(results);
     }
@@ -43,7 +47,7 @@ public class AuctionController : ControllerBase
     [ProducesResponseType(typeof(StreamsResponse[]), StatusCodes.Status200OK)]
     public async Task<IActionResult> CreateAuctionWithBidsStream()
     {
-        var results = await _auctionService.CreateAuctionsWithBidsStreamAsync();
+        var results = await _auctionWithBidsService.CreateAuctionsWithBidsStreamAsync();
 
         return Ok(results);
     }
@@ -52,7 +56,7 @@ public class AuctionController : ControllerBase
     [ProducesResponseType(typeof(DropResourceResponseDto[]), StatusCodes.Status200OK)]
     public async Task<IActionResult> DropTables()
     {
-        var results = await _auctionService.DropTablesAsync();
+        var results = await _auctionService.DropAuctionTablesAsync();
 
         return Ok(results);
     }
@@ -133,7 +137,7 @@ public class AuctionController : ControllerBase
             Timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")
         };
 
-        var (httpResponseMessage, bidDto) = await _auctionService.InsertBidAsync(auctionBid);
+        var (httpResponseMessage, bidDto) = await _auctionBidService.InsertBidAsync(auctionBid);
 
         if (!httpResponseMessage.IsSuccessStatusCode)
         {
@@ -165,7 +169,7 @@ public class AuctionController : ControllerBase
     [ProducesResponseType(typeof(AuctionDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAuctions([FromQuery] int limit, [FromQuery] bool sortByDate = false)
     {
-        var auctions = await _auctionService.GetAuctions(limit);
+        var auctions = await _auctionService.GetAuctionsAsync(limit);
 
         if (sortByDate)
         {
@@ -179,7 +183,7 @@ public class AuctionController : ControllerBase
     [ProducesResponseType(typeof(AuctionDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAuctionById(string auction_id)
     {
-        var auction = await _auctionService.GetAuctionDtoById(auction_id);
+        var auction = await _auctionService.GetAuctionDtoByIdAsync(auction_id);
 
         return Ok(auction);
     }
@@ -188,16 +192,17 @@ public class AuctionController : ControllerBase
     [ProducesResponseType(typeof(AuctionBidCreatorDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllBids()
     {
-        var auctionBids = await _auctionService.GetAllBids();
+        var auctionBids = await _auctionBidService.GetAllBidsAsync();
 
         return Ok(auctionBids);
     }
+
 
     [HttpGet("get_all_auctions_with_bids")]
     [ProducesResponseType(typeof(AuctionWithBidDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllAuctionsAndBids([FromQuery] bool sortByDate = false)
     {
-        var auctionsWithBids = await _auctionService.GetAllAuctionWithBids();
+        var auctionsWithBids = await _auctionWithBidsService.GetAllAuctionWithBidsAsync();
 
         if (sortByDate)
         {
@@ -211,7 +216,7 @@ public class AuctionController : ControllerBase
     [ProducesResponseType(typeof(AuctionBidMessageDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetBidMessagesForAuction(string auction_Id)
     {
-        var messages = await _auctionService.GetBidMessagesForAuction(auction_Id);
+        var messages = await _auctionBidService.GetBidMessagesForAuctionAsync(auction_Id);
 
         return Ok(messages);
     }

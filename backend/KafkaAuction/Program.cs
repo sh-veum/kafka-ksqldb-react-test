@@ -6,6 +6,7 @@ using KafkaAuction.Json;
 using KafkaAuction.Middleware;
 using KafkaAuction.Models;
 using KafkaAuction.Services;
+using KafkaAuction.Services.BackgroundServices;
 using KafkaAuction.Services.Interfaces;
 using KafkaAuction.Services.Interfaces.WebSocketService;
 using KafkaAuction.Services.WebSocketService;
@@ -94,36 +95,19 @@ builder.Services.AddHttpClient();
 var httpClientFactory = new HttpClientFactory(new Uri(ksqlDbUrl!));
 
 builder.Services.AddSingleton<IKSqlDbRestApiClient>(new KSqlDbRestApiClient(httpClientFactory));
+builder.Services.AddSingleton<IKSqlDbRestApiProvider>(new KSqlDbRestApiProvider(httpClientFactory, configuration));
 
-// AuctionService
-var restApiProvider = new KSqlDbRestApiProvider(httpClientFactory, builder.Configuration)
-{
-    DisposeHttpClient = false
-};
+builder.Services.AddSingleton<IServiceFactory, ServiceFactory>();
 
-builder.Services.AddScoped<IAuctionService, AuctionService>(
-    sp => new AuctionService(
-        sp.GetRequiredService<ILogger<AuctionService>>(),
-        restApiProvider, configuration)
-    );
+builder.Services.AddScoped<IAuctionService, AuctionService>();
+builder.Services.AddScoped<IAuctionBidService, AuctionBidService>();
+builder.Services.AddScoped<IAuctionWithBidsService, AuctionWithBidsService>();
 
-builder.Services.AddScoped<IChatService, ChatService>(
-    sp => new ChatService(
-        sp.GetRequiredService<ILogger<ChatService>>(),
-        restApiProvider, configuration)
-    );
+builder.Services.AddScoped<IChatService, ChatService>();
 
-builder.Services.AddScoped<IUserLocationService, UserLocationService>(
-    sp => new UserLocationService(
-        sp.GetRequiredService<ILogger<UserLocationService>>(),
-        restApiProvider, configuration)
-    );
+builder.Services.AddScoped<IUserLocationService, UserLocationService>();
 
-builder.Services.AddScoped<IKsqlDbService, KsqlDbService>(
-    sp => new KsqlDbService(
-        sp.GetRequiredService<ILogger<KsqlDbService>>(),
-        restApiProvider)
-    );
+builder.Services.AddScoped<IKsqlDbService, KsqlDbService>();
 
 builder.Services.AddScoped(typeof(EntityInserter<>));
 builder.Services.AddScoped(typeof(TableCreator<>));
@@ -136,12 +120,8 @@ builder.Services.AddSingleton<IChatWebSocketService, ChatWebSocketService>();
 builder.Services.AddSingleton<IWebSocketHandler, WebSocketHandler>();
 
 builder.Services.AddHostedService<WebSocketLoggerService>();
-builder.Services.AddHostedService(
-    sp => new AuctionStatusChecker(
-        sp.GetRequiredService<ILogger<AuctionStatusChecker>>(),
-        sp.GetRequiredService<IAuctionService>(),
-        restApiProvider)
-);
+
+builder.Services.AddHostedService<AuctionStatusChecker>();
 
 // CORS policy with the frontend
 builder.Services.AddCors(options =>
@@ -231,13 +211,15 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var auctionService = services.GetRequiredService<IAuctionService>();
+        var auctionBidService = services.GetRequiredService<IAuctionBidService>();
+        var auctionWithBidsService = services.GetRequiredService<IAuctionWithBidsService>();
         var chatService = services.GetRequiredService<IChatService>();
         var userLocationService = services.GetRequiredService<IUserLocationService>();
         var ksqlDbService = services.GetRequiredService<IKsqlDbService>();
 
         AuctionConfig auctionConfig = new();
 
-        await KsqlDbInitializer.InitializeAsync(auctionService, chatService, userLocationService, ksqlDbService, logger, auctionConfig);
+        await KsqlDbInitializer.InitializeAsync(auctionService, auctionBidService, auctionWithBidsService, chatService, userLocationService, ksqlDbService, logger, auctionConfig);
     }
     catch (Exception ex)
     {

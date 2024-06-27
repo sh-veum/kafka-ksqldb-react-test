@@ -1,6 +1,6 @@
 using KafkaAuction.Services.Interfaces.WebSocketService;
 
-namespace KafkaAuction.Services.WebSocketService;
+namespace KafkaAuction.Services.BackgroundServices;
 
 /// <summary>
 /// Used for logging the number of active WebSocket connections.

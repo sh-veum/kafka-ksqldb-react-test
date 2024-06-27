@@ -7,6 +7,10 @@ using ksqlDB.RestApi.Client.KSql.RestApi.Statements;
 
 namespace KafkaAuction.Utilities;
 
+/// <summary>
+/// Inserts an entity into a KSQL table or stream
+/// </summary>
+/// <typeparam name="T">The object class to insert</typeparam>
 public class EntityInserter<T>
 {
     private readonly IKSqlDbRestApiProvider _restApiProvider;
@@ -75,9 +79,9 @@ public class EntityInserter<T>
     {
         return value switch
         {
-            DateTime dt => $"'{dt:yyyy-MM-dd HH:mm:ss}'", // Use a standard SQL datetime format
-            string str => $"'{str.Replace("'", "''")}'", // Ensure strings are correctly escaped
-            string[] arr => $"ARRAY[{string.Join(", ", arr.Select(s => $"'{s.Replace("'", "''")}'"))}]", // Correctly format string arrays
+            DateTime dt => $"'{dt:yyyy-MM-dd HH:mm:ss}'",
+            string str => $"'{str.Replace("'", "''")}'",
+            string[] arr => $"ARRAY[{string.Join(", ", arr.Select(s => $"'{s.Replace("'", "''")}'"))}]",
             _ => value.ToString()
         };
     }

@@ -3,19 +3,21 @@ using KafkaAuction.Models;
 using KafkaAuction.Services.Interfaces;
 using KafkaAuction.Utilities;
 
-namespace KafkaAuction.Services;
+namespace KafkaAuction.Services.BackgroundServices;
 
 public class AuctionStatusChecker : BackgroundService
 {
     private readonly ILogger<AuctionStatusChecker> _logger;
     private readonly IAuctionService _auctionService;
+    private readonly IAuctionBidService _auctionBidService;
     private readonly IKSqlDbRestApiProvider _restApiProvider;
     private readonly int delayInMinutes = 1;
 
-    public AuctionStatusChecker(ILogger<AuctionStatusChecker> logger, IAuctionService auctionService, IKSqlDbRestApiProvider restApiProvider)
+    public AuctionStatusChecker(ILogger<AuctionStatusChecker> logger, IAuctionService auctionService, IAuctionBidService auctionBidService, IKSqlDbRestApiProvider restApiProvider)
     {
         _logger = logger;
         _auctionService = auctionService;
+        _auctionBidService = auctionBidService;
         _restApiProvider = restApiProvider;
     }
 
@@ -52,7 +54,7 @@ public class AuctionStatusChecker : BackgroundService
             auctionDto.Is_Open = false;
 
             // Optionally set the winner if you want to automatically determine it
-            var bids = await _auctionService.GetBidsForAuction(auctionDto.Auction_Id);
+            var bids = await _auctionBidService.GetBidsForAuctionAsync(auctionDto.Auction_Id);
             auctionDto.Winner = bids.Count == 0 ? "No bids" : bids.OrderByDescending(b => b.Bid_Amount).First().Username;
 
             var auction = new Auction
