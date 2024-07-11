@@ -6,7 +6,7 @@ Requires Docker Desktop to run.
 
 ## docker-compose.py
 
-Allows you to run `docker-compose` commands with the option to exclude specific containers.
+Allows you to run `docker-compose` commands with the option to exclude or delay specific containers.
 
 Made since the kafka containers need time to start before the .Net backend can connect.
 
